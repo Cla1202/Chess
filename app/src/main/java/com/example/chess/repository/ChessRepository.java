@@ -25,17 +25,4 @@ public class ChessRepository {
     public void saveCurrentGame(Board board) {
         localDataSource.saveGame(board);
     }
-
-    public boolean performLogin(Context context, LoginRequest request) { // Aggiungi Context qui
-        if (request.username != null && request.username.length() > 2 &&
-                request.password != null && request.password.length() > 4) {
-
-            // Ora passi il contesto al data source
-            localDataSource.saveUser(context, request.username);
-            return true;
-        }
-        return false;
-    }
-
-
 }

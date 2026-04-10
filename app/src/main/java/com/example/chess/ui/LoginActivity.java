@@ -15,12 +15,16 @@ import androidx.core.view.WindowInsetsCompat;
 import com.example.chess.R;
 import com.example.chess.model.LoginRequest;
 import com.example.chess.repository.ChessRepository;
-
+import com.example.chess.repository.user.IChessUserRepository;
+import com.example.chess.repository.user.UserRepository;
+import com.example.chess.repository.user.UserResponseCallback;
+import com.example.chess.source.user.BaseUserAuthenticationRemoteDataSource;
+import com.example.chess.source.user.UserAuthenticationLocalDataSource;
 
 
 public class LoginActivity extends AppCompatActivity {
     private EditText usernameInput, passwordInput;
-    private ChessRepository repository;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -30,25 +34,33 @@ public class LoginActivity extends AppCompatActivity {
         usernameInput = findViewById(R.id.usernameInput);
         passwordInput = findViewById(R.id.passwordInput);
         Button loginButton = findViewById(R.id.loginButton);
-        repository = new ChessRepository();
+
 
         loginButton.setOnClickListener(v -> {
             String user = usernameInput.getText().toString().trim();
             String pass = passwordInput.getText().toString().trim();
 
-            LoginRequest request = new LoginRequest(user, pass);
+            // 1. Creiamo il Data Source e il Repository (seguendo la nuova struttura)
+            BaseUserAuthenticationRemoteDataSource dataSource = new UserAuthenticationLocalDataSource(this);
+            IChessUserRepository userRepository = new UserRepository(dataSource);
 
-            if (repository.performLogin(this,request)) {
-                // Login riuscito: Vai alla scacchiera
-                Toast.makeText(this, "Login effettuato!", Toast.LENGTH_SHORT).show();
-                Intent intent = new Intent(this, MainActivity.class);
-                // Puoi passare l'username alla MainActivity
-                intent.putExtra("USERNAME", user);
-                startActivity(intent);
-                finish(); // Chiudi LoginActivity
-            } else {
-                Toast.makeText(this, "Credenziali non valide", Toast.LENGTH_LONG).show();
-            }
+            // 2. Eseguiamo il login con la Callback
+            userRepository.login(new LoginRequest(user, pass), new UserResponseCallback() {
+                @Override
+                public void onSuccess(String username) {
+                    Toast.makeText(LoginActivity.this, "Login effettuato!", Toast.LENGTH_SHORT).show();
+
+                    Intent intent = new Intent(LoginActivity.this, MainActivity.class);
+                    intent.putExtra("USERNAME", username);
+                    startActivity(intent);
+                    finish();
+                }
+
+                @Override
+                public void onFailure(String errorMessage) {
+                    Toast.makeText(LoginActivity.this, errorMessage, Toast.LENGTH_LONG).show();
+                }
+            });
         });
     }
 }

@@ -9,6 +9,12 @@ public class Board {
         setupBoard();
     }
 
+    // Nuovo costruttore per inizializzare la scacchiera a partire da un livello Quiz
+    public Board(Piece[][] customGrid, boolean whiteTurnToStart) {
+        this.grid = customGrid;
+        this.whiteTurn = whiteTurnToStart;
+    }
+
     private void setupBoard() {
         // --- PEZZI NERI (Riga 0 e 1) ---
         grid[0][0] = new Rook(0, 0, false);

@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:gravity="center"
+    android:background="#2C2C2C">
+
+    <TextView
+        android:id="@+id/levelTitleText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Caricamento livello..."
+        android:textColor="#FFD700"
+        android:textStyle="bold"
+        android:textSize="28sp"
+        android:layout_marginBottom="8dp" />
+
+    <TextView
+        android:id="@+id/statusText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Tocca a te!"
+        android:textColor="#FFFFFF"
+        android:textSize="18sp"
+        android:layout_marginBottom="20dp" />
+
+    <GridView
+        android:id="@+id/chessGrid"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:numColumns="8"
+        android:gravity="center"
+        android:stretchMode="columnWidth"
+        android:background="#444444"
+        android:layout_margin="4dp" />
+
+</LinearLayout>

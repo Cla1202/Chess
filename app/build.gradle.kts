@@ -1,5 +1,8 @@
 plugins {
     alias(libs.plugins.android.application)
+    // Add the Google services Gradle plugin
+    id("com.google.gms.google-services")
+
 }
 
 android {
@@ -46,6 +49,20 @@ dependencies {
     implementation(libs.annotation)
     implementation(libs.lifecycle.livedata.ktx)
     implementation(libs.lifecycle.viewmodel.ktx)
+
+    // Import the Firebase BoM
+    implementation(platform("com.google.firebase:firebase-bom:34.12.0"))
+
+    // Add the dependency for the Firebase Authentication library
+        // When using the BoM, you don't specify versions in Firebase library dependencies
+    implementation("com.google.firebase:firebase-auth")
+
+    // SIGN IN GOOGLE
+    // Also add the dependencies for the Credential Manager libraries and specify their versions
+    implementation("androidx.credentials:credentials:1.3.0")
+    implementation("com.google.android.gms:play-services-auth:21.0.0") // O versione più recente
+    implementation("com.google.android.libraries.identity.googleid:googleid:1.1.1")
+
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)

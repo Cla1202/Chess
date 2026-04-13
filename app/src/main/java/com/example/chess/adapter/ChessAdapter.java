@@ -9,6 +9,9 @@ import android.widget.ImageView;
 import com.example.chess.model.Board;
 import com.example.chess.model.Piece;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class ChessAdapter extends BaseAdapter {
     private Context context;
     private Board board;
@@ -27,16 +30,21 @@ public class ChessAdapter extends BaseAdapter {
     @Override
     public long getItemId(int position) { return position; }
 
+
+    private List<Integer> hintPositions = new ArrayList<>();
+
+    public void setHints(List<Integer> positions) {
+        this.hintPositions = positions;
+        notifyDataSetChanged();
+    }
+
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
         ImageView square;
         if (convertView == null) {
             square = new ImageView(context);
-            // Imposta altezza uguale alla larghezza (proporzione quadrata)
-            // Usa i parametri del display per forzare una dimensione visibile
             int screenWidth = context.getResources().getDisplayMetrics().widthPixels;
             int size = screenWidth / 8;
-            square.setLayoutParams(new ViewGroup.LayoutParams(size, size));
             square.setLayoutParams(new ViewGroup.LayoutParams(size, size));
             square.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
             square.setPadding(8, 8, 8, 8);
@@ -44,28 +52,33 @@ public class ChessAdapter extends BaseAdapter {
             square = (ImageView) convertView;
         }
 
-        // Dentro getView, dopo aver impostato il colore chiaro/scuro alternato:
-        if (selectedPosition != null && selectedPosition == position) {
-            square.setBackgroundColor(Color.parseColor("#F5F682")); // Colore evidenziatore
-        }
-
-        // Calcola coordinate x,y dalla posizione 0-63
         int row = position / 8;
         int col = position % 8;
 
-        // Colore della casella (alternato)
+        // 1. IMPOSTA IL COLORE BASE DELLA SCACCHIERA
         if ((row + col) % 2 == 0) {
-            square.setBackgroundColor(Color.parseColor("#EEEED2")); // Chiaro
+            square.setBackgroundColor(Color.parseColor("#E0E0E0")); // Chiaro
         } else {
-            square.setBackgroundColor(Color.parseColor("#769656")); // Scuro
+            square.setBackgroundColor(Color.parseColor("#8B0000")); // Scuro
         }
 
-        // Disegna il pezzo se presente
+        // 2. SOVRASCRIVI CON L'EVIDENZIAZIONE (SELEZIONE O CONSIGLIO)
+        // Controlliamo prima se è una cella di consiglio (HINT)
+        if (hintPositions != null && hintPositions.contains(position)) {
+            // Colore giallo semitrasparente per il consiglio
+            square.setBackgroundColor(Color.parseColor("#80FFEB3B"));
+        }
+        // Altrimenti controlliamo se è la cella selezionata dall'utente
+        else if (selectedPosition != null && selectedPosition == position) {
+            square.setBackgroundColor(Color.parseColor("#F5F682")); // Colore evidenziatore selezione
+        }
+
+        // 3. DISEGNA IL PEZZO
         Piece piece = board.getPiece(row, col);
         if (piece != null) {
             square.setImageResource(getResIdForPiece(piece));
         } else {
-            square.setImageResource(0); // Vuoto
+            square.setImageResource(0);
         }
 
         return square;

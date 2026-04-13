@@ -3,7 +3,6 @@ package com.example.chess.model;
 public class Board {
     private Piece[][] grid;
     private boolean whiteTurn = true; // Il Bianco inizia sempre
-    public boolean isWhiteTurn() { return whiteTurn; }
     public Board() {
         grid = new Piece[8][8];
         setupBoard();
@@ -78,4 +77,14 @@ public class Board {
         // 4. Se isValidMove era FALSE, restituiamo false e NON tocchiamo la grid
         return false;
     }
+
+    public void setWhiteTurn(boolean whiteTurn) {
+        this.whiteTurn = whiteTurn;
+    }
+
+    public boolean isWhiteTurn() {
+        return whiteTurn;
+    }
+
+
 }

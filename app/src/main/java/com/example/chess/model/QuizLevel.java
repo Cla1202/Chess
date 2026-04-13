@@ -15,12 +15,15 @@ public class QuizLevel {
     // Sequenza di mosse che formano l'unica soluzione corretta
     private List<MoveRequest> solutionMoves;
 
-    public QuizLevel(int levelId, String title, Piece[][] initialBoardSetup, boolean whiteTurnToStart, List<MoveRequest> solutionMoves) {
+    private int maxAttempts;
+
+    public QuizLevel(int levelId, String title, Piece[][] initialBoardSetup, boolean whiteTurnToStart, List<MoveRequest> solutionMoves, int maxAttempts) {
         this.levelId = levelId;
         this.title = title;
         this.initialBoardSetup = initialBoardSetup;
         this.whiteTurnToStart = whiteTurnToStart;
         this.solutionMoves = solutionMoves;
+        this.maxAttempts = maxAttempts;
     }
 
     public int getLevelId() { return levelId; }
@@ -28,4 +31,8 @@ public class QuizLevel {
     public Piece[][] getInitialBoardSetup() { return initialBoardSetup; }
     public boolean isWhiteTurnToStart() { return whiteTurnToStart; }
     public List<MoveRequest> getSolutionMoves() { return solutionMoves; }
+
+    public int getMaxAttempts() { return maxAttempts; }
+
+
 }

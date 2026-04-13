@@ -1,5 +1,6 @@
 package com.example.chess.ui;
 
+import android.content.Intent;
 import android.os.Bundle;
 
 import androidx.activity.EdgeToEdge;
@@ -17,6 +18,8 @@ import com.example.chess.model.Piece;
 import com.example.chess.repository.ChessRepository;
 import com.example.chess.util.MoveCalculator;
 import com.example.chess.util.Constants;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 
 public class MainActivity extends AppCompatActivity {
     private Board board;
@@ -37,6 +40,26 @@ public class MainActivity extends AppCompatActivity {
         GridView gridView = findViewById(R.id.chessGrid);
         adapter = new ChessAdapter(this, board);
         gridView.setAdapter(adapter);
+
+        // 1. Prendi l'utente attualmente loggato
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+
+        if (user != null) {
+            // L'utente è loggato! Estraiamo i suoi dati
+            String email = user.getEmail();
+            String uid = user.getUid(); // Questo è l'ID univoco segreto dell'utente
+
+            // Se hai una TextView nel layout per il benvenuto, puoi aggiornarla così:
+            // TextView welcomeText = findViewById(R.id.welcomeTextView);
+            // welcomeText.setText("Benvenuto, " + email);
+
+        } else {
+            // SICUREZZA: Se per qualche motivo l'utente arriva qui ma NON è loggato,
+            // rispediscilo immediatamente alla schermata di Login.
+            Intent intent = new Intent(MainActivity.this, LoginActivity.class);
+            startActivity(intent);
+            finish();
+        }
 
         gridView.setOnItemClickListener((parent, view, position, id) -> {
             handleTouch(position);

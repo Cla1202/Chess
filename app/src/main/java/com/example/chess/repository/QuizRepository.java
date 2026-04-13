@@ -53,25 +53,31 @@ public class QuizRepository {
         setupLevel[5][2] = new Knight(5, 2, true);  // Cavallo in c1
         setupLevel[0][0] = new King(0, 0, true);    // Re in h1
 
-// Creazione della soluzione (da compilare con la mossa corretta del Nero)
-        List<MoveRequest> solution = new ArrayList<>();
-        MoveRequest move = new MoveRequest();
-// TODO: Inserisci le coordinate della mossa corretta per risolvere il quiz
-// move.startRow = ...; move.startCol = ...;
-// move.endRow = ...; move.endCol = ...;
-        solution.add(move);
-
-// Creiamo il livello passando "false" perché tocca al NERO iniziare
-        QuizLevel myLevel = new QuizLevel(1, "Trova la mossa vincente", setupLevel, false, solution);
-
         // Creiamo la mossa della soluzione
+        int tentativiMassimi = 3;
         List<MoveRequest> soluzione1 = new ArrayList<>();
+
+// MOSSA 1: TU (Regina c6 -> f3)
         MoveRequest mossa1 = new MoveRequest();
-        mossa1.startRow = 6; mossa1.startCol = 6;
-        mossa1.endRow = 1; mossa1.endCol = 1; // Alfiere si sposta in b7 (1,1) per scacco matto
+        mossa1.startRow = 2; mossa1.startCol = 2;
+        mossa1.endRow = 5; mossa1.endCol = 5;
         soluzione1.add(mossa1);
 
-        QuizLevel livello1 = new QuizLevel(1, "Matto in 1", setupLevel, true, soluzione1);
+// MOSSA 2: COMPUTER (Re d2 -> e1)
+// Nota: queste coordinate devono corrispondere a dove hai messo il Re nero nel setup
+        MoveRequest mossa2 = new MoveRequest();
+        mossa2.startRow = 6; mossa2.startCol = 3;
+        mossa2.endRow = 7; mossa2.endCol = 4;
+        soluzione1.add(mossa2);
+
+// MOSSA 3: TU (Regina f3 -> f2) - IL MATTO
+        MoveRequest mossa3 = new MoveRequest();
+        mossa3.startRow = 5; mossa3.startCol = 5;
+        mossa3.endRow = 6; mossa3.endCol = 5;
+        soluzione1.add(mossa3);
+
+// Crea il livello con questa lista
+        QuizLevel livello1 = new QuizLevel(1, "Matto in 2", setupLevel, true, soluzione1, 3);
         levels.add(livello1);
 
 

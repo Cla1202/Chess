@@ -1,6 +1,8 @@
 package com.example.chess.ui;
 
+import android.graphics.Color;
 import android.os.Bundle;
+import android.widget.Button;
 import android.widget.GridView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -28,6 +30,10 @@ public class QuizActivity extends AppCompatActivity {
     private TextView levelTitleText;
     private TextView statusText;
 
+    private boolean isComputerThinking = false;
+    private int errorCount = 0; // Contatore errori
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -53,14 +59,44 @@ public class QuizActivity extends AppCompatActivity {
         adapter = new ChessAdapter(this, board);
         gridView.setAdapter(adapter);
 
+        Button hintButton = findViewById(R.id.hintButton);
+
         // Gestisce il tocco sulla scacchiera
         gridView.setOnItemClickListener((parent, view, position, id) -> {
             handleQuizTouch(position);
         });
+
+        hintButton.setOnClickListener(v -> {
+            if (currentMoveIndex < currentLevel.getSolutionMoves().size()) {
+                MoveRequest correctMove = currentLevel.getSolutionMoves().get(currentMoveIndex);
+
+                // Calcolo posizioni
+                int startPos = correctMove.startRow * 8 + correctMove.startCol;
+                int endPos = correctMove.endRow * 8 + correctMove.endCol;
+
+                List<Integer> hints = new ArrayList<>();
+                hints.add(startPos);
+                hints.add(endPos);
+
+                // Applica i suggerimenti all'adapter
+                adapter.setHints(hints);
+
+                // AGGIORNAMENTO TESTO
+                statusText.setText("Suggerimento attivato: osserva le celle gialle!");
+                statusText.setTextColor(android.graphics.Color.CYAN);
+
+                // Opzionale: Cambia il testo del bottone stesso
+                hintButton.setText("Suggerimento mostrato");
+                hintButton.setEnabled(false); // Disabilita per evitare click ripetuti
+            }
+        });
+
     }
 
     private void handleQuizTouch(int position) {
-        // Se il livello è già completato, non fare nulla
+        Button hintButton = findViewById(R.id.hintButton);
+        if (isComputerThinking) return;
+
         if (currentMoveIndex >= currentLevel.getSolutionMoves().size()) {
             Toast.makeText(this, "Hai già superato questo livello!", Toast.LENGTH_SHORT).show();
             return;
@@ -70,9 +106,8 @@ public class QuizActivity extends AppCompatActivity {
         int col = position % 8;
 
         if (selectedPosition == null) {
-            // Fase 1: SELEZIONE di un pezzo
+            // --- FASE 1: SELEZIONE ---
             Piece p = board.getPiece(row, col);
-            // Seleziona solo se c'è un pezzo e se è del colore del turno attuale
             if (p != null && p.isWhite() == board.isWhiteTurn()) {
                 selectedPosition = position;
                 adapter.setSelectedPosition(position);
@@ -81,44 +116,89 @@ public class QuizActivity extends AppCompatActivity {
                 Toast.makeText(this, "Seleziona un tuo pezzo!", Toast.LENGTH_SHORT).show();
             }
         } else {
-            // Fase 2: MOVIMENTO verso una cella di destinazione
+            // --- FASE 2: MOVIMENTO ---
             int startRow = selectedPosition / 8;
             int startCol = selectedPosition % 8;
 
-            // Recupera la mossa corretta prevista per questo passaggio del quiz
             MoveRequest expectedMove = currentLevel.getSolutionMoves().get(currentMoveIndex);
 
-            // Verifica se la mossa tentata coincide con la soluzione
-            if (startRow == expectedMove.startRow && startCol == expectedMove.startCol &&
-                    row == expectedMove.endRow && col == expectedMove.endCol) {
+            if (board.movePiece(startRow, startCol, row, col)) {
+                currentMoveIndex++; // L'indice passa da 0 (tua mossa) a 1 (mossa computer)
 
-                // Mossa CORRETTA!
-                if (board.movePiece(startRow, startCol, row, col)) {
-                    currentMoveIndex++; // Avanza nella sequenza della soluzione
-                    statusText.setText("Ottimo! Mossa corretta.");
-                    statusText.setTextColor(android.graphics.Color.GREEN);
+                // Pulisci subito la selezione grafica dell'utente
+                selectedPosition = null;
+                adapter.setSelectedPosition(null);
+                adapter.setHints(new ArrayList<>()); // Rimuovi eventuali aiuti gialli
 
-                    // Controlla se il livello è finito
-                    if (currentMoveIndex >= currentLevel.getSolutionMoves().size()) {
-                        statusText.setText("Livello Superato! Congratulazioni.");
-                        Toast.makeText(this, "Livello Completato!", Toast.LENGTH_LONG).show();
-                    }
+                // CONTROLLO: C'è una mossa successiva nella lista?
+                if (currentMoveIndex < currentLevel.getSolutionMoves().size()) {
+                    // Se sì, significa che la prossima mossa (indice 1) è del COMPUTER
+                    statusText.setText("Ottimo! Il computer sta rispondendo...");
+                    playComputerMove();
                 } else {
-                    // La mossa coincide con la soluzione ma viola le regole di base degli scacchi
-                    Toast.makeText(this, "Mossa non consentita dalle regole!", Toast.LENGTH_SHORT).show();
+                    // Se no, il quiz è finito con la tua mossa
+                    statusText.setText("Livello Superato! Scacco Matto.");
+                    statusText.setTextColor(Color.GREEN);
                 }
 
-            } else {
-                // Mossa ERRATA rispetto alla soluzione
-                statusText.setText("Mossa sbagliata. Riprova!");
-                statusText.setTextColor(android.graphics.Color.RED);
+                adapter.notifyDataSetChanged();
+            }
+             else {
+                // --- GESTIONE ERRORE ---
+                errorCount++;
+                int tentativiRimasti = currentLevel.getMaxAttempts() - errorCount;
+
+                // Rimuoviamo gli aiuti anche se sbaglia, così deve richiederli
+                adapter.setHints(new ArrayList<>());
+                hintButton.setText("Aiuto");
+                hintButton.setEnabled(true);
+
+                if (tentativiRimasti <= 0) {
+                    statusText.setText("TENTATIVI ESAURITI! HAI PERSO.");
+                    statusText.setTextColor(android.graphics.Color.RED);
+                    isComputerThinking = true;
+                } else {
+                    statusText.setText("Mossa errata! Rimasti: " + tentativiRimasti);
+                    statusText.setTextColor(android.graphics.Color.RED);
+                }
             }
 
-            // Pulisce la selezione in ogni caso
+            // Reset grafica
             selectedPosition = null;
             adapter.setSelectedPosition(null);
             adapter.notifyDataSetChanged();
         }
     }
+
+
+    // COMPUTER MOVE
+    private void playComputerMove() {
+        isComputerThinking = true; // Impedisce all'utente di toccare la scacchiera
+
+        new android.os.Handler().postDelayed(() -> {
+            // Prende la mossa all'indice 1 (Re d2 -> e1)
+            MoveRequest computerMove = currentLevel.getSolutionMoves().get(currentMoveIndex);
+
+            // FORZA IL TURNO AL NERO (fondamentale!)
+            board.setWhiteTurn(false);
+
+            if (board.movePiece(computerMove.startRow, computerMove.startCol,
+                    computerMove.endRow, computerMove.endCol)) {
+
+                currentMoveIndex++; // L'indice passa da 1 a 2 (tua mossa finale)
+
+                // RESTITUISCE IL TURNO AL BIANCO
+                board.setWhiteTurn(true);
+
+                statusText.setText("Il computer si è mosso. Ora tocca a te per il matto!");
+                adapter.notifyDataSetChanged();
+            }
+
+            isComputerThinking = false; // L'utente può tornare a giocare
+        }, 1000); // 1 secondo di pausa per rendere il gioco naturale
+    }
+
+    // TASTO DI SUGGERIMENTO
+
 
 }

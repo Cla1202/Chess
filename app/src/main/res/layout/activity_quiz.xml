@@ -1,15 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:gravity="center"
-    android:background="#2C2C2C">
+    android:background="#444444"
+    android:padding="16dp">
 
     <TextView
         android:id="@+id/levelTitleText"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
         android:text="Caricamento livello..."
         android:textColor="#FFD700"
         android:textStyle="bold"
@@ -20,26 +22,46 @@
         android:id="@+id/statusText"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
         android:text="Tocca a te!"
         android:textColor="#FFFFFF"
         android:textSize="18sp"
-        android:layout_marginBottom="20dp" />
+        android:layout_marginBottom="24dp" />
 
     <GridView
         android:id="@+id/chessGrid"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="0dp"
+        android:layout_weight="1"
         android:numColumns="8"
         android:gravity="center"
         android:stretchMode="columnWidth"
         android:background="#444444"
         android:layout_margin="4dp" />
 
-    <Button
-        android:id="@+id/hintButton"
-        android:layout_width="wrap_content"
+    <RelativeLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Aiuto"
-        android:layout_gravity="center" />
+        android:paddingTop="8dp"
+        android:paddingBottom="8dp">
+
+        <ImageButton
+            android:id="@+id/backButton"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_alignParentStart="true"
+            android:layout_centerVertical="true"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Torna indietro"
+            android:src="@drawable/ic_arrow_back" />
+
+        <Button
+            android:id="@+id/hintButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:text="Aiuto" />
+
+    </RelativeLayout>
 
 </LinearLayout>

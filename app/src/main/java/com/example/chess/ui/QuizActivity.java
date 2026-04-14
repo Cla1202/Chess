@@ -1,7 +1,9 @@
 package com.example.chess.ui;
 
+import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.os.Handler;
 import android.widget.Button;
 import android.widget.GridView;
 import android.widget.TextView;
@@ -11,15 +13,16 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.chess.R;
 import com.example.chess.adapter.ChessAdapter;
-import com.example.chess.model.Bishop;
+import com.example.chess.database.ChessDatabase;
+import com.example.chess.database.LevelProgress;
 import com.example.chess.model.Board;
-import com.example.chess.model.King;
 import com.example.chess.model.MoveRequest;
 import com.example.chess.model.Piece;
 import com.example.chess.model.QuizLevel;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Executors;
 
 public class QuizActivity extends AppCompatActivity {
     private Board board;
@@ -33,7 +36,6 @@ public class QuizActivity extends AppCompatActivity {
     private boolean isComputerThinking = false;
     private int errorCount = 0; // Contatore errori
 
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -43,9 +45,11 @@ public class QuizActivity extends AppCompatActivity {
         statusText = findViewById(R.id.statusText);
         GridView gridView = findViewById(R.id.chessGrid);
 
-        // Inizializza il repository e carica il primo livello (indice 0)
         com.example.chess.repository.QuizRepository quizRepository = new com.example.chess.repository.QuizRepository();
-        currentLevel = quizRepository.getAllLevels().get(0);
+
+        // Recupera l'indice del livello dall'Intent (di default 0 se non lo trova)
+        int levelIndex = getIntent().getIntExtra("LEVEL_INDEX", 0);
+        currentLevel = quizRepository.getAllLevels().get(levelIndex);
 
         // Inizializza la scacchiera con il setup del quiz
         board = new Board(currentLevel.getInitialBoardSetup(), currentLevel.isWhiteTurnToStart());
@@ -53,7 +57,7 @@ public class QuizActivity extends AppCompatActivity {
         // Aggiorna la UI con il titolo e lo stato iniziale
         levelTitleText.setText(currentLevel.getTitle());
         statusText.setText("Tocca a te! Trova la mossa vincente.");
-        statusText.setTextColor(android.graphics.Color.WHITE);
+        statusText.setTextColor(Color.WHITE);
 
         // Configura l'adapter per la GridView
         adapter = new ChessAdapter(this, board);
@@ -83,13 +87,23 @@ public class QuizActivity extends AppCompatActivity {
 
                 // AGGIORNAMENTO TESTO
                 statusText.setText("Suggerimento attivato: osserva le celle gialle!");
-                statusText.setTextColor(android.graphics.Color.CYAN);
+                statusText.setTextColor(Color.CYAN);
 
                 // Opzionale: Cambia il testo del bottone stesso
                 hintButton.setText("Suggerimento mostrato");
                 hintButton.setEnabled(false); // Disabilita per evitare click ripetuti
             }
         });
+
+        // Trova il pulsante indietro
+        android.widget.ImageButton backButton = findViewById(R.id.backButton);
+
+// Azione: quando viene cliccato, chiudi questa schermata
+        backButton.setOnClickListener(v -> {
+            finish(); // Questo comando distrugge la QuizActivity e ti fa scivolare indietro alla schermata precedente!
+        });
+
+
 
     }
 
@@ -122,8 +136,13 @@ public class QuizActivity extends AppCompatActivity {
 
             MoveRequest expectedMove = currentLevel.getSolutionMoves().get(currentMoveIndex);
 
-            if (board.movePiece(startRow, startCol, row, col)) {
-                currentMoveIndex++; // L'indice passa da 0 (tua mossa) a 1 (mossa computer)
+            // CONTROLLO: È la mossa corretta? (Confronta con expectedMove)
+            if (startRow == expectedMove.startRow && startCol == expectedMove.startCol &&
+                    row == expectedMove.endRow && col == expectedMove.endCol) {
+
+                // Mossa corretta! Esegui il movimento sulla scacchiera
+                board.movePiece(startRow, startCol, row, col);
+                currentMoveIndex++; // L'indice avanza
 
                 // Pulisci subito la selezione grafica dell'utente
                 selectedPosition = null;
@@ -132,19 +151,21 @@ public class QuizActivity extends AppCompatActivity {
 
                 // CONTROLLO: C'è una mossa successiva nella lista?
                 if (currentMoveIndex < currentLevel.getSolutionMoves().size()) {
-                    // Se sì, significa che la prossima mossa (indice 1) è del COMPUTER
+                    // Se sì, significa che la prossima mossa è del COMPUTER
                     statusText.setText("Ottimo! Il computer sta rispondendo...");
                     playComputerMove();
                 } else {
-                    // Se no, il quiz è finito con la tua mossa
+                    // --- VITTORIA E SALVATAGGIO PROGRESSO ---
                     statusText.setText("Livello Superato! Scacco Matto.");
                     statusText.setTextColor(Color.GREEN);
+                    isComputerThinking = true; // Blocca la scacchiera a fine partita
+
+                    salvaProgresso();
                 }
 
                 adapter.notifyDataSetChanged();
-            }
-             else {
-                // --- GESTIONE ERRORE ---
+            } else {
+                // --- GESTIONE ERRORE (Mossa Sbagliata) ---
                 errorCount++;
                 int tentativiRimasti = currentLevel.getMaxAttempts() - errorCount;
 
@@ -155,37 +176,56 @@ public class QuizActivity extends AppCompatActivity {
 
                 if (tentativiRimasti <= 0) {
                     statusText.setText("TENTATIVI ESAURITI! HAI PERSO.");
-                    statusText.setTextColor(android.graphics.Color.RED);
-                    isComputerThinking = true;
+                    statusText.setTextColor(Color.RED);
+                    isComputerThinking = true; // Blocca la scacchiera
                 } else {
                     statusText.setText("Mossa errata! Rimasti: " + tentativiRimasti);
-                    statusText.setTextColor(android.graphics.Color.RED);
+                    statusText.setTextColor(Color.RED);
                 }
             }
 
-            // Reset grafica
+            // Reset grafica dopo un tentativo di mossa (sia giusto che sbagliato)
             selectedPosition = null;
             adapter.setSelectedPosition(null);
             adapter.notifyDataSetChanged();
         }
     }
 
+    // --- NUOVO METODO: SALVATAGGIO DEI LIVELLI SBLOCCATI ---
+    private void salvaProgresso() {
+        int levelIndex = getIntent().getIntExtra("LEVEL_INDEX", 0);
+        int currentLevelId = levelIndex + 1;
+
+        // Usiamo un Executor per non bloccare l'interfaccia grafica
+        Executors.newSingleThreadExecutor().execute(() -> {
+            ChessDatabase db = ChessDatabase.getInstance(this);
+
+            // Salviamo il progresso del livello attuale come completato
+            LevelProgress progress = new LevelProgress(currentLevelId, true, errorCount);
+            db.levelDao().insertProgress(progress);
+
+            // Torniamo sul thread principale per chiudere l'activity e mostrare il brindisi
+            runOnUiThread(() -> {
+                Toast.makeText(this, "Progresso salvato nel Database!", Toast.LENGTH_SHORT).show();
+                new Handler().postDelayed(this::finish, 2000);
+            });
+        });
+    }
 
     // COMPUTER MOVE
     private void playComputerMove() {
         isComputerThinking = true; // Impedisce all'utente di toccare la scacchiera
 
-        new android.os.Handler().postDelayed(() -> {
-            // Prende la mossa all'indice 1 (Re d2 -> e1)
+        new Handler().postDelayed(() -> {
             MoveRequest computerMove = currentLevel.getSolutionMoves().get(currentMoveIndex);
 
-            // FORZA IL TURNO AL NERO (fondamentale!)
+            // FORZA IL TURNO AL NERO
             board.setWhiteTurn(false);
 
             if (board.movePiece(computerMove.startRow, computerMove.startCol,
                     computerMove.endRow, computerMove.endCol)) {
 
-                currentMoveIndex++; // L'indice passa da 1 a 2 (tua mossa finale)
+                currentMoveIndex++;
 
                 // RESTITUISCE IL TURNO AL BIANCO
                 board.setWhiteTurn(true);
@@ -194,11 +234,7 @@ public class QuizActivity extends AppCompatActivity {
                 adapter.notifyDataSetChanged();
             }
 
-            isComputerThinking = false; // L'utente può tornare a giocare
-        }, 1000); // 1 secondo di pausa per rendere il gioco naturale
+            isComputerThinking = false;
+        }, 1000);
     }
-
-    // TASTO DI SUGGERIMENTO
-
-
 }

@@ -79,6 +79,10 @@ public class QuizRepository {
 // Crea il livello con questa lista
         QuizLevel livello1 = new QuizLevel(1, "Matto in 2", setupLevel, true, soluzione1, 3);
         levels.add(livello1);
+        levels.add(livello1);
+        levels.add(livello1);
+        levels.add(livello1);
+        levels.add(livello1);
 
 
         // === CREAZIONE LIVELLO 2 (Soluzione a più mosse) ===

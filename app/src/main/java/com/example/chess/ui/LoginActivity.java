@@ -22,6 +22,7 @@ import androidx.credentials.GetCredentialResponse;
 import androidx.credentials.exceptions.GetCredentialException;
 
 import com.example.chess.R;
+import com.example.chess.ui.home.HomeActivity;
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption;
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential;
 import com.google.android.libraries.identity.googleid.GoogleIdTokenParsingException;
@@ -69,7 +70,7 @@ public class LoginActivity extends AppCompatActivity {
                     .addOnCompleteListener(this, task -> {
                         if (task.isSuccessful()) {
                             Toast.makeText(LoginActivity.this, "Accesso effettuato!", Toast.LENGTH_SHORT).show();
-                            vaiAiLivelli();
+                            vaiHome();
                         } else {
                             Toast.makeText(LoginActivity.this, "Errore: " + task.getException().getMessage(), Toast.LENGTH_LONG).show();
                         }
@@ -143,18 +144,23 @@ public class LoginActivity extends AppCompatActivity {
                 .addOnCompleteListener(this, task -> {
                     if (task.isSuccessful()) {
                         Toast.makeText(LoginActivity.this, "Accesso con Google completato", Toast.LENGTH_SHORT).show();
-                        vaiAiLivelli();
+                        vaiHome();
                     } else {
                         Toast.makeText(LoginActivity.this, "Errore Firebase Google: " + task.getException().getMessage(), Toast.LENGTH_LONG).show();
                     }
                 });
     }
 
-    private void vaiAiLivelli() {
-        Intent intent = new Intent(LoginActivity.this, LevelSelectionActivity.class);
-        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+    private void vaiHome() {
+        // Quando il login ha successo (l'utente non è null)
+        Intent intent = new Intent(LoginActivity.this, HomeActivity.class);
+
+// Opzionale ma consigliato: Pulisce la cronologia così l'utente
+// non può tornare alla pagina di login premendo "Indietro"
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+
         startActivity(intent);
-        finish();
+        finish(); // Distrugge definitivamente la LoginActivity
     }
 
 

@@ -9,6 +9,7 @@ import android.widget.GridView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull; // Import per il salvataggio
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.chess.R;
@@ -44,6 +45,7 @@ public class QuizActivity extends AppCompatActivity {
         levelTitleText = findViewById(R.id.levelTitleText);
         statusText = findViewById(R.id.statusText);
         GridView gridView = findViewById(R.id.chessGrid);
+        Button hintButton = findViewById(R.id.hintButton);
 
         com.example.chess.repository.QuizRepository quizRepository = new com.example.chess.repository.QuizRepository();
 
@@ -54,7 +56,25 @@ public class QuizActivity extends AppCompatActivity {
         // Inizializza la scacchiera con il setup del quiz
         board = new Board(currentLevel.getInitialBoardSetup(), currentLevel.isWhiteTurnToStart());
 
-        // Aggiorna la UI con il titolo e lo stato iniziale
+        // --- PROTEZIONE DA ROTAZIONE SCHERMO ---
+        if (savedInstanceState != null) {
+            // Recupera i dati salvati prima della rotazione
+            currentMoveIndex = savedInstanceState.getInt("CURRENT_MOVE_INDEX", 0);
+            errorCount = savedInstanceState.getInt("ERROR_COUNT", 0);
+
+            // "Manda avanti veloce" la scacchiera eseguendo automaticamente le mosse già fatte
+            for (int i = 0; i < currentMoveIndex; i++) {
+                MoveRequest move = currentLevel.getSolutionMoves().get(i);
+                // Forza il turno corretto in base a chi doveva muovere
+                board.setWhiteTurn(currentLevel.isWhiteTurnToStart() ? (i % 2 == 0) : (i % 2 != 0));
+                board.movePiece(move.startRow, move.startCol, move.endRow, move.endCol);
+            }
+
+            // Ripristina il turno corretto per il giocatore attuale
+            board.setWhiteTurn(currentLevel.isWhiteTurnToStart() ? (currentMoveIndex % 2 == 0) : (currentMoveIndex % 2 != 0));
+        }
+
+        // Aggiorna la UI con il titolo e lo stato
         levelTitleText.setText(currentLevel.getTitle());
         statusText.setText("Tocca a te! Trova la mossa vincente.");
         statusText.setTextColor(Color.WHITE);
@@ -62,8 +82,6 @@ public class QuizActivity extends AppCompatActivity {
         // Configura l'adapter per la GridView
         adapter = new ChessAdapter(this, board);
         gridView.setAdapter(adapter);
-
-        Button hintButton = findViewById(R.id.hintButton);
 
         // Gestisce il tocco sulla scacchiera
         gridView.setOnItemClickListener((parent, view, position, id) -> {
@@ -85,26 +103,24 @@ public class QuizActivity extends AppCompatActivity {
                 // Applica i suggerimenti all'adapter
                 adapter.setHints(hints);
 
-                // AGGIORNAMENTO TESTO
                 statusText.setText("Suggerimento attivato: osserva le celle gialle!");
                 statusText.setTextColor(Color.CYAN);
-
-                // Opzionale: Cambia il testo del bottone stesso
                 hintButton.setText("Suggerimento mostrato");
-                hintButton.setEnabled(false); // Disabilita per evitare click ripetuti
+                hintButton.setEnabled(false);
             }
         });
 
-        // Trova il pulsante indietro
         android.widget.ImageButton backButton = findViewById(R.id.backButton);
+        backButton.setOnClickListener(v -> finish());
+    }
 
-// Azione: quando viene cliccato, chiudi questa schermata
-        backButton.setOnClickListener(v -> {
-            finish(); // Questo comando distrugge la QuizActivity e ti fa scivolare indietro alla schermata precedente!
-        });
-
-
-
+    // --- NUOVO METODO: SALVA I DATI PRIMA DELLA ROTAZIONE ---
+    @Override
+    protected void onSaveInstanceState(@NonNull Bundle outState) {
+        super.onSaveInstanceState(outState);
+        // Mettiamo in cassaforte le nostre variabili chiave
+        outState.putInt("CURRENT_MOVE_INDEX", currentMoveIndex);
+        outState.putInt("ERROR_COUNT", errorCount);
     }
 
     private void handleQuizTouch(int position) {
@@ -120,7 +136,6 @@ public class QuizActivity extends AppCompatActivity {
         int col = position % 8;
 
         if (selectedPosition == null) {
-            // --- FASE 1: SELEZIONE ---
             Piece p = board.getPiece(row, col);
             if (p != null && p.isWhite() == board.isWhiteTurn()) {
                 selectedPosition = position;
@@ -130,46 +145,36 @@ public class QuizActivity extends AppCompatActivity {
                 Toast.makeText(this, "Seleziona un tuo pezzo!", Toast.LENGTH_SHORT).show();
             }
         } else {
-            // --- FASE 2: MOVIMENTO ---
             int startRow = selectedPosition / 8;
             int startCol = selectedPosition % 8;
 
             MoveRequest expectedMove = currentLevel.getSolutionMoves().get(currentMoveIndex);
 
-            // CONTROLLO: È la mossa corretta? (Confronta con expectedMove)
             if (startRow == expectedMove.startRow && startCol == expectedMove.startCol &&
                     row == expectedMove.endRow && col == expectedMove.endCol) {
 
-                // Mossa corretta! Esegui il movimento sulla scacchiera
                 board.movePiece(startRow, startCol, row, col);
-                currentMoveIndex++; // L'indice avanza
+                currentMoveIndex++;
 
-                // Pulisci subito la selezione grafica dell'utente
                 selectedPosition = null;
                 adapter.setSelectedPosition(null);
-                adapter.setHints(new ArrayList<>()); // Rimuovi eventuali aiuti gialli
+                adapter.setHints(new ArrayList<>());
 
-                // CONTROLLO: C'è una mossa successiva nella lista?
                 if (currentMoveIndex < currentLevel.getSolutionMoves().size()) {
-                    // Se sì, significa che la prossima mossa è del COMPUTER
                     statusText.setText("Ottimo! Il computer sta rispondendo...");
                     playComputerMove();
                 } else {
-                    // --- VITTORIA E SALVATAGGIO PROGRESSO ---
                     statusText.setText("Livello Superato! Scacco Matto.");
                     statusText.setTextColor(Color.GREEN);
-                    isComputerThinking = true; // Blocca la scacchiera a fine partita
-
+                    isComputerThinking = true;
                     salvaProgresso();
                 }
 
                 adapter.notifyDataSetChanged();
             } else {
-                // --- GESTIONE ERRORE (Mossa Sbagliata) ---
                 errorCount++;
                 int tentativiRimasti = currentLevel.getMaxAttempts() - errorCount;
 
-                // Rimuoviamo gli aiuti anche se sbaglia, così deve richiederli
                 adapter.setHints(new ArrayList<>());
                 hintButton.setText("Aiuto");
                 hintButton.setEnabled(true);
@@ -177,34 +182,28 @@ public class QuizActivity extends AppCompatActivity {
                 if (tentativiRimasti <= 0) {
                     statusText.setText("TENTATIVI ESAURITI! HAI PERSO.");
                     statusText.setTextColor(Color.RED);
-                    isComputerThinking = true; // Blocca la scacchiera
+                    isComputerThinking = true;
                 } else {
                     statusText.setText("Mossa errata! Rimasti: " + tentativiRimasti);
                     statusText.setTextColor(Color.RED);
                 }
             }
 
-            // Reset grafica dopo un tentativo di mossa (sia giusto che sbagliato)
             selectedPosition = null;
             adapter.setSelectedPosition(null);
             adapter.notifyDataSetChanged();
         }
     }
 
-    // --- NUOVO METODO: SALVATAGGIO DEI LIVELLI SBLOCCATI ---
     private void salvaProgresso() {
         int levelIndex = getIntent().getIntExtra("LEVEL_INDEX", 0);
         int currentLevelId = levelIndex + 1;
 
-        // Usiamo un Executor per non bloccare l'interfaccia grafica
         Executors.newSingleThreadExecutor().execute(() -> {
             ChessDatabase db = ChessDatabase.getInstance(this);
-
-            // Salviamo il progresso del livello attuale come completato
             LevelProgress progress = new LevelProgress(currentLevelId, true, errorCount);
             db.levelDao().insertProgress(progress);
 
-            // Torniamo sul thread principale per chiudere l'activity e mostrare il brindisi
             runOnUiThread(() -> {
                 Toast.makeText(this, "Progresso salvato nel Database!", Toast.LENGTH_SHORT).show();
                 new Handler().postDelayed(this::finish, 2000);
@@ -212,22 +211,18 @@ public class QuizActivity extends AppCompatActivity {
         });
     }
 
-    // COMPUTER MOVE
     private void playComputerMove() {
-        isComputerThinking = true; // Impedisce all'utente di toccare la scacchiera
+        isComputerThinking = true;
 
         new Handler().postDelayed(() -> {
             MoveRequest computerMove = currentLevel.getSolutionMoves().get(currentMoveIndex);
 
-            // FORZA IL TURNO AL NERO
             board.setWhiteTurn(false);
 
             if (board.movePiece(computerMove.startRow, computerMove.startCol,
                     computerMove.endRow, computerMove.endCol)) {
 
                 currentMoveIndex++;
-
-                // RESTITUISCE IL TURNO AL BIANCO
                 board.setWhiteTurn(true);
 
                 statusText.setText("Il computer si è mosso. Ora tocca a te per il matto!");

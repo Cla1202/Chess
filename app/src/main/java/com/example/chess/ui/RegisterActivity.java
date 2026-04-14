@@ -1,12 +1,15 @@
 package com.example.chess.ui;
 
+import android.content.Intent; // Aggiungi questo import
 import android.os.Bundle;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
+
 import com.example.chess.R;
+import com.example.chess.ui.home.HomeActivity; // Aggiungi questo import
 
 // Importiamo Firebase
 import com.google.firebase.auth.FirebaseAuth;
@@ -62,14 +65,20 @@ public class RegisterActivity extends AppCompatActivity {
 
                             // Aggiorniamo il nome del profilo
                             if (user != null) {
-                                com.google.firebase.auth.UserProfileChangeRequest profileUpdates =
-                                        new com.google.firebase.auth.UserProfileChangeRequest.Builder()
+                                UserProfileChangeRequest profileUpdates =
+                                        new UserProfileChangeRequest.Builder()
                                                 .setDisplayName(name)
                                                 .build();
 
                                 user.updateProfile(profileUpdates).addOnCompleteListener(updateTask -> {
                                     Toast.makeText(RegisterActivity.this, "Account creato con successo!", Toast.LENGTH_LONG).show();
-                                    finish(); // Torna al login
+
+                                    // --- MODIFICA QUI ---
+                                    // Invece di finish(), andiamo alla HomeActivity e puliamo lo stack
+                                    Intent intent = new Intent(RegisterActivity.this, LoginActivity.class);
+                                    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                                    startActivity(intent);
+                                    // --------------------
                                 });
                             }
 

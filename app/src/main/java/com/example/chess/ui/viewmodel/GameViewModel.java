@@ -1,35 +1,30 @@
 package com.example.chess.ui.viewmodel;
 
 import androidx.lifecycle.ViewModel;
-import java.util.ArrayList;
-import java.util.List;
+import com.example.chess.model.Board;
+import com.example.chess.repository.ChessRepository;
 
 public class GameViewModel extends ViewModel {
 
-    // Esempio: salviamo lo stato della scacchiera (es. un array di 64 posizioni)
-    // E la lista delle mosse fatte
-    private int[] boardState;
-    private List<String> movesMade = new ArrayList<>();
-    private boolean isWhiteTurn = true;
+    // Il ViewModel ora custodisce l'OGGETTO vero e proprio della scacchiera
+    private Board board;
+    private ChessRepository repository;
 
-    // Quando il ViewModel viene creato per la prima volta, inizializziamo il gioco
     public GameViewModel() {
-        // Qui metti la logica per preparare la scacchiera iniziale (i 32 pezzi al loro posto)
-        boardState = new int[64];
-        // initBoard(boardState);
+        repository = new ChessRepository();
     }
 
-    // Metodi per leggere i dati
-    public int[] getBoardState() { return boardState; }
-    public List<String> getMovesMade() { return movesMade; }
-    public boolean isWhiteTurn() { return isWhiteTurn; }
+    // Questo è il cuore della magia:
+    // Quando giri lo schermo, l'Activity chiede la scacchiera.
+    // Il ViewModel gliela ridà intatta. Se è la prima volta che apri l'app, ne crea una nuova.
+    public Board getBoard() {
+        if (board == null) {
+            board = repository.getNewGame();
+        }
+        return board;
+    }
 
-    // Metodo per fare una mossa e salvarla nel ViewModel
-    public void makeMove(int fromIndex, int toIndex, String moveNotation) {
-        // 1. Aggiorna l'array boardState spostando il pezzo
-        // 2. Aggiungi la mossa alla cronologia
-        movesMade.add(moveNotation);
-        // 3. Cambia turno
-        isWhiteTurn = !isWhiteTurn;
+    public ChessRepository getRepository() {
+        return repository;
     }
 }

@@ -13,19 +13,28 @@
         android:theme="@style/Theme.Chess">
         <activity
             android:name=".ui.home.HomeActivity"
-            android:exported="false" />
+            android:exported="false"
+            android:screenOrientation="fullSensor"
+            />
         <activity
             android:name=".ui.LevelSelectionActivity"
-            android:exported="false" />
+            android:exported="false"
+            android:screenOrientation="fullSensor"
+            />
         <activity
             android:name=".ui.RegisterActivity"
-            android:exported="false" />
+            android:exported="false"
+            android:screenOrientation="fullSensor"
+            />
         <activity
             android:name=".ui.QuizActivity"
-            android:exported="false" />
+            android:exported="false"
+            android:screenOrientation="fullSensor"
+            />
         <activity
             android:name=".ui.LoginActivity"
-            android:exported="true">
+            android:exported="true"
+            android:screenOrientation="fullSensor">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -34,7 +43,9 @@
         </activity>
         <activity
             android:name=".ui.MainActivity"
-            android:exported="false" />
+            android:exported="false"
+            android:screenOrientation="fullSensor">
+        </activity>
     </application>
 
 </manifest>

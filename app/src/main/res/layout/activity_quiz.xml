@@ -28,17 +28,22 @@
         android:textSize="18sp"
         android:layout_marginBottom="24dp" />
 
-    <GridView
-        android:id="@+id/chessGrid"
+    <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="1"
-        android:numColumns="8"
-        android:gravity="center"
-        android:stretchMode="columnWidth"
-        android:background="#444444"
-        android:layout_margin="4dp" />
+        android:layout_weight="1">
 
+        <com.example.chess.util.SquareGridView
+            android:id="@+id/chessGrid"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_gravity="center"
+            android:numColumns="8"
+            android:stretchMode="columnWidth"
+            android:background="#444444"
+            android:layout_margin="4dp" />
+
+    </FrameLayout>
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

@@ -13,7 +13,9 @@ public abstract class Piece {
     }
 
     // Metodo astratto: ogni pezzo dirà se può muoversi in una posizione
-    public abstract boolean isValidMove(int targetX, int targetY, Piece[][] board);
+    // Cambia da (int endX, int endY, Piece[][] grid)
+// a questo:
+    public abstract boolean isValidMove(int endX, int endY, Board board);
 
     // Getter e Setter
     public int getX() { return x; }

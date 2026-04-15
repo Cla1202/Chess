@@ -7,6 +7,7 @@ import android.view.ViewGroup;
 import android.widget.AbsListView; // <-- Questo import è nuovo e fondamentale!
 import android.widget.BaseAdapter;
 import android.widget.ImageView;
+
 import com.example.chess.model.Board;
 import com.example.chess.model.Piece;
 

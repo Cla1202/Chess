@@ -1,23 +1,42 @@
 package com.example.chess.model;
 
- public class Rook extends Piece {
+public class Rook extends Piece {
+    private boolean hasMoved = false;
+
     public Rook(int x, int y, boolean isWhite) {
         super(x, y, isWhite);
     }
 
-     @Override
-     public boolean isValidMove(int targetX, int targetY, Piece[][] board) {
-         if (x != targetX && y != targetY) return false; // Non è una linea retta
-         if (!isPathClear(x, y, targetX, targetY, board)) return false;
+    public boolean hasMoved() { return hasMoved; }
+    public void setHasMoved(boolean hasMoved) { this.hasMoved = hasMoved; }
 
-         Piece target = board[targetX][targetY];
-         return target == null || target.isWhite() != this.isWhite; // Vuota o nemico
-     }
-    private boolean isPathClear(int targetX, int targetY, Piece[][] board) {
-        // Logica per ciclare tra (x,y) e (targetX, targetY)
-        // e restituire false se incontra un pezzo
-        return true; // Semplificato per ora
+    @Override
+    public boolean isValidMove(int targetX, int targetY, Board board) {
+        int curX = getX();
+        int curY = getY();
+
+        // 1. SALVAVITA: Un pezzo non può muoversi sulla casella in cui si trova già
+        if (curX == targetX && curY == targetY) return false;
+
+        // 2. Deve muoversi dritto (o cambia solo X o cambia solo Y)
+        if (curX != targetX && curY != targetY) return false;
+
+        // 3. Calcolo direzione sicuro
+        int dirX = Integer.compare(targetX, curX);
+        int dirY = Integer.compare(targetY, curY);
+
+        int x = curX + dirX;
+        int y = curY + dirY;
+
+        // Controllo ostacoli in linea retta
+        while (x != targetX || y != targetY) {
+            if (board.getPiece(x, y) != null) return false;
+            x += dirX;
+            y += dirY;
+        }
+
+        // 4. Controllo finale
+        Piece target = board.getPiece(targetX, targetY);
+        return target == null || target.isWhite() != isWhite();
     }
-
-
 }

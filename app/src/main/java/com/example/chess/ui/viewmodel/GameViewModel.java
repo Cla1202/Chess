@@ -1,6 +1,7 @@
 package com.example.chess.ui.viewmodel;
 
 import androidx.lifecycle.ViewModel;
+
 import com.example.chess.model.Board;
 import com.example.chess.repository.ChessRepository;
 

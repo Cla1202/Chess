@@ -2,6 +2,7 @@ package com.example.chess.ui;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.widget.Button; // <-- IMPORTANTE: Aggiunto l'import del Button
 import android.widget.GridView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -20,7 +21,6 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 
 public class MainActivity extends AppCompatActivity {
-    // 1. Dichiariamo il nostro ViewModel
     private GameViewModel viewModel;
     private ChessAdapter adapter;
     private Integer selectedPosition = null;
@@ -34,6 +34,17 @@ public class MainActivity extends AppCompatActivity {
         statusText = findViewById(R.id.statusText);
         GridView gridView = findViewById(R.id.chessGrid);
 
+        // --- NUOVO: Colleghiamo il pulsante di uscita ---
+        Button btnExit = findViewById(R.id.btnExit);
+        // Aggiungiamo un controllo per sicurezza, nel caso l'ID nell'XML non sia ancora btnExit
+        if (btnExit != null) {
+            btnExit.setOnClickListener(v -> {
+                // Chiude questa activity e torna a quella precedente (il menu)
+                finish();
+            });
+        }
+        // ------------------------------------------------
+
         // CONTROLLO SICUREZZA FIREBASE
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
         if (user == null) {
@@ -43,18 +54,14 @@ public class MainActivity extends AppCompatActivity {
             return;
         }
 
-        // --- IL CAMBIAMENTO PRINCIPALE ---
-        // Colleghiamo l'Activity al suo ViewModel (se stiamo ruotando, ci ricollega a quello esistente)
         viewModel = new ViewModelProvider(this).get(GameViewModel.class);
-
-        // Chiediamo la scacchiera al ViewModel invece di crearne una nuova!
         Board board = viewModel.getBoard();
-        // ---------------------------------
 
         adapter = new ChessAdapter(this, board);
         gridView.setAdapter(adapter);
 
-        aggiornaTestoTurno();
+        // Inizializza lo stato del gioco corretto (Scacco, Turno, ecc.) all'avvio
+        aggiornaStatoGioco();
 
         // GESTIONE DEI TOCCHI
         gridView.setOnItemClickListener((parent, view, position, id) -> {
@@ -63,7 +70,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void handleMove(int position) {
-        // Recuperiamo sempre la scacchiera dal ViewModel per sicurezza
         Board board = viewModel.getBoard();
 
         int row = MoveCalculator.toRow(position);
@@ -84,9 +90,10 @@ public class MainActivity extends AppCompatActivity {
             int startCol = MoveCalculator.toCol(selectedPosition);
 
             if (board.movePiece(startRow, startCol, row, col)) {
-                aggiornaTestoTurno();
+                // La mossa è avvenuta con successo, verifichiamo se c'è Scacco o Scacco Matto
+                aggiornaStatoGioco();
             } else {
-                Toast.makeText(this, "Mossa non valida", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, "Mossa non valida o Re in pericolo!", Toast.LENGTH_SHORT).show();
             }
 
             selectedPosition = null;
@@ -95,18 +102,40 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void aggiornaTestoTurno() {
-        if (viewModel.getBoard().isWhiteTurn()) {
-            statusText.setText("Turno: Bianco");
+    // --- Gestisce tutta la logica dei testi e della fine partita ---
+    private void aggiornaStatoGioco() {
+        Board board = viewModel.getBoard();
+        boolean turnoBianco = board.isWhiteTurn();
+
+        // Chiediamo alla Board la situazione attuale
+        boolean inScacco = board.isKingInCheck(turnoBianco);
+        boolean haMosseLegali = board.hasAnyLegalMoves(turnoBianco);
+
+        if (!haMosseLegali) {
+            if (inScacco) {
+                // SCACCO MATTO
+                String vincitore = turnoBianco ? "NERO" : "BIANCO";
+                statusText.setText("🏆 SCACCO MATTO! Vince il " + vincitore);
+                Toast.makeText(this, "Partita finita: Scacco Matto!", Toast.LENGTH_LONG).show();
+            } else {
+                // STALLO
+                statusText.setText("🤝 STALLO (Pareggio)");
+                Toast.makeText(this, "La partita finisce in pareggio per stallo.", Toast.LENGTH_LONG).show();
+            }
         } else {
-            statusText.setText("Turno: Nero");
+            // Partita in corso
+            String turnoDi = turnoBianco ? "Bianco" : "Nero";
+            if (inScacco) {
+                statusText.setText("⚠️ Turno: " + turnoDi + " (Sotto SCACCO!)");
+            } else {
+                statusText.setText("Turno: " + turnoDi);
+            }
         }
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-        // Salviamo la partita quando l'app va in background usando il ViewModel
         if (viewModel != null) {
             viewModel.getRepository().saveCurrentGame(viewModel.getBoard());
         }

@@ -6,15 +6,28 @@ public class Queen extends Piece {
     }
 
     @Override
-    public boolean isValidMove(int targetX, int targetY, Piece[][] board) {
-        boolean straight = (x == targetX || y == targetY);
-        boolean diagonal = Math.abs(targetX - x) == Math.abs(targetY - y);
+    public boolean isValidMove(int targetX, int targetY, Board board) {
+        int curX = getX();
+        int curY = getY();
 
-        if (!(straight || diagonal)) return false;
-        if (!isPathClear(x, y, targetX, targetY, board)) return false;
+        // Deve essere o linea retta o diagonale
+        if (curX != targetX && curY != targetY && Math.abs(targetX - curX) != Math.abs(targetY - curY)) {
+            return false;
+        }
 
-        Piece target = board[targetX][targetY];
-        return target == null || target.isWhite() != this.isWhite;
+        // Controllo percorso libero
+        int dirX = Integer.compare(targetX, curX);
+        int dirY = Integer.compare(targetY, curY);
+        int x = curX + dirX;
+        int y = curY + dirY;
+
+        while (x != targetX || y != targetY) {
+            if (board.getPiece(x, y) != null) return false;
+            x += dirX;
+            y += dirY;
+        }
+
+        Piece target = board.getPiece(targetX, targetY);
+        return target == null || target.isWhite() != isWhite();
     }
-
 }

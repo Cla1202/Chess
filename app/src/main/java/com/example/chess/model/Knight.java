@@ -6,12 +6,17 @@ public class Knight extends Piece {
     }
 
     @Override
-    public boolean isValidMove(int targetX, int targetY, Piece[][] board) {
-        int dx = Math.abs(targetX - x);
-        int dy = Math.abs(targetY - y);
-        if (!((dx == 2 && dy == 1) || (dx == 1 && dy == 2))) return false;
+    public boolean isValidMove(int targetX, int targetY, Board boardObject) {
+        Piece[][] grid = boardObject.getGrid();
+        int diffX = Math.abs(targetX - getX());
+        int diffY = Math.abs(targetY - getY());
 
-        Piece target = board[targetX][targetY];
-        return target == null || target.isWhite() != this.isWhite;
+        // Il cavallo si muove a "L": (2,1) o (1,2)
+        if ((diffX == 2 && diffY == 1) || (diffX == 1 && diffY == 2)) {
+            Piece target = grid[targetX][targetY];
+            // Può muoversi se la casella è vuota o ha un nemico
+            return target == null || target.isWhite() != isWhite();
+        }
+        return false;
     }
 }

@@ -6,23 +6,35 @@ public class Pawn extends Piece {
     }
 
     @Override
-    public boolean isValidMove(int targetX, int targetY, Piece[][] board) {
-        int direction = isWhite ? -1 : 1; // Bianco sale (-1), Nero scende (+1)
-        int startRow = isWhite ? 6 : 1;
+    public boolean isValidMove(int targetX, int targetY, Board boardObject) {
+        Piece[][] board = boardObject.getGrid();
+        int direction = isWhite() ? -1 : 1;
+        int currentX = getX();
+        int currentY = getY();
 
-        // Movimento dritto di 1
-        if (targetY == y && targetX == x + direction && board[targetX][targetY] == null) {
-            return true;
+        // 1. Movimento dritto (1 o 2 caselle) - Già fatto
+        if (targetY == currentY) {
+            if (targetX == currentX + direction) return board[targetX][targetY] == null;
+            if (currentX == (isWhite() ? 6 : 1) && targetX == currentX + (2 * direction)) {
+                return board[targetX][targetY] == null && board[currentX + direction][currentY] == null;
+            }
         }
-        // Movimento iniziale di 2
-        if (targetY == y && x == startRow && targetX == x + (2 * direction)
-                && board[targetX][targetY] == null && board[x + direction][y] == null) {
-            return true;
+
+        // 2. Cattura Diagonale Standard
+        if (Math.abs(targetY - currentY) == 1 && targetX == currentX + direction) {
+            if (board[targetX][targetY] != null) {
+                return board[targetX][targetY].isWhite() != this.isWhite();
+            }
+
+            // --- LOGICA EN PASSANT ---
+            // Se la casella è vuota, controlla se è un En Passant
+            if (targetY == boardObject.getEnPassantColumn()) {
+                // La riga deve essere quella corretta (riga 2 per il bianco, 5 per il nero)
+                int enPassantRow = isWhite() ? 2 : 5;
+                return targetX == enPassantRow;
+            }
         }
-        // Mangiare in diagonale
-        if (Math.abs(targetY - y) == 1 && targetX == x + direction && board[targetX][targetY] != null) {
-            return board[targetX][targetY].isWhite() != this.isWhite;
-        }
+
         return false;
     }
 }

@@ -1,21 +1,23 @@
 package com.example.chess.database;
 
+import androidx.annotation.NonNull;
 import androidx.room.Entity;
-import androidx.room.PrimaryKey;
 
-// Diciamo ad Android che questa classe è una tabella del database
-@Entity(tableName = "level_progress")
+// Definiamo una chiave primaria composta: la combinazione di levelId e userId
+@Entity(tableName = "level_progress", primaryKeys = {"levelId", "userId"})
 public class LevelProgress {
 
-    @PrimaryKey // Il levelId è la chiave principale, non ci possono essere due livelli uguali
     public int levelId;
 
-    public boolean isCompleted;
-    public int mistakesMade; // Possiamo salvare anche gli errori per dare un punteggio!
+    @NonNull
+    public String userId; // Qui salverai l'ID univoco o l'email dell'account (es. Firebase UID)
 
-    // Costruttore
-    public LevelProgress(int levelId, boolean isCompleted, int mistakesMade) {
+    public boolean isCompleted;
+    public int mistakesMade;
+
+    public LevelProgress(int levelId, @NonNull String userId, boolean isCompleted, int mistakesMade) {
         this.levelId = levelId;
+        this.userId = userId;
         this.isCompleted = isCompleted;
         this.mistakesMade = mistakesMade;
     }

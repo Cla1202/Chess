@@ -20,6 +20,7 @@ import java.util.List;
 public class LevelSelectionActivity extends AppCompatActivity {
 
     private LevelViewModel viewModel;
+    private LevelAdapter adapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -29,27 +30,33 @@ public class LevelSelectionActivity extends AppCompatActivity {
         RecyclerView recyclerView = findViewById(R.id.levelsRecyclerView);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
 
-        // 1. I dati statici dei livelli
         QuizRepository repository = new QuizRepository();
         List<QuizLevel> levels = repository.getAllLevels();
 
-        // 2. Prepariamo la Factory e il ViewModel
         ChessDatabase db = ChessDatabase.getInstance(this);
         LevelViewModelFactory factory = new LevelViewModelFactory(db);
         viewModel = new ViewModelProvider(this, factory).get(LevelViewModel.class);
 
-        // 3. Osserviamo i cambiamenti!
-        // Appena il ViewModel finisce di leggere dal DB, questo blocco scatta in automatico
-        viewModel.getMaxUnlockedLevel().observe(this, maxUnlocked -> {
+        adapter = new LevelAdapter(levels, 1, position -> {
+            Intent intent = new Intent(LevelSelectionActivity.this, QuizActivity.class);
+            intent.putExtra("LEVEL_INDEX", position);
+            startActivity(intent);
+        });
+        recyclerView.setAdapter(adapter);
 
-            // Creiamo l'Adapter solo quando abbiamo il dato aggiornato
-            LevelAdapter adapter = new LevelAdapter(levels, maxUnlocked, position -> {
-                Intent intent = new Intent(LevelSelectionActivity.this, QuizActivity.class);
-                intent.putExtra("LEVEL_INDEX", position);
-                startActivity(intent);
-            });
+        // OSSERVIAMO DIRETTAMENTE IL DATABASE
+        viewModel.getMaxCompletedLevel().observe(this, maxCompleted -> {
 
-            recyclerView.setAdapter(adapter);
+            // Se maxCompleted è null (database vuoto), partiamo da 0
+            int max = (maxCompleted != null) ? maxCompleted : 0;
+
+            // Il livello sbloccato è il massimo livello completato + 1
+            int unlocked = max + 1;
+
+            // Aggiorniamo la grafica
+            adapter.updateMaxUnlocked(unlocked);
         });
     }
+
+    // Abbiamo rimosso l'onResume() perché ora il database lavora in tempo reale!
 }

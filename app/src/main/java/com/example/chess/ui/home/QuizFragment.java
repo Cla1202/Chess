@@ -11,21 +11,20 @@ import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-
 import com.example.chess.R;
 import com.example.chess.adapter.LevelAdapter;
 import com.example.chess.database.ChessDatabase;
 import com.example.chess.model.QuizLevel;
 import com.example.chess.repository.QuizRepository;
-import com.example.chess.ui.QuizActivity; // Attenzione: questa rimane un'Activity a parte!
+import com.example.chess.ui.QuizActivity;
 import com.example.chess.ui.viewmodel.LevelViewModel;
 import com.example.chess.ui.viewmodel.LevelViewModelFactory;
-
 import java.util.List;
 
 public class QuizFragment extends Fragment {
 
     private LevelViewModel viewModel;
+    private LevelAdapter adapter;
 
     @Nullable
     @Override
@@ -33,8 +32,6 @@ public class QuizFragment extends Fragment {
         View view = inflater.inflate(R.layout.fragment_quiz, container, false);
 
         RecyclerView recyclerView = view.findViewById(R.id.levelsRecyclerView);
-
-        // REGOLA D'ORO: Usiamo requireContext() invece di "this"
         recyclerView.setLayoutManager(new LinearLayoutManager(requireContext()));
 
         QuizRepository repository = new QuizRepository();
@@ -42,21 +39,24 @@ public class QuizFragment extends Fragment {
 
         ChessDatabase db = ChessDatabase.getInstance(requireContext());
         LevelViewModelFactory factory = new LevelViewModelFactory(db);
-
-        // Usiamo "this" qui perché stiamo attaccando il ViewModel a questo specifico Fragment
         viewModel = new ViewModelProvider(this, factory).get(LevelViewModel.class);
 
-        // REGOLA D'ORO 2: Nei Fragment, per osservare i dati in modo sicuro usiamo getViewLifecycleOwner()
-        viewModel.getMaxUnlockedLevel().observe(getViewLifecycleOwner(), maxUnlocked -> {
+        // OSSERVIAMO IL DATABASE (Usiamo getViewLifecycleOwner)
+        viewModel.getMaxCompletedLevel().observe(getViewLifecycleOwner(), maxCompleted -> {
 
-            LevelAdapter adapter = new LevelAdapter(levels, maxUnlocked, position -> {
-                // REGOLA D'ORO 3: Per lanciare un'Activity (il Quiz vero e proprio), chiediamo l'Activity madre
-                Intent intent = new Intent(requireActivity(), QuizActivity.class);
-                intent.putExtra("LEVEL_INDEX", position);
-                startActivity(intent);
-            });
+            int max = (maxCompleted != null) ? maxCompleted : 0;
+            int unlocked = max + 1;
 
-            recyclerView.setAdapter(adapter);
+            if (adapter == null) {
+                adapter = new LevelAdapter(levels, unlocked, position -> {
+                    Intent intent = new Intent(requireActivity(), QuizActivity.class);
+                    intent.putExtra("LEVEL_INDEX", position);
+                    startActivity(intent);
+                });
+                recyclerView.setAdapter(adapter);
+            } else {
+                adapter.updateMaxUnlocked(unlocked);
+            }
         });
 
         return view;

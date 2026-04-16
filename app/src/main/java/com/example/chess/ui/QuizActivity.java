@@ -22,6 +22,8 @@ import com.example.chess.model.Board;
 import com.example.chess.model.MoveRequest;
 import com.example.chess.model.Piece;
 import com.example.chess.model.QuizLevel;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -116,6 +118,8 @@ public class QuizActivity extends AppCompatActivity {
 
     private void handleQuizTouch(int position) {
         Button hintButton = findViewById(R.id.hintButton);
+
+        // Se il computer sta pensando, ignoriamo i tocchi (sicurezza aggiuntiva)
         if (isComputerThinking) return;
 
         if (currentMoveIndex >= currentLevel.getSolutionMoves().size()) {
@@ -145,16 +149,15 @@ public class QuizActivity extends AppCompatActivity {
             if (startRow == expectedMove.startRow && startCol == expectedMove.startCol &&
                     row == expectedMove.endRow && col == expectedMove.endCol) {
 
-                // 1. Prendi il pezzo per l'animazione e muovilo sulla scacchiera logica
                 Piece movingPiece = board.getPiece(startRow, startCol);
                 board.movePiece(startRow, startCol, row, col);
 
                 int startPos = selectedPosition;
-                gridView.setEnabled(false); // Blocca tocchi doppi durante l'animazione
 
-                // 2. Fai partire l'animazione!
+                // --- 1. BLOCCA I TOCCHI SUBITO DOPO LA MOSSA ---
+                gridView.setEnabled(false);
+
                 animateMove(startPos, position, movingPiece, () -> {
-                    // --- QUESTO AVVIENE A FINE ANIMAZIONE ---
                     currentMoveIndex++;
                     selectedPosition = null;
                     adapter.setSelectedPosition(null);
@@ -162,20 +165,21 @@ public class QuizActivity extends AppCompatActivity {
 
                     if (currentMoveIndex < currentLevel.getSolutionMoves().size()) {
                         statusText.setText("Ottimo! Il computer sta rispondendo...");
+                        adapter.notifyDataSetChanged();
+
+                        // Chiama la mossa del computer, ma la griglia RESTA BLOCCATA
                         playComputerMove();
                     } else {
                         statusText.setText("Livello Superato! Scacco Matto.");
                         statusText.setTextColor(Color.GREEN);
                         isComputerThinking = true;
                         salvaProgresso();
+                        // Anche qui non sblocchiamo, il livello è finito!
                     }
-
-                    adapter.notifyDataSetChanged(); // Aggiorna grafica
-                    gridView.setEnabled(true); // Sblocca tocchi
                 });
 
             } else {
-                // SE LA MOSSA È SBAGLIATA: (Nessuna animazione, mostra errore)
+                // SE LA MOSSA È SBAGLIATA:
                 errorCount++;
                 int tentativiRimasti = currentLevel.getMaxAttempts() - errorCount;
 
@@ -187,6 +191,8 @@ public class QuizActivity extends AppCompatActivity {
                     statusText.setText("TENTATIVI ESAURITI! HAI PERSO.");
                     statusText.setTextColor(Color.RED);
                     isComputerThinking = true;
+                    // Blocca i tocchi se hai finito le vite
+                    gridView.setEnabled(false);
                 } else {
                     statusText.setText("Mossa errata! Rimasti: " + tentativiRimasti);
                     statusText.setTextColor(Color.RED);
@@ -203,13 +209,24 @@ public class QuizActivity extends AppCompatActivity {
         int levelIndex = getIntent().getIntExtra("LEVEL_INDEX", 0);
         int currentLevelId = levelIndex + 1;
 
+        // 1. Recuperiamo l'utente attuale da Firebase
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+
+        // Se per qualche motivo non c'è un utente loggato, usiamo un ID di default
+        // o blocchiamo il salvataggio per evitare crash
+        final String userId = (user != null) ? user.getUid() : "guest_user";
+
         Executors.newSingleThreadExecutor().execute(() -> {
             ChessDatabase db = ChessDatabase.getInstance(this);
-            LevelProgress progress = new LevelProgress(currentLevelId, true, errorCount);
+
+            // 2. Usiamo il nuovo costruttore di LevelProgress che include l'userId
+            // Assicurati che la tua classe LevelProgress abbia il campo userId come abbiamo discusso
+            LevelProgress progress = new LevelProgress(currentLevelId, userId, true, errorCount);
+
             db.levelDao().insertProgress(progress);
 
             runOnUiThread(() -> {
-                Toast.makeText(this, "Progresso salvato nel Database!", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, "Progresso salvato per: " + ((user != null) ? user.getEmail() : "Ospite"), Toast.LENGTH_SHORT).show();
                 new Handler().postDelayed(this::finish, 2000);
             });
         });
@@ -225,22 +242,27 @@ public class QuizActivity extends AppCompatActivity {
             int endPos = computerMove.endRow * 8 + computerMove.endCol;
             Piece movingPiece = board.getPiece(computerMove.startRow, computerMove.startCol);
 
-            board.setWhiteTurn(false);
+            // Se proviamo a muovere e la mossa è valida (il turno si inverte automaticamente!)
+            if (board.movePiece(computerMove.startRow, computerMove.startCol, computerMove.endRow, computerMove.endCol)) {
 
-            if (board.movePiece(computerMove.startRow, computerMove.startCol,
-                    computerMove.endRow, computerMove.endCol)) {
-
-                // ANIMAZIONE ANCHE PER IL COMPUTER!
+                // ANIMAZIONE PER IL COMPUTER
                 animateMove(startPos, endPos, movingPiece, () -> {
                     currentMoveIndex++;
-                    board.setWhiteTurn(true);
 
                     statusText.setText("Il computer si è mosso. Ora tocca a te per il matto!");
                     adapter.notifyDataSetChanged();
                     isComputerThinking = false;
+
+                    // SBLOCCA I TOCCHI ORA CHE IL COMPUTER HA FINITO
+                    gridView.setEnabled(true);
                 });
             } else {
+                // --- PROTEZIONE ANTI-BUG ---
+                // Se la mossa del computer fallisce (es. coordinate sbagliate nel QuizRepository)
                 isComputerThinking = false;
+                gridView.setEnabled(true); // Sblocchiamo per non far bloccare l'app
+
+                Toast.makeText(this, "ERRORE LIVELLO: Mossa computer non valida! Controlla le coordinate nel QuizRepository.", Toast.LENGTH_LONG).show();
             }
         }, 1000);
     }
@@ -263,17 +285,15 @@ public class QuizActivity extends AppCompatActivity {
         ghostPiece.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
         ghostPiece.setPadding(8, 8, 8, 8);
 
-        // --- IL FIX È QUI ---
-        // Sommiamo la posizione della casella a quella dell'intera GridView
         ghostPiece.setX(startView.getX() + gridView.getX());
         ghostPiece.setY(startView.getY() + gridView.getY());
 
         boardContainer.addView(ghostPiece);
-        ((ImageView) startView).setImageResource(0); // Nasconde il pezzo vero
+        ((ImageView) startView).setImageResource(0);
 
         ghostPiece.animate()
-                .x(endView.getX() + gridView.getX()) // Destinazione corretta X
-                .y(endView.getY() + gridView.getY()) // Destinazione corretta Y
+                .x(endView.getX() + gridView.getX())
+                .y(endView.getY() + gridView.getY())
                 .setDuration(300)
                 .withEndAction(() -> {
                     boardContainer.removeView(ghostPiece);

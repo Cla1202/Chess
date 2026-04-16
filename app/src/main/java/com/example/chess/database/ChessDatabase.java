@@ -5,13 +5,12 @@ import androidx.room.Database;
 import androidx.room.Room;
 import androidx.room.RoomDatabase;
 
-// Dichiariamo quali tabelle ci sono e la versione del database
-@Database(entities = {LevelProgress.class}, version = 1)
+// FIX: Versione aggiornata a 3 per supportare la nuova tabella con userId
+@Database(entities = {LevelProgress.class}, version = 3)
 public abstract class ChessDatabase extends RoomDatabase {
 
     public abstract LevelDao levelDao();
 
-    // Creiamo un'istanza "Singleton" (significa che ci sarà sempre e solo un database aperto per evitare crash)
     private static volatile ChessDatabase INSTANCE;
 
     public static ChessDatabase getInstance(Context context) {
@@ -20,6 +19,8 @@ public abstract class ChessDatabase extends RoomDatabase {
                 if (INSTANCE == null) {
                     INSTANCE = Room.databaseBuilder(context.getApplicationContext(),
                                     ChessDatabase.class, "chess_database")
+                            // Fondamentale: cancella i vecchi dati incompatibili
+                            // e ricrea le tabelle con la nuova struttura
                             .fallbackToDestructiveMigration()
                             .build();
                 }

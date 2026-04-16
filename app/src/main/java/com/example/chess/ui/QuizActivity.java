@@ -3,12 +3,15 @@ package com.example.chess.ui;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
+import android.view.View;
 import android.widget.Button;
+import android.widget.FrameLayout;
 import android.widget.GridView;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.annotation.NonNull; // Import per il salvataggio
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.chess.R;
@@ -30,11 +33,14 @@ public class QuizActivity extends AppCompatActivity {
     private QuizLevel currentLevel;
     private int currentMoveIndex = 0;
     private Integer selectedPosition = null;
+
+    // --- VARIABILI GLOBALI AGGIORNATE ---
     private TextView levelTitleText;
     private TextView statusText;
+    private GridView gridView; // Messa globale per fargliela vedere all'animazione
 
     private boolean isComputerThinking = false;
-    private int errorCount = 0; // Contatore errori
+    private int errorCount = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -43,46 +49,36 @@ public class QuizActivity extends AppCompatActivity {
 
         levelTitleText = findViewById(R.id.levelTitleText);
         statusText = findViewById(R.id.statusText);
-        GridView gridView = findViewById(R.id.chessGrid);
+        gridView = findViewById(R.id.chessGrid); // Inizializzata qui
         Button hintButton = findViewById(R.id.hintButton);
 
         com.example.chess.repository.QuizRepository quizRepository = new com.example.chess.repository.QuizRepository();
 
-        // Recupera l'indice del livello dall'Intent (di default 0 se non lo trova)
         int levelIndex = getIntent().getIntExtra("LEVEL_INDEX", 0);
         currentLevel = quizRepository.getAllLevels().get(levelIndex);
 
-        // Inizializza la scacchiera con il setup del quiz
         board = new Board(currentLevel.getInitialBoardSetup(), currentLevel.isWhiteTurnToStart());
 
-        // --- PROTEZIONE DA ROTAZIONE SCHERMO ---
         if (savedInstanceState != null) {
-            // Recupera i dati salvati prima della rotazione
             currentMoveIndex = savedInstanceState.getInt("CURRENT_MOVE_INDEX", 0);
             errorCount = savedInstanceState.getInt("ERROR_COUNT", 0);
 
-            // "Manda avanti veloce" la scacchiera eseguendo automaticamente le mosse già fatte
             for (int i = 0; i < currentMoveIndex; i++) {
                 MoveRequest move = currentLevel.getSolutionMoves().get(i);
-                // Forza il turno corretto in base a chi doveva muovere
                 board.setWhiteTurn(currentLevel.isWhiteTurnToStart() ? (i % 2 == 0) : (i % 2 != 0));
                 board.movePiece(move.startRow, move.startCol, move.endRow, move.endCol);
             }
 
-            // Ripristina il turno corretto per il giocatore attuale
             board.setWhiteTurn(currentLevel.isWhiteTurnToStart() ? (currentMoveIndex % 2 == 0) : (currentMoveIndex % 2 != 0));
         }
 
-        // Aggiorna la UI con il titolo e lo stato
         levelTitleText.setText(currentLevel.getTitle());
         statusText.setText("Tocca a te! Trova la mossa vincente.");
         statusText.setTextColor(Color.WHITE);
 
-        // Configura l'adapter per la GridView
         adapter = new ChessAdapter(this, board);
         gridView.setAdapter(adapter);
 
-        // Gestisce il tocco sulla scacchiera
         gridView.setOnItemClickListener((parent, view, position, id) -> {
             handleQuizTouch(position);
         });
@@ -91,7 +87,6 @@ public class QuizActivity extends AppCompatActivity {
             if (currentMoveIndex < currentLevel.getSolutionMoves().size()) {
                 MoveRequest correctMove = currentLevel.getSolutionMoves().get(currentMoveIndex);
 
-                // Calcolo posizioni
                 int startPos = correctMove.startRow * 8 + correctMove.startCol;
                 int endPos = correctMove.endRow * 8 + correctMove.endCol;
 
@@ -99,7 +94,6 @@ public class QuizActivity extends AppCompatActivity {
                 hints.add(startPos);
                 hints.add(endPos);
 
-                // Applica i suggerimenti all'adapter
                 adapter.setHints(hints);
 
                 statusText.setText("Suggerimento attivato: osserva le celle gialle!");
@@ -113,11 +107,9 @@ public class QuizActivity extends AppCompatActivity {
         backButton.setOnClickListener(v -> finish());
     }
 
-    // --- NUOVO METODO: SALVA I DATI PRIMA DELLA ROTAZIONE ---
     @Override
     protected void onSaveInstanceState(@NonNull Bundle outState) {
         super.onSaveInstanceState(outState);
-        // Mettiamo in cassaforte le nostre variabili chiave
         outState.putInt("CURRENT_MOVE_INDEX", currentMoveIndex);
         outState.putInt("ERROR_COUNT", errorCount);
     }
@@ -149,28 +141,41 @@ public class QuizActivity extends AppCompatActivity {
 
             MoveRequest expectedMove = currentLevel.getSolutionMoves().get(currentMoveIndex);
 
+            // SE LA MOSSA È QUELLA CORRETTA:
             if (startRow == expectedMove.startRow && startCol == expectedMove.startCol &&
                     row == expectedMove.endRow && col == expectedMove.endCol) {
 
+                // 1. Prendi il pezzo per l'animazione e muovilo sulla scacchiera logica
+                Piece movingPiece = board.getPiece(startRow, startCol);
                 board.movePiece(startRow, startCol, row, col);
-                currentMoveIndex++;
 
-                selectedPosition = null;
-                adapter.setSelectedPosition(null);
-                adapter.setHints(new ArrayList<>());
+                int startPos = selectedPosition;
+                gridView.setEnabled(false); // Blocca tocchi doppi durante l'animazione
 
-                if (currentMoveIndex < currentLevel.getSolutionMoves().size()) {
-                    statusText.setText("Ottimo! Il computer sta rispondendo...");
-                    playComputerMove();
-                } else {
-                    statusText.setText("Livello Superato! Scacco Matto.");
-                    statusText.setTextColor(Color.GREEN);
-                    isComputerThinking = true;
-                    salvaProgresso();
-                }
+                // 2. Fai partire l'animazione!
+                animateMove(startPos, position, movingPiece, () -> {
+                    // --- QUESTO AVVIENE A FINE ANIMAZIONE ---
+                    currentMoveIndex++;
+                    selectedPosition = null;
+                    adapter.setSelectedPosition(null);
+                    adapter.setHints(new ArrayList<>());
 
-                adapter.notifyDataSetChanged();
+                    if (currentMoveIndex < currentLevel.getSolutionMoves().size()) {
+                        statusText.setText("Ottimo! Il computer sta rispondendo...");
+                        playComputerMove();
+                    } else {
+                        statusText.setText("Livello Superato! Scacco Matto.");
+                        statusText.setTextColor(Color.GREEN);
+                        isComputerThinking = true;
+                        salvaProgresso();
+                    }
+
+                    adapter.notifyDataSetChanged(); // Aggiorna grafica
+                    gridView.setEnabled(true); // Sblocca tocchi
+                });
+
             } else {
+                // SE LA MOSSA È SBAGLIATA: (Nessuna animazione, mostra errore)
                 errorCount++;
                 int tentativiRimasti = currentLevel.getMaxAttempts() - errorCount;
 
@@ -186,11 +191,11 @@ public class QuizActivity extends AppCompatActivity {
                     statusText.setText("Mossa errata! Rimasti: " + tentativiRimasti);
                     statusText.setTextColor(Color.RED);
                 }
-            }
 
-            selectedPosition = null;
-            adapter.setSelectedPosition(null);
-            adapter.notifyDataSetChanged();
+                selectedPosition = null;
+                adapter.setSelectedPosition(null);
+                adapter.notifyDataSetChanged();
+            }
         }
     }
 
@@ -216,19 +221,68 @@ public class QuizActivity extends AppCompatActivity {
         new Handler().postDelayed(() -> {
             MoveRequest computerMove = currentLevel.getSolutionMoves().get(currentMoveIndex);
 
+            int startPos = computerMove.startRow * 8 + computerMove.startCol;
+            int endPos = computerMove.endRow * 8 + computerMove.endCol;
+            Piece movingPiece = board.getPiece(computerMove.startRow, computerMove.startCol);
+
             board.setWhiteTurn(false);
 
             if (board.movePiece(computerMove.startRow, computerMove.startCol,
                     computerMove.endRow, computerMove.endCol)) {
 
-                currentMoveIndex++;
-                board.setWhiteTurn(true);
+                // ANIMAZIONE ANCHE PER IL COMPUTER!
+                animateMove(startPos, endPos, movingPiece, () -> {
+                    currentMoveIndex++;
+                    board.setWhiteTurn(true);
 
-                statusText.setText("Il computer si è mosso. Ora tocca a te per il matto!");
-                adapter.notifyDataSetChanged();
+                    statusText.setText("Il computer si è mosso. Ora tocca a te per il matto!");
+                    adapter.notifyDataSetChanged();
+                    isComputerThinking = false;
+                });
+            } else {
+                isComputerThinking = false;
             }
-
-            isComputerThinking = false;
         }, 1000);
+    }
+
+    // --- MAGIA DELL'ANIMAZIONE (CON FIX DELLE COORDINATE) ---
+    private void animateMove(int startPosition, int endPosition, Piece piece, Runnable onComplete) {
+        FrameLayout boardContainer = findViewById(R.id.boardContainer);
+
+        View startView = gridView.getChildAt(startPosition - gridView.getFirstVisiblePosition());
+        View endView = gridView.getChildAt(endPosition - gridView.getFirstVisiblePosition());
+
+        if (startView == null || endView == null) {
+            onComplete.run();
+            return;
+        }
+
+        ImageView ghostPiece = new ImageView(this);
+        ghostPiece.setImageResource(getResIdForPiece(piece));
+        ghostPiece.setLayoutParams(new FrameLayout.LayoutParams(startView.getWidth(), startView.getHeight()));
+        ghostPiece.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
+        ghostPiece.setPadding(8, 8, 8, 8);
+
+        // --- IL FIX È QUI ---
+        // Sommiamo la posizione della casella a quella dell'intera GridView
+        ghostPiece.setX(startView.getX() + gridView.getX());
+        ghostPiece.setY(startView.getY() + gridView.getY());
+
+        boardContainer.addView(ghostPiece);
+        ((ImageView) startView).setImageResource(0); // Nasconde il pezzo vero
+
+        ghostPiece.animate()
+                .x(endView.getX() + gridView.getX()) // Destinazione corretta X
+                .y(endView.getY() + gridView.getY()) // Destinazione corretta Y
+                .setDuration(300)
+                .withEndAction(() -> {
+                    boardContainer.removeView(ghostPiece);
+                    onComplete.run();
+                })
+                .start();
+    }
+    private int getResIdForPiece(Piece piece) {
+        String name = (piece.isWhite() ? "w_" : "b_") + piece.getClass().getSimpleName().toLowerCase();
+        return getResources().getIdentifier(name, "drawable", getPackageName());
     }
 }

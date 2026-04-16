@@ -17,15 +17,22 @@
         android:textSize="24sp"
         android:layout_marginBottom="20dp" />
 
-    <com.example.chess.util.SquareGridView
-        android:id="@+id/chessGrid"
+    <FrameLayout
+        android:id="@+id/boardContainer"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:numColumns="8"
-        android:gravity="center"
-        android:stretchMode="columnWidth"
-        android:background="#444444"
-        android:layout_margin="4dp" />
+        android:layout_margin="4dp">
+
+        <com.example.chess.util.SquareGridView
+            android:id="@+id/chessGrid"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:numColumns="8"
+            android:gravity="center"
+            android:stretchMode="columnWidth"
+            android:background="#444444" />
+
+    </FrameLayout>
 
     <Button
         android:id="@+id/btnExit"
@@ -38,14 +45,3 @@
         android:textColor="#FFFFFF" />
 
 </LinearLayout>
-
-
-
-
-
-
-
-
-
-
-

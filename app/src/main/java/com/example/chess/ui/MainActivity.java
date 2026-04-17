@@ -1,12 +1,16 @@
 package com.example.chess.ui;
 
 import android.content.Intent;
+import android.graphics.Color;
 import android.os.Bundle;
+import android.os.CountDownTimer;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.GridView;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -30,6 +34,12 @@ public class MainActivity extends AppCompatActivity {
     private TextView statusText;
     private GridView gridView;
 
+    // --- VARIABILI TIMER ---
+    private ProgressBar timerBar;
+    private TextView timerText;
+    private CountDownTimer moveTimer;
+    private final long TIME_LIMIT_MS = 30000; // 30 secondi per mossa
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -38,6 +48,10 @@ public class MainActivity extends AppCompatActivity {
         statusText = findViewById(R.id.statusText);
         gridView = findViewById(R.id.chessGrid);
 
+        // Inizializza Timer UI
+        timerBar = findViewById(R.id.timerBar);
+        timerText = findViewById(R.id.timerText);
+
         Button btnExit = findViewById(R.id.btnExit);
         if (btnExit != null) {
             btnExit.setOnClickListener(v -> finish());
@@ -45,8 +59,7 @@ public class MainActivity extends AppCompatActivity {
 
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
         if (user == null) {
-            Intent intent = new Intent(MainActivity.this, LoginActivity.class);
-            startActivity(intent);
+            startActivity(new Intent(this, LoginActivity.class));
             finish();
             return;
         }
@@ -59,6 +72,9 @@ public class MainActivity extends AppCompatActivity {
 
         aggiornaStatoGioco();
 
+        // Avvia il timer per il primo turno
+        startTimer();
+
         gridView.setOnItemClickListener((parent, view, position, id) -> {
             handleMove(position);
         });
@@ -69,43 +85,37 @@ public class MainActivity extends AppCompatActivity {
         int row = MoveCalculator.toRow(position);
         int col = MoveCalculator.toCol(position);
 
-        // PRIMO TOCCO: Seleziona il pezzo
         if (selectedPosition == null) {
             Piece p = board.getPiece(row, col);
-
             if (p != null && p.isWhite() == board.isWhiteTurn()) {
                 selectedPosition = position;
                 adapter.setSelectedPosition(position);
                 adapter.notifyDataSetChanged();
-            } else if (p != null) {
-                Toast.makeText(this, "Non è il tuo turno!", Toast.LENGTH_SHORT).show();
             }
-        }
-        // SECONDO TOCCO: Scegli destinazione
-        else {
+        } else {
             int startRow = MoveCalculator.toRow(selectedPosition);
             int startCol = MoveCalculator.toCol(selectedPosition);
-
-            // Salviamo il pezzo prima che si muova nel modello
             Piece movingPiece = board.getPiece(startRow, startCol);
 
-            // Mossa valida?
             if (board.movePiece(startRow, startCol, row, col)) {
-                // Blocchiamo la griglia per evitare tocchi durante l'animazione
+                // FERMA IL TIMER: mossa effettuata
+                stopTimer();
+
                 gridView.setEnabled(false);
 
-                // Facciamo partire l'animazione
                 animateMove(selectedPosition, position, movingPiece, () -> {
-                    // COSA FARE QUANDO L'ANIMAZIONE È FINITA:
                     aggiornaStatoGioco();
                     selectedPosition = null;
                     adapter.setSelectedPosition(null);
                     adapter.notifyDataSetChanged();
-                    gridView.setEnabled(true); // Sblocca la griglia
+                    gridView.setEnabled(true);
+
+                    // FAI RIPARTIRE IL TIMER per l'altro giocatore
+                    startTimer();
                 });
 
             } else {
-                Toast.makeText(this, "Mossa non valida o Re in pericolo!", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, "Mossa non valida!", Toast.LENGTH_SHORT).show();
                 selectedPosition = null;
                 adapter.setSelectedPosition(null);
                 adapter.notifyDataSetChanged();
@@ -113,48 +123,81 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    // --- MAGIA DELL'ANIMAZIONE ---
+    // --- LOGICA DEL TIMER ---
+    private void startTimer() {
+        if (moveTimer != null) moveTimer.cancel();
+
+        timerBar.setMax((int) TIME_LIMIT_MS);
+        timerBar.setProgress((int) TIME_LIMIT_MS);
+
+        moveTimer = new CountDownTimer(TIME_LIMIT_MS, 50) {
+            @Override
+            public void onTick(long millisUntilFinished) {
+                timerBar.setProgress((int) millisUntilFinished);
+                int seconds = (int) (millisUntilFinished / 1000);
+                timerText.setText(String.format("00:%02d", seconds));
+
+                if (millisUntilFinished < 5000) timerText.setTextColor(Color.RED);
+                else timerText.setTextColor(Color.parseColor("#FF5722"));
+            }
+
+            @Override
+            public void onFinish() {
+                timerBar.setProgress(0);
+                timerText.setText("00:00");
+                handleTimeOut();
+            }
+        }.start();
+    }
+
+    private void stopTimer() {
+        if (moveTimer != null) moveTimer.cancel();
+    }
+
+    private void handleTimeOut() {
+        // Nel gioco libero, se scade il tempo, il turno passa all'altro
+        Toast.makeText(this, "Tempo scaduto! Cambio turno.", Toast.LENGTH_SHORT).show();
+        viewModel.getBoard().setWhiteTurn(!viewModel.getBoard().isWhiteTurn());
+        aggiornaStatoGioco();
+        startTimer(); // Riparte per l'altro giocatore
+    }
+
     private void animateMove(int startPosition, int endPosition, Piece piece, Runnable onComplete) {
         FrameLayout boardContainer = findViewById(R.id.boardContainer);
-
-        // Troviamo le View della casella di partenza e di arrivo
         View startView = gridView.getChildAt(startPosition - gridView.getFirstVisiblePosition());
         View endView = gridView.getChildAt(endPosition - gridView.getFirstVisiblePosition());
 
         if (startView == null || endView == null) {
-            onComplete.run(); // Se le view non si vedono (improbabile negli scacchi), salta l'animazione
+            onComplete.run();
             return;
         }
 
-        // 1. Creiamo il "Pezzo Fantasma" per l'animazione
         ImageView ghostPiece = new ImageView(this);
         ghostPiece.setImageResource(getResIdForPiece(piece));
         ghostPiece.setLayoutParams(new FrameLayout.LayoutParams(startView.getWidth(), startView.getHeight()));
         ghostPiece.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
         ghostPiece.setPadding(8, 8, 8, 8);
-
-        // 2. Posizioniamo il fantasma esattamente sopra il pezzo vero
-        ghostPiece.setX(startView.getX());
-        ghostPiece.setY(startView.getY());
-
-        // Aggiungiamo il fantasma al layout e nascondiamo temporaneamente quello vero
+        ghostPiece.setX(startView.getX() + gridView.getX());
+        ghostPiece.setY(startView.getY() + gridView.getY());
         boardContainer.addView(ghostPiece);
-        ((ImageView) startView).setImageResource(0);
 
-        // 3. Animiamo il fantasma verso la destinazione (Durata: 300ms)
+        // FIX PER FRAME LAYOUT (Contiene ImageView + TextView coordinate)
+        if (startView instanceof ViewGroup) {
+            ImageView realPieceImage = (ImageView) ((ViewGroup) startView).getChildAt(0);
+            realPieceImage.setImageResource(0);
+        }
+
         ghostPiece.animate()
-                .x(endView.getX())
-                .y(endView.getY())
+                .x(endView.getX() + gridView.getX())
+                .y(endView.getY() + gridView.getY())
                 .setDuration(300)
                 .withEndAction(() -> {
-                    // Quando arriva, cancelliamo il fantasma ed eseguiamo l'aggiornamento (onComplete)
                     boardContainer.removeView(ghostPiece);
                     onComplete.run();
                 })
                 .start();
     }
 
-    // Aiutante per trovare l'immagine del pezzo
     private int getResIdForPiece(Piece piece) {
         String name = (piece.isWhite() ? "w_" : "b_") + piece.getClass().getSimpleName().toLowerCase();
         return getResources().getIdentifier(name, "drawable", getPackageName());
@@ -167,27 +210,27 @@ public class MainActivity extends AppCompatActivity {
         boolean haMosseLegali = board.hasAnyLegalMoves(turnoBianco);
 
         if (!haMosseLegali) {
+            stopTimer(); // Ferma tutto se la partita è finita
             if (inScacco) {
-                String vincitore = turnoBianco ? "NERO" : "BIANCO";
-                statusText.setText("🏆 SCACCO MATTO! Vince il " + vincitore);
+                statusText.setText("🏆 SCACCO MATTO! Vince il " + (turnoBianco ? "NERO" : "BIANCO"));
             } else {
                 statusText.setText("🤝 STALLO (Pareggio)");
             }
         } else {
-            String turnoDi = turnoBianco ? "Bianco" : "Nero";
-            if (inScacco) {
-                statusText.setText("⚠️ Turno: " + turnoDi + " (Sotto SCACCO!)");
-            } else {
-                statusText.setText("Turno: " + turnoDi);
-            }
+            statusText.setText("Turno: " + (turnoBianco ? "Bianco" : "Nero") + (inScacco ? " (SCACCO!)" : ""));
         }
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-        if (viewModel != null) {
-            viewModel.getRepository().saveCurrentGame(viewModel.getBoard());
-        }
+        stopTimer();
+        if (viewModel != null) viewModel.getRepository().saveCurrentGame(viewModel.getBoard());
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        stopTimer();
     }
 }

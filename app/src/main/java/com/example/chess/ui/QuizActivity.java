@@ -2,12 +2,15 @@ package com.example.chess.ui;
 
 import android.graphics.Color;
 import android.os.Bundle;
+import android.os.CountDownTimer; // Aggiunto
 import android.os.Handler;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.GridView;
 import android.widget.ImageView;
+import android.widget.ProgressBar; // Aggiunto
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -36,10 +39,15 @@ public class QuizActivity extends AppCompatActivity {
     private int currentMoveIndex = 0;
     private Integer selectedPosition = null;
 
-    // --- VARIABILI GLOBALI AGGIORNATE ---
     private TextView levelTitleText;
     private TextView statusText;
-    private GridView gridView; // Messa globale per fargliela vedere all'animazione
+    private GridView gridView;
+
+    // --- VARIABILI TIMER ---
+    private ProgressBar timerBar;
+    private TextView timerText;
+    private CountDownTimer moveTimer;
+    private final long TIME_LIMIT_MS = 30000; // 30 secondi per mossa
 
     private boolean isComputerThinking = false;
     private int errorCount = 0;
@@ -51,7 +59,12 @@ public class QuizActivity extends AppCompatActivity {
 
         levelTitleText = findViewById(R.id.levelTitleText);
         statusText = findViewById(R.id.statusText);
-        gridView = findViewById(R.id.chessGrid); // Inizializzata qui
+        gridView = findViewById(R.id.chessGrid);
+
+        // --- INIZIALIZZA TIMER UI ---
+        timerBar = findViewById(R.id.timerBar);
+        timerText = findViewById(R.id.timerText);
+
         Button hintButton = findViewById(R.id.hintButton);
 
         com.example.chess.repository.QuizRepository quizRepository = new com.example.chess.repository.QuizRepository();
@@ -70,7 +83,6 @@ public class QuizActivity extends AppCompatActivity {
                 board.setWhiteTurn(currentLevel.isWhiteTurnToStart() ? (i % 2 == 0) : (i % 2 != 0));
                 board.movePiece(move.startRow, move.startCol, move.endRow, move.endCol);
             }
-
             board.setWhiteTurn(currentLevel.isWhiteTurnToStart() ? (currentMoveIndex % 2 == 0) : (currentMoveIndex % 2 != 0));
         }
 
@@ -88,44 +100,74 @@ public class QuizActivity extends AppCompatActivity {
         hintButton.setOnClickListener(v -> {
             if (currentMoveIndex < currentLevel.getSolutionMoves().size()) {
                 MoveRequest correctMove = currentLevel.getSolutionMoves().get(currentMoveIndex);
-
                 int startPos = correctMove.startRow * 8 + correctMove.startCol;
                 int endPos = correctMove.endRow * 8 + correctMove.endCol;
-
                 List<Integer> hints = new ArrayList<>();
                 hints.add(startPos);
                 hints.add(endPos);
-
                 adapter.setHints(hints);
-
-                statusText.setText("Suggerimento attivato: osserva le celle gialle!");
+                statusText.setText("Suggerimento attivato!");
                 statusText.setTextColor(Color.CYAN);
-                hintButton.setText("Suggerimento mostrato");
                 hintButton.setEnabled(false);
             }
         });
 
-        android.widget.ImageButton backButton = findViewById(R.id.backButton);
-        backButton.setOnClickListener(v -> finish());
+        findViewById(R.id.backButton).setOnClickListener(v -> finish());
+
+        // --- AVVIA IL TIMER ALL'INIZIO ---
+        startTimer();
     }
 
-    @Override
-    protected void onSaveInstanceState(@NonNull Bundle outState) {
-        super.onSaveInstanceState(outState);
-        outState.putInt("CURRENT_MOVE_INDEX", currentMoveIndex);
-        outState.putInt("ERROR_COUNT", errorCount);
+    // --- LOGICA DEL TIMER ---
+    private void startTimer() {
+        if (moveTimer != null) moveTimer.cancel();
+
+        timerBar.setMax((int) TIME_LIMIT_MS);
+        timerBar.setProgress((int) TIME_LIMIT_MS);
+
+        moveTimer = new CountDownTimer(TIME_LIMIT_MS, 50) {
+            @Override
+            public void onTick(long millisUntilFinished) {
+                timerBar.setProgress((int) millisUntilFinished);
+                int seconds = (int) (millisUntilFinished / 1000);
+                timerText.setText(String.format("00:%02d", seconds));
+
+                // Effetto colore: diventa rosso sotto i 5 secondi
+                if (millisUntilFinished < 5000) {
+                    timerText.setTextColor(Color.RED);
+                } else {
+                    timerText.setTextColor(Color.parseColor("#FF5722"));
+                }
+            }
+
+            @Override
+            public void onFinish() {
+                timerBar.setProgress(0);
+                timerText.setText("00:00");
+                handleTimeOut();
+            }
+        }.start();
+    }
+
+    private void stopTimer() {
+        if (moveTimer != null) moveTimer.cancel();
+    }
+
+    private void handleTimeOut() {
+        gridView.setEnabled(false);
+        statusText.setText("TEMPO SCADUTO!");
+        statusText.setTextColor(Color.RED);
+        Toast.makeText(this, "Sei stato troppo lento!", Toast.LENGTH_SHORT).show();
+
+        // Riavvia il livello dopo 2 secondi
+        new Handler().postDelayed(() -> {
+            int levelIndex = getIntent().getIntExtra("LEVEL_INDEX", 0);
+            recreate(); // Ricarica l'activity per resettare il livello
+        }, 2000);
     }
 
     private void handleQuizTouch(int position) {
-        Button hintButton = findViewById(R.id.hintButton);
-
-        // Se il computer sta pensando, ignoriamo i tocchi (sicurezza aggiuntiva)
         if (isComputerThinking) return;
-
-        if (currentMoveIndex >= currentLevel.getSolutionMoves().size()) {
-            Toast.makeText(this, "Hai già superato questo livello!", Toast.LENGTH_SHORT).show();
-            return;
-        }
 
         int row = position / 8;
         int col = position % 8;
@@ -136,68 +178,48 @@ public class QuizActivity extends AppCompatActivity {
                 selectedPosition = position;
                 adapter.setSelectedPosition(position);
                 adapter.notifyDataSetChanged();
-            } else {
-                Toast.makeText(this, "Seleziona un tuo pezzo!", Toast.LENGTH_SHORT).show();
             }
         } else {
             int startRow = selectedPosition / 8;
             int startCol = selectedPosition % 8;
-
             MoveRequest expectedMove = currentLevel.getSolutionMoves().get(currentMoveIndex);
 
-            // SE LA MOSSA È QUELLA CORRETTA:
             if (startRow == expectedMove.startRow && startCol == expectedMove.startCol &&
                     row == expectedMove.endRow && col == expectedMove.endCol) {
 
+                // --- FERMA IL TIMER: MOSSA CORRETTA ---
+                stopTimer();
+
                 Piece movingPiece = board.getPiece(startRow, startCol);
                 board.movePiece(startRow, startCol, row, col);
-
-                int startPos = selectedPosition;
-
-                // --- 1. BLOCCA I TOCCHI SUBITO DOPO LA MOSSA ---
                 gridView.setEnabled(false);
 
-                animateMove(startPos, position, movingPiece, () -> {
+                animateMove(selectedPosition, position, movingPiece, () -> {
                     currentMoveIndex++;
                     selectedPosition = null;
                     adapter.setSelectedPosition(null);
                     adapter.setHints(new ArrayList<>());
 
                     if (currentMoveIndex < currentLevel.getSolutionMoves().size()) {
-                        statusText.setText("Ottimo! Il computer sta rispondendo...");
-                        adapter.notifyDataSetChanged();
-
-                        // Chiama la mossa del computer, ma la griglia RESTA BLOCCATA
+                        statusText.setText("Ottimo! Risposta del computer...");
                         playComputerMove();
                     } else {
-                        statusText.setText("Livello Superato! Scacco Matto.");
+                        statusText.setText("Livello Superato!");
                         statusText.setTextColor(Color.GREEN);
-                        isComputerThinking = true;
                         salvaProgresso();
-                        // Anche qui non sblocchiamo, il livello è finito!
                     }
                 });
-
             } else {
-                // SE LA MOSSA È SBAGLIATA:
+                // ERRORE
                 errorCount++;
                 int tentativiRimasti = currentLevel.getMaxAttempts() - errorCount;
-
-                adapter.setHints(new ArrayList<>());
-                hintButton.setText("Aiuto");
-                hintButton.setEnabled(true);
-
                 if (tentativiRimasti <= 0) {
-                    statusText.setText("TENTATIVI ESAURITI! HAI PERSO.");
-                    statusText.setTextColor(Color.RED);
-                    isComputerThinking = true;
-                    // Blocca i tocchi se hai finito le vite
+                    stopTimer();
+                    statusText.setText("HAI PERSO!");
                     gridView.setEnabled(false);
                 } else {
-                    statusText.setText("Mossa errata! Rimasti: " + tentativiRimasti);
-                    statusText.setTextColor(Color.RED);
+                    statusText.setText("Mossa errata! Vite: " + tentativiRimasti);
                 }
-
                 selectedPosition = null;
                 adapter.setSelectedPosition(null);
                 adapter.notifyDataSetChanged();
@@ -205,72 +227,37 @@ public class QuizActivity extends AppCompatActivity {
         }
     }
 
-    private void salvaProgresso() {
-        int levelIndex = getIntent().getIntExtra("LEVEL_INDEX", 0);
-        int currentLevelId = levelIndex + 1;
-
-        // 1. Recuperiamo l'utente attuale da Firebase
-        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
-
-        // Se per qualche motivo non c'è un utente loggato, usiamo un ID di default
-        // o blocchiamo il salvataggio per evitare crash
-        final String userId = (user != null) ? user.getUid() : "guest_user";
-
-        Executors.newSingleThreadExecutor().execute(() -> {
-            ChessDatabase db = ChessDatabase.getInstance(this);
-
-            // 2. Usiamo il nuovo costruttore di LevelProgress che include l'userId
-            // Assicurati che la tua classe LevelProgress abbia il campo userId come abbiamo discusso
-            LevelProgress progress = new LevelProgress(currentLevelId, userId, true, errorCount);
-
-            db.levelDao().insertProgress(progress);
-
-            runOnUiThread(() -> {
-                Toast.makeText(this, "Progresso salvato per: " + ((user != null) ? user.getEmail() : "Ospite"), Toast.LENGTH_SHORT).show();
-                new Handler().postDelayed(this::finish, 2000);
-            });
-        });
-    }
-
     private void playComputerMove() {
         isComputerThinking = true;
-
         new Handler().postDelayed(() -> {
             MoveRequest computerMove = currentLevel.getSolutionMoves().get(currentMoveIndex);
-
             int startPos = computerMove.startRow * 8 + computerMove.startCol;
             int endPos = computerMove.endRow * 8 + computerMove.endCol;
             Piece movingPiece = board.getPiece(computerMove.startRow, computerMove.startCol);
 
-            // Se proviamo a muovere e la mossa è valida (il turno si inverte automaticamente!)
-            if (board.movePiece(computerMove.startRow, computerMove.startCol, computerMove.endRow, computerMove.endCol)) {
+            board.movePiece(computerMove.startRow, computerMove.startCol, computerMove.endRow, computerMove.endCol);
 
-                // ANIMAZIONE PER IL COMPUTER
-                animateMove(startPos, endPos, movingPiece, () -> {
-                    currentMoveIndex++;
-
-                    statusText.setText("Il computer si è mosso. Ora tocca a te per il matto!");
-                    adapter.notifyDataSetChanged();
-                    isComputerThinking = false;
-
-                    // SBLOCCA I TOCCHI ORA CHE IL COMPUTER HA FINITO
-                    gridView.setEnabled(true);
-                });
-            } else {
-                // --- PROTEZIONE ANTI-BUG ---
-                // Se la mossa del computer fallisce (es. coordinate sbagliate nel QuizRepository)
+            animateMove(startPos, endPos, movingPiece, () -> {
+                currentMoveIndex++;
+                statusText.setText("Tocca a te!");
                 isComputerThinking = false;
-                gridView.setEnabled(true); // Sblocchiamo per non far bloccare l'app
+                gridView.setEnabled(true);
 
-                Toast.makeText(this, "ERRORE LIVELLO: Mossa computer non valida! Controlla le coordinate nel QuizRepository.", Toast.LENGTH_LONG).show();
-            }
+                // --- FAI RIPARTIRE IL TIMER PER LA NUOVA MOSSA ---
+                startTimer();
+            });
         }, 1000);
     }
 
-    // --- MAGIA DELL'ANIMAZIONE (CON FIX DELLE COORDINATE) ---
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        stopTimer(); // Evita memory leak
+    }
+
+    // --- ANIMAZIONE E METODI UTILI (Invariati o con FIX) ---
     private void animateMove(int startPosition, int endPosition, Piece piece, Runnable onComplete) {
         FrameLayout boardContainer = findViewById(R.id.boardContainer);
-
         View startView = gridView.getChildAt(startPosition - gridView.getFirstVisiblePosition());
         View endView = gridView.getChildAt(endPosition - gridView.getFirstVisiblePosition());
 
@@ -284,12 +271,14 @@ public class QuizActivity extends AppCompatActivity {
         ghostPiece.setLayoutParams(new FrameLayout.LayoutParams(startView.getWidth(), startView.getHeight()));
         ghostPiece.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
         ghostPiece.setPadding(8, 8, 8, 8);
-
         ghostPiece.setX(startView.getX() + gridView.getX());
         ghostPiece.setY(startView.getY() + gridView.getY());
-
         boardContainer.addView(ghostPiece);
-        ((ImageView) startView).setImageResource(0);
+
+        if (startView instanceof ViewGroup) {
+            ImageView realPieceImage = (ImageView) ((ViewGroup) startView).getChildAt(0);
+            realPieceImage.setImageResource(0);
+        }
 
         ghostPiece.animate()
                 .x(endView.getX() + gridView.getX())
@@ -301,8 +290,26 @@ public class QuizActivity extends AppCompatActivity {
                 })
                 .start();
     }
+
     private int getResIdForPiece(Piece piece) {
         String name = (piece.isWhite() ? "w_" : "b_") + piece.getClass().getSimpleName().toLowerCase();
         return getResources().getIdentifier(name, "drawable", getPackageName());
+    }
+
+    private void salvaProgresso() {
+        int levelIndex = getIntent().getIntExtra("LEVEL_INDEX", 0);
+        int currentLevelId = levelIndex + 1;
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        final String userId = (user != null) ? user.getUid() : "guest_user";
+
+        Executors.newSingleThreadExecutor().execute(() -> {
+            ChessDatabase db = ChessDatabase.getInstance(this);
+            LevelProgress progress = new LevelProgress(currentLevelId, userId, true, errorCount);
+            db.levelDao().insertProgress(progress);
+            runOnUiThread(() -> {
+                Toast.makeText(this, "Progresso salvato!", Toast.LENGTH_SHORT).show();
+                new Handler().postDelayed(this::finish, 2000);
+            });
+        });
     }
 }

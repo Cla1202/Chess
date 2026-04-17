@@ -2,11 +2,15 @@ package com.example.chess.adapter;
 
 import android.content.Context;
 import android.graphics.Color;
+import android.graphics.Typeface;
+import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AbsListView;
 import android.widget.BaseAdapter;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
+import android.widget.TextView;
 
 import com.example.chess.model.Board;
 import com.example.chess.model.Piece;
@@ -43,18 +47,61 @@ public class ChessAdapter extends BaseAdapter {
         this.selectedPosition = position;
     }
 
+    // --- STRUTTURA OTTIMIZZATA PER LE CASELLE ---
+    private static class ViewHolder {
+        FrameLayout container;
+        ImageView pieceImage;
+        TextView rankText; // Numeri 1-8
+        TextView fileText; // Lettere a-h
+    }
+
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
-        ImageView square;
+        ViewHolder holder;
 
         if (convertView == null) {
-            square = new ImageView(context);
-            square.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
-            square.setPadding(8, 8, 8, 8);
+            holder = new ViewHolder();
+
+            // 1. Il contenitore principale della casella
+            holder.container = new FrameLayout(context);
+
+            // 2. L'immagine del pezzo
+            holder.pieceImage = new ImageView(context);
+            holder.pieceImage.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
+            holder.pieceImage.setPadding(8, 8, 8, 8);
+            holder.container.addView(holder.pieceImage, new FrameLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+
+            // 3. Il testo del Numero (In alto a sinistra)
+            holder.rankText = new TextView(context);
+            FrameLayout.LayoutParams rankParams = new FrameLayout.LayoutParams(
+                    ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            rankParams.gravity = Gravity.TOP | Gravity.START;
+            holder.rankText.setLayoutParams(rankParams);
+            holder.rankText.setPadding(6, 2, 0, 0); // Piccolo margine
+            holder.rankText.setTextSize(12);
+            holder.rankText.setTypeface(null, Typeface.BOLD);
+            holder.container.addView(holder.rankText);
+
+            // 4. Il testo della Lettera (In basso a destra)
+            holder.fileText = new TextView(context);
+            FrameLayout.LayoutParams fileParams = new FrameLayout.LayoutParams(
+                    ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            fileParams.gravity = Gravity.BOTTOM | Gravity.END;
+            holder.fileText.setLayoutParams(fileParams);
+            holder.fileText.setPadding(0, 0, 6, 2); // Piccolo margine
+            holder.fileText.setTextSize(12);
+            holder.fileText.setTypeface(null, Typeface.BOLD);
+            holder.container.addView(holder.fileText);
+
+            // Salviamo il blocco per riutilizzarlo
+            holder.container.setTag(holder);
+            convertView = holder.container;
         } else {
-            square = (ImageView) convertView;
+            holder = (ViewHolder) convertView.getTag();
         }
 
+        // --- DIMENSIONAMENTO DELLA CASELLA ---
         int availableWidth = parent.getWidth();
         if (availableWidth == 0) {
             availableWidth = Math.min(
@@ -63,32 +110,58 @@ public class ChessAdapter extends BaseAdapter {
             );
         }
         int size = availableWidth / 8;
-        square.setLayoutParams(new AbsListView.LayoutParams(size, size));
+        holder.container.setLayoutParams(new AbsListView.LayoutParams(size, size));
 
+        // --- CALCOLO RIGHE E COLONNE ---
         int row = position / 8;
         int col = position % 8;
 
-        if ((row + col) % 2 == 0) {
-            square.setBackgroundColor(Color.parseColor("#E0E0E0"));
+        // --- COLORI DELLA SCACCHIERA ---
+        boolean isLightSquare = (row + col) % 2 == 0;
+        if (isLightSquare) {
+            holder.container.setBackgroundColor(Color.parseColor("#E0E0E0")); // Chiaro
         } else {
-            square.setBackgroundColor(Color.parseColor("#8B0000"));
+            holder.container.setBackgroundColor(Color.parseColor("#8B0000")); // Scuro (Rosso scacchi)
         }
 
+        // Il trucco da maestri: il testo ha il colore OPPOSTO a quello della casella
+        int textColor = isLightSquare ? Color.parseColor("#8B0000") : Color.parseColor("#E0E0E0");
+
+        // --- IMPOSTAZIONE NUMERI (1-8) SOLO SULLA PRIMA COLONNA ---
+        if (col == 0) {
+            holder.rankText.setVisibility(View.VISIBLE);
+            holder.rankText.setText(String.valueOf(8 - row));
+            holder.rankText.setTextColor(textColor);
+        } else {
+            holder.rankText.setVisibility(View.GONE);
+        }
+
+        // --- IMPOSTAZIONE LETTERE (a-h) SOLO SULL'ULTIMA RIGA ---
+        if (row == 7) {
+            holder.fileText.setVisibility(View.VISIBLE);
+            char fileLetter = (char) ('a' + col);
+            holder.fileText.setText(String.valueOf(fileLetter));
+            holder.fileText.setTextColor(textColor);
+        } else {
+            holder.fileText.setVisibility(View.GONE);
+        }
+
+        // --- GESTIONE DEI COLORI DI SELEZIONE E AIUTO ---
         if (hintPositions != null && hintPositions.contains(position)) {
-            square.setBackgroundColor(Color.parseColor("#80FFEB3B"));
-        }
-        else if (selectedPosition != null && selectedPosition == position) {
-            square.setBackgroundColor(Color.parseColor("#F5F682"));
+            holder.container.setBackgroundColor(Color.parseColor("#80FFEB3B"));
+        } else if (selectedPosition != null && selectedPosition == position) {
+            holder.container.setBackgroundColor(Color.parseColor("#F5F682"));
         }
 
+        // --- INSERIMENTO DEL PEZZO ---
         Piece piece = board.getPiece(row, col);
         if (piece != null) {
-            square.setImageResource(getResIdForPiece(piece));
+            holder.pieceImage.setImageResource(getResIdForPiece(piece));
         } else {
-            square.setImageResource(0);
+            holder.pieceImage.setImageResource(0); // Casella vuota
         }
 
-        return square;
+        return convertView;
     }
 
     private int getResIdForPiece(Piece piece) {

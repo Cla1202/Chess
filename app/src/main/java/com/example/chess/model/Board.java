@@ -161,4 +161,25 @@ public class Board {
         }
         return false;
     }
+
+    public List<Integer> getLegalMovesForPiece(int row, int col) {
+        List<Integer> legalMoves = new ArrayList<>();
+        Piece piece = getPiece(row, col);
+
+        if (piece == null) return legalMoves;
+
+        // Cicliamo su tutte le 64 caselle della scacchiera
+        for (int targetRow = 0; targetRow < 8; targetRow++) {
+            for (int targetCol = 0; targetCol < 8; targetCol++) {
+                // Verifichiamo se la mossa è valida secondo le regole del pezzo
+                // e se non lascia il proprio Re sotto scacco
+                if (isValidMove(row, col, targetRow, targetCol)) {
+                    // Convertiamo le coordinate row/col in posizione 0-63
+                    int position = targetRow * 8 + targetCol;
+                    legalMoves.add(position);
+                }
+            }
+        }
+        return legalMoves;
+    }
 }

@@ -27,6 +27,9 @@ import com.example.chess.util.MoveCalculator;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class MainActivity extends AppCompatActivity {
     private GameViewModel viewModel;
     private ChessAdapter adapter;
@@ -39,6 +42,7 @@ public class MainActivity extends AppCompatActivity {
     private TextView timerText;
     private CountDownTimer moveTimer;
     private final long TIME_LIMIT_MS = 30000; // 30 secondi per mossa
+    private boolean isTimerEnabled = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -51,6 +55,14 @@ public class MainActivity extends AppCompatActivity {
         // Inizializza Timer UI
         timerBar = findViewById(R.id.timerBar);
         timerText = findViewById(R.id.timerText);
+
+        isTimerEnabled = getIntent().getBooleanExtra("EXTRA_TIMER_ENABLED", false);
+        if (!isTimerEnabled) {
+            timerBar.setVisibility(View.GONE);
+            timerText.setVisibility(View.GONE);
+        } else {
+            startTimer();
+        }
 
         Button btnExit = findViewById(R.id.btnExit);
         if (btnExit != null) {
@@ -72,9 +84,6 @@ public class MainActivity extends AppCompatActivity {
 
         aggiornaStatoGioco();
 
-        // Avvia il timer per il primo turno
-        startTimer();
-
         gridView.setOnItemClickListener((parent, view, position, id) -> {
             handleMove(position);
         });
@@ -90,6 +99,12 @@ public class MainActivity extends AppCompatActivity {
             if (p != null && p.isWhite() == board.isWhiteTurn()) {
                 selectedPosition = position;
                 adapter.setSelectedPosition(position);
+
+                // Recupera tutte le mosse legali per il pezzo selezionato
+                List<Integer> legalMoves = board.getLegalMovesForPiece(row, col);
+                // Passa la lista all'adapter per visualizzare i suggerimenti
+                adapter.setHints(legalMoves);
+
                 adapter.notifyDataSetChanged();
             }
         } else {
@@ -98,8 +113,7 @@ public class MainActivity extends AppCompatActivity {
             Piece movingPiece = board.getPiece(startRow, startCol);
 
             if (board.movePiece(startRow, startCol, row, col)) {
-                // FERMA IL TIMER: mossa effettuata
-                stopTimer();
+                if (isTimerEnabled) stopTimer();
 
                 gridView.setEnabled(false);
 
@@ -107,11 +121,11 @@ public class MainActivity extends AppCompatActivity {
                     aggiornaStatoGioco();
                     selectedPosition = null;
                     adapter.setSelectedPosition(null);
+                    adapter.setHints(new ArrayList<>()); // Svuota i suggerimenti dopo la mossa
                     adapter.notifyDataSetChanged();
                     gridView.setEnabled(true);
 
-                    // FAI RIPARTIRE IL TIMER per l'altro giocatore
-                    startTimer();
+                    if (isTimerEnabled) startTimer();
                 });
 
             } else {
@@ -125,6 +139,8 @@ public class MainActivity extends AppCompatActivity {
 
     // --- LOGICA DEL TIMER ---
     private void startTimer() {
+        if (!isTimerEnabled) return;
+
         if (moveTimer != null) moveTimer.cancel();
 
         timerBar.setMax((int) TIME_LIMIT_MS);
@@ -151,6 +167,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void stopTimer() {
+        if (!isTimerEnabled) return;
         if (moveTimer != null) moveTimer.cancel();
     }
 
@@ -210,7 +227,7 @@ public class MainActivity extends AppCompatActivity {
         boolean haMosseLegali = board.hasAnyLegalMoves(turnoBianco);
 
         if (!haMosseLegali) {
-            stopTimer(); // Ferma tutto se la partita è finita
+            if (isTimerEnabled) stopTimer(); // Ferma tutto se la partita è finita
             if (inScacco) {
                 statusText.setText("🏆 SCACCO MATTO! Vince il " + (turnoBianco ? "NERO" : "BIANCO"));
             } else {
@@ -233,4 +250,5 @@ public class MainActivity extends AppCompatActivity {
         super.onDestroy();
         stopTimer();
     }
+
 }

@@ -27,6 +27,9 @@ public class PlayFragment extends Fragment {
             // Crea un "Biglietto" (Intent) per viaggiare da questo Fragment alla MainActivity
             Intent intent = new Intent(requireActivity(), com.example.chess.ui.MainActivity.class);
 
+            // Passare al MainActivity se si vuole o no il timer
+            intent.putExtra("EXTRA_TIMER_ENABLED", false);
+
             // Fai partire il viaggio!
             startActivity(intent);
         });

@@ -1,5 +1,8 @@
 package com.example.chess.model;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class Board {
     private Piece[][] grid;
     private boolean whiteTurn = true;
@@ -83,7 +86,7 @@ public class Board {
         return isSquareAttacked(kX, kY, !isWhite);
     }
 
-    // --- HAS ANY LEGAL MOVES (Risolve l'errore in MainActivity) ---
+    // --- HAS ANY LEGAL MOVES: controlla se la mossa che vuoi fare è legale (se non porta a scacco)
     public boolean hasAnyLegalMoves(boolean isWhite) {
         for (int startX = 0; startX < 8; startX++) {
             for (int startY = 0; startY < 8; startY++) {
@@ -160,5 +163,50 @@ public class Board {
             return true;
         }
         return false;
+    }
+
+    public boolean isValidMove(int startX, int startY, int endX, int endY) {
+        Piece p = grid[startX][startY];
+        if (p == null) return false;
+
+        // 1. Controlla se la mossa è valida per le regole del pezzo specifico
+        if (!p.isValidMove(endX, endY, this)) {
+            return false;
+        }
+
+        // 2. Simulazione della mossa per vedere se il Re finisce sotto scacco
+        Piece captured = grid[endX][endY];
+        int oldX = p.getX();
+        int oldY = p.getY();
+
+        // Muovi temporaneamente
+        grid[endX][endY] = p;
+        grid[startX][startY] = null;
+        p.setX(endX);
+        p.setY(endY);
+
+        // Controlla se il Re è al sicuro
+        boolean isSafe = !isKingInCheck(p.isWhite());
+
+        // Torna alla posizione originale (Annulla mossa)
+        grid[startX][startY] = p;
+        grid[endX][endY] = captured;
+        p.setX(oldX);
+        p.setY(oldY);
+
+        return isSafe;
+    }
+
+    public List<Integer> getLegalMovesForPiece(int row, int col) {
+        List<Integer> legalMoves = new ArrayList<>();
+        // Usiamo isValidMove che abbiamo appena creato per scansionare la scacchiera
+        for (int targetRow = 0; targetRow < 8; targetRow++) {
+            for (int targetCol = 0; targetCol < 8; targetCol++) {
+                if (isValidMove(row, col, targetRow, targetCol)) {
+                    legalMoves.add(targetRow * 8 + targetCol);
+                }
+            }
+        }
+        return legalMoves;
     }
 }

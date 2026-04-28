@@ -4,6 +4,7 @@ import android.content.Context;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.view.Gravity;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AbsListView;
@@ -11,12 +12,15 @@ import android.widget.BaseAdapter;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.GridView;
 
 import com.example.chess.model.Board;
 import com.example.chess.model.Piece;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import com.example.chess.R;
 
 public class ChessAdapter extends BaseAdapter {
     private Context context;
@@ -47,121 +51,75 @@ public class ChessAdapter extends BaseAdapter {
         this.selectedPosition = position;
     }
 
-    // --- STRUTTURA OTTIMIZZATA PER LE CASELLE ---
-    private static class ViewHolder {
-        FrameLayout container;
-        ImageView pieceImage;
-        TextView rankText; // Numeri 1-8
-        TextView fileText; // Lettere a-h
-    }
 
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
         ViewHolder holder;
 
         if (convertView == null) {
+            convertView = LayoutInflater.from(context).inflate(R.layout.item_chess_square, parent, false);
+
+            // Calcolo dimensione quadrata
+            int size = parent.getWidth() / 8;
+            if (size == 0) size = context.getResources().getDisplayMetrics().widthPixels / 8;
+            convertView.setLayoutParams(new GridView.LayoutParams(size, size));
+
             holder = new ViewHolder();
-
-            // 1. Il contenitore principale della casella
-            holder.container = new FrameLayout(context);
-
-            // 2. L'immagine del pezzo
-            holder.pieceImage = new ImageView(context);
-            holder.pieceImage.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
-            holder.pieceImage.setPadding(8, 8, 8, 8);
-            holder.container.addView(holder.pieceImage, new FrameLayout.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
-
-            // 3. Il testo del Numero (In alto a sinistra)
-            holder.rankText = new TextView(context);
-            FrameLayout.LayoutParams rankParams = new FrameLayout.LayoutParams(
-                    ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-            rankParams.gravity = Gravity.TOP | Gravity.START;
-            holder.rankText.setLayoutParams(rankParams);
-            holder.rankText.setPadding(6, 2, 0, 0); // Piccolo margine
-            holder.rankText.setTextSize(12);
-            holder.rankText.setTypeface(null, Typeface.BOLD);
-            holder.container.addView(holder.rankText);
-
-            // 4. Il testo della Lettera (In basso a destra)
-            holder.fileText = new TextView(context);
-            FrameLayout.LayoutParams fileParams = new FrameLayout.LayoutParams(
-                    ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-            fileParams.gravity = Gravity.BOTTOM | Gravity.END;
-            holder.fileText.setLayoutParams(fileParams);
-            holder.fileText.setPadding(0, 0, 6, 2); // Piccolo margine
-            holder.fileText.setTextSize(12);
-            holder.fileText.setTypeface(null, Typeface.BOLD);
-            holder.container.addView(holder.fileText);
-
-            // Salviamo il blocco per riutilizzarlo
-            holder.container.setTag(holder);
-            convertView = holder.container;
+            holder.container = convertView.findViewById(R.id.squareContainer);
+            holder.pieceImage = convertView.findViewById(R.id.pieceImage);
+            holder.hintDot = convertView.findViewById(R.id.hintDot);
+            holder.rankText = convertView.findViewById(R.id.rankText); // Aggiungi questi nel tuo XML
+            holder.fileText = convertView.findViewById(R.id.fileText);
+            convertView.setTag(holder);
         } else {
             holder = (ViewHolder) convertView.getTag();
         }
 
-        // --- DIMENSIONAMENTO DELLA CASELLA ---
-        int availableWidth = parent.getWidth();
-        if (availableWidth == 0) {
-            availableWidth = Math.min(
-                    context.getResources().getDisplayMetrics().widthPixels,
-                    context.getResources().getDisplayMetrics().heightPixels
-            );
-        }
-        int size = availableWidth / 8;
-        holder.container.setLayoutParams(new AbsListView.LayoutParams(size, size));
-
-        // --- CALCOLO RIGHE E COLONNE ---
         int row = position / 8;
         int col = position % 8;
 
-        // --- COLORI DELLA SCACCHIERA ---
-        boolean isLightSquare = (row + col) % 2 == 0;
-        if (isLightSquare) {
-            holder.container.setBackgroundColor(Color.parseColor("#E0E0E0")); // Chiaro
-        } else {
-            holder.container.setBackgroundColor(Color.parseColor("#8B0000")); // Scuro (Rosso scacchi)
+        // --- 1. COLORI BASE E COORDINATE ---
+        boolean isLight = (row + col) % 2 == 0;
+        int baseColor = Color.parseColor(isLight ? "#EEEEEE" : "#769656");
+        int contrastColor = Color.parseColor(isLight ? "#769656" : "#EEEEEE");
+
+        holder.container.setBackgroundColor(baseColor);
+
+        // --- 2. GESTIONE SELEZIONE E PALLINI (HINTS) ---
+        // Il pallino è un elemento separato, non cambia lo sfondo!
+        holder.hintDot.setVisibility(hintPositions != null && hintPositions.contains(position) ? View.VISIBLE : View.GONE);
+
+        // Solo la selezione cambia lo sfondo
+        if (selectedPosition != null && selectedPosition == position) {
+            holder.container.setBackgroundColor(Color.parseColor("#81B3D2"));
         }
 
-        // Il trucco da maestri: il testo ha il colore OPPOSTO a quello della casella
-        int textColor = isLightSquare ? Color.parseColor("#8B0000") : Color.parseColor("#E0E0E0");
-
-        // --- IMPOSTAZIONE NUMERI (1-8) SOLO SULLA PRIMA COLONNA ---
+        // --- 3. COORDINATE (Numeri e Lettere) ---
+        holder.rankText.setVisibility(col == 0 ? View.VISIBLE : View.GONE);
         if (col == 0) {
-            holder.rankText.setVisibility(View.VISIBLE);
             holder.rankText.setText(String.valueOf(8 - row));
-            holder.rankText.setTextColor(textColor);
-        } else {
-            holder.rankText.setVisibility(View.GONE);
+            holder.rankText.setTextColor(contrastColor);
         }
 
-        // --- IMPOSTAZIONE LETTERE (a-h) SOLO SULL'ULTIMA RIGA ---
+        holder.fileText.setVisibility(row == 7 ? View.VISIBLE : View.GONE);
         if (row == 7) {
-            holder.fileText.setVisibility(View.VISIBLE);
-            char fileLetter = (char) ('a' + col);
-            holder.fileText.setText(String.valueOf(fileLetter));
-            holder.fileText.setTextColor(textColor);
-        } else {
-            holder.fileText.setVisibility(View.GONE);
+            holder.fileText.setText(String.valueOf((char) ('a' + col)));
+            holder.fileText.setTextColor(contrastColor);
         }
 
-        // --- GESTIONE DEI COLORI DI SELEZIONE E AIUTO ---
-        if (hintPositions != null && hintPositions.contains(position)) {
-            holder.container.setBackgroundColor(Color.parseColor("#80FFEB3B"));
-        } else if (selectedPosition != null && selectedPosition == position) {
-            holder.container.setBackgroundColor(Color.parseColor("#F5F682"));
-        }
-
-        // --- INSERIMENTO DEL PEZZO ---
+        // --- 4. PEZZI ---
         Piece piece = board.getPiece(row, col);
-        if (piece != null) {
-            holder.pieceImage.setImageResource(getResIdForPiece(piece));
-        } else {
-            holder.pieceImage.setImageResource(0); // Casella vuota
-        }
+        holder.pieceImage.setImageResource(piece != null ? getResIdForPiece(piece) : 0);
 
         return convertView;
+    }
+
+    private static class ViewHolder {
+        FrameLayout container;
+        ImageView pieceImage;
+        View hintDot;
+        TextView rankText; // Per i numeri 1-8
+        TextView fileText; // Per le lettere a-h
     }
 
     private int getResIdForPiece(Piece piece) {

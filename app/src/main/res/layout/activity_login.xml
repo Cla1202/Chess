@@ -3,7 +3,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:fillViewport="true"
-    android:background="#1A1A1D">
+    android:background="@color/black_deep">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -15,14 +15,14 @@
         <ImageView
             android:layout_width="80dp"
             android:layout_height="80dp"
-            android:src="@drawable/b_king"
+            android:src="@drawable/w_king"
             android:layout_marginBottom="16dp"/>
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Benvenuto in Chess!"
-            android:textColor="#FFFFFF"
+            android:text="@string/unimib_chess"
+            android:textColor="@color/white"
             android:textSize="28sp"
             android:textStyle="bold"
             android:layout_marginBottom="40dp" />
@@ -31,10 +31,10 @@
             android:id="@+id/usernameInput"
             android:layout_width="match_parent"
             android:layout_height="50dp"
-            android:hint="Username o Email"
-            android:textColorHint="#888888"
-            android:textColor="#FFFFFF"
-            android:backgroundTint="#FFFFFF"
+            android:hint="@string/username_o_email"
+            android:textColorHint="@color/grigio_chiaro"
+            android:textColor="@color/white"
+            android:backgroundTint="@color/white"
             android:inputType="textEmailAddress"
             android:layout_marginBottom="16dp" />
 
@@ -42,10 +42,10 @@
             android:id="@+id/passwordInput"
             android:layout_width="match_parent"
             android:layout_height="50dp"
-            android:hint="Password"
-            android:textColorHint="#888888"
-            android:textColor="#FFFFFF"
-            android:backgroundTint="#FFFFFF"
+            android:hint="@string/password"
+            android:textColorHint="@color/grigio_chiaro"
+            android:textColor="@color/white"
+            android:backgroundTint="@color/white"
             android:inputType="textPassword"
             android:layout_marginBottom="32dp" />
 
@@ -53,11 +53,11 @@
             android:id="@+id/loginButton"
             android:layout_width="match_parent"
             android:layout_height="55dp"
-            android:text="Accedi"
-            android:textColor="#FFFFFF"
+            android:text="@string/accedi"
+            android:textColor="@color/white"
             android:textSize="16sp"
             android:textStyle="bold"
-            android:backgroundTint="#769656"
+            android:backgroundTint="@color/green_soft"
             android:layout_marginBottom="32dp" />
 
         <LinearLayout
@@ -71,13 +71,13 @@
                 android:layout_width="0dp"
                 android:layout_height="1dp"
                 android:layout_weight="1"
-                android:background="#44FFFFFF" />
+                android:background="@color/white_trasp" />
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Oppure accedi con"
-                android:textColor="#888888"
+                android:text="@string/oppure_accedi_con"
+                android:textColor="@color/grigio_chiaro"
                 android:textSize="14sp"
                 android:layout_marginStart="16dp"
                 android:layout_marginEnd="16dp" />
@@ -86,7 +86,7 @@
                 android:layout_width="0dp"
                 android:layout_height="1dp"
                 android:layout_weight="1"
-                android:background="#44FFFFFF" />
+                android:background="@color/white_trasp" />
         </LinearLayout>
 
         <LinearLayout
@@ -105,7 +105,7 @@
                 android:scaleType="fitCenter"
                 android:elevation="4dp"
                 android:layout_marginEnd="24dp"
-                android:contentDescription="Google"/>
+                android:contentDescription="@string/google"/>
 
             <ImageButton
                 android:id="@+id/facebookLoginButton"
@@ -116,7 +116,7 @@
                 android:padding="12dp"
                 android:scaleType="fitCenter"
                 android:elevation="4dp"
-                android:contentDescription="Facebook"/>
+                android:contentDescription="@string/facebook"/>
 
         </LinearLayout>
 
@@ -129,16 +129,16 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Non hai un account? "
-                android:textColor="#888888" />
+                android:text="@string/non_hai_un_account"
+                android:textColor="@color/grigio_chiaro" />
 
             <TextView
                 android:id="@+id/registerLink"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Registrati"
+                android:text="@string/registrati"
                 android:textStyle="bold"
-                android:textColor="#769656" />
+                android:textColor="@color/green_soft" />
         </LinearLayout>
 
     </LinearLayout>

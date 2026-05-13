@@ -7,7 +7,7 @@
     android:layout_margin="8dp"
     app:cardCornerRadius="12dp"
     app:cardElevation="4dp"
-    app:cardBackgroundColor="#2A2A2D">
+    app:cardBackgroundColor="@color/grigio_scuro">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -27,8 +27,8 @@
                 android:id="@+id/levelNumberText"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Livello 1"
-                android:textColor="#769656"
+                android:text="@string/livello_1"
+                android:textColor="@color/green_soft"
                 android:textSize="18sp"
                 android:textStyle="bold" />
 
@@ -36,8 +36,8 @@
                 android:id="@+id/levelTitleText"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Titolo del Quiz"
-                android:textColor="#FFFFFF"
+                android:text="@string/titolo_del_quiz"
+                android:textColor="@color/white"
                 android:textSize="16sp"
                 android:layout_marginTop="4dp" />
 

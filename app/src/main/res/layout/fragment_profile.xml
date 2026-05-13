@@ -4,7 +4,7 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:gravity="center"
-    android:background="#2C2C2C"
+    android:background="@color/grigio_scuro"
     android:padding="24dp">
 
     <ImageView
@@ -12,7 +12,7 @@
         android:layout_width="100dp"
         android:layout_height="100dp"
         android:src="@drawable/ic_profile"
-        app:tint="#FFFFFF"
+        app:tint="@color/white"
         xmlns:app="http://schemas.android.com/apk/res-auto"
         android:layout_marginBottom="16dp" />
 
@@ -20,8 +20,8 @@
         android:id="@+id/profileName"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Caricamento..."
-        android:textColor="#FFFFFF"
+        android:text="@string/caricamento"
+        android:textColor="@color/white"
         android:textSize="24sp"
         android:textStyle="bold"
         android:layout_marginBottom="8dp" />
@@ -30,8 +30,8 @@
         android:id="@+id/profileEmail"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Attendere prego..."
-        android:textColor="#AAAAAA"
+        android:text="@string/attendere_prego"
+        android:textColor="@color/silver"
         android:textSize="16sp"
         android:layout_marginBottom="32dp" />
 
@@ -39,7 +39,7 @@
         android:id="@+id/logoutButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Logout"
-        android:textColor="#FFFFFF" />
+        android:text="@string/logout"
+        android:textColor="@color/white" />
 
 </LinearLayout>

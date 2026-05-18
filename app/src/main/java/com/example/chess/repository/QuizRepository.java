@@ -215,7 +215,7 @@ public class QuizRepository {
         setupLevel[riga("h1")][col("h1")] = new Rook(riga("h1"), col("h1"), true);
 
         List<MoveRequest> soluzione = new ArrayList<>();
-        soluzione.add(mossa("d5", "h7"));
+        soluzione.add(mossa("d5", "g8"));
         soluzione.add(mossa("h8", "h7"));
         soluzione.add(mossa("h1", "h3"));
 

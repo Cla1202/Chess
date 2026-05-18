@@ -243,6 +243,9 @@ public class QuizActivity extends AppCompatActivity {
                 isComputerThinking = false;
                 gridView.setEnabled(true);
 
+                // --- LA RIGA MAGICA CHE MANCAVA ---
+                // Diciamo all'Adapter di ridisegnare la griglia con i pezzi aggiornati!
+                adapter.notifyDataSetChanged();
                 // --- FAI RIPARTIRE IL TIMER PER LA NUOVA MOSSA ---
                 startTimer();
             });

@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.example.chess.R;
+import com.example.chess.util.Constants;
 
 public class ChessAdapter extends BaseAdapter {
     private Context context;
@@ -80,8 +81,8 @@ public class ChessAdapter extends BaseAdapter {
 
         // --- 1. COLORI BASE E COORDINATE ---
         boolean isLight = (row + col) % 2 == 0;
-        int baseColor = Color.parseColor(isLight ? "#EEEEEE" : "#769656");
-        int contrastColor = Color.parseColor(isLight ? "#769656" : "#EEEEEE");
+        int baseColor = Color.parseColor(isLight ? Constants.COLOR_SQUARE_LIGHT: Constants.COLOR_DARK);
+        int contrastColor = Color.parseColor(isLight ? Constants.COLOR_DARK : Constants.COLOR_SQUARE_LIGHT);
 
         holder.container.setBackgroundColor(baseColor);
 

@@ -3,7 +3,8 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:fillViewport="true"
-    android:background="@color/black_deep">
+    android:orientation="vertical"
+    android:background="@drawable/login_backgroundred">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -30,22 +31,26 @@
         <EditText
             android:id="@+id/usernameInput"
             android:layout_width="match_parent"
-            android:layout_height="50dp"
+            android:layout_height="55dp"
             android:hint="@string/username_o_email"
-            android:textColorHint="@color/grigio_chiaro"
+            android:textColorHint="#CCCCCC"
             android:textColor="@color/white"
-            android:backgroundTint="@color/white"
+            android:background="@drawable/bg_input_field"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
             android:inputType="textEmailAddress"
             android:layout_marginBottom="16dp" />
 
         <EditText
             android:id="@+id/passwordInput"
             android:layout_width="match_parent"
-            android:layout_height="50dp"
+            android:layout_height="55dp"
             android:hint="@string/password"
-            android:textColorHint="@color/grigio_chiaro"
+            android:textColorHint="#CCCCCC"
             android:textColor="@color/white"
-            android:backgroundTint="@color/white"
+            android:background="@drawable/bg_input_field"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
             android:inputType="textPassword"
             android:layout_marginBottom="32dp" />
 
@@ -57,7 +62,7 @@
             android:textColor="@color/white"
             android:textSize="16sp"
             android:textStyle="bold"
-            android:backgroundTint="@color/green_soft"
+            android:backgroundTint="#D4AF37"
             android:layout_marginBottom="32dp" />
 
         <LinearLayout
@@ -71,13 +76,13 @@
                 android:layout_width="0dp"
                 android:layout_height="1dp"
                 android:layout_weight="1"
-                android:background="@color/white_trasp" />
+                android:background="#4DFFFFFF" />
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/oppure_accedi_con"
-                android:textColor="@color/grigio_chiaro"
+                android:textColor="#CCCCCC"
                 android:textSize="14sp"
                 android:layout_marginStart="16dp"
                 android:layout_marginEnd="16dp" />
@@ -86,7 +91,7 @@
                 android:layout_width="0dp"
                 android:layout_height="1dp"
                 android:layout_weight="1"
-                android:background="@color/white_trasp" />
+                android:background="#4DFFFFFF" />
         </LinearLayout>
 
         <LinearLayout
@@ -130,7 +135,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/non_hai_un_account"
-                android:textColor="@color/grigio_chiaro" />
+                android:textColor="#CCCCCC" />
 
             <TextView
                 android:id="@+id/registerLink"
@@ -138,7 +143,8 @@
                 android:layout_height="wrap_content"
                 android:text="@string/registrati"
                 android:textStyle="bold"
-                android:textColor="@color/green_soft" />
+                android:layout_marginStart="4dp"
+                android:textColor="#D4AF37" />
         </LinearLayout>
 
     </LinearLayout>

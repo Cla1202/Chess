@@ -24,6 +24,7 @@ import com.example.chess.R;
 import com.example.chess.util.Constants;
 
 public class ChessAdapter extends BaseAdapter {
+
     private Context context;
     private Board board;
     private Integer selectedPosition = null;
@@ -92,7 +93,7 @@ public class ChessAdapter extends BaseAdapter {
 
         // Solo la selezione cambia lo sfondo
         if (selectedPosition != null && selectedPosition == position) {
-            holder.container.setBackgroundColor(Color.parseColor("#81B3D2"));
+            holder.container.setBackgroundColor(Color.parseColor(Constants.STEEL_BLUE));
         }
 
         // --- 3. COORDINATE (Numeri e Lettere) ---
@@ -124,7 +125,15 @@ public class ChessAdapter extends BaseAdapter {
     }
 
     private int getResIdForPiece(Piece piece) {
-        String name = (piece.isWhite() ? "w_" : "b_") + piece.getClass().getSimpleName().toLowerCase();
-        return context.getResources().getIdentifier(name, "drawable", context.getPackageName());
+        // Genera il nome unendo il prefisso statico al nome della classe del pezzo
+        String prefix = piece.isWhite() ? Constants.PREFIX_WHITE : Constants.PREFIX_BLACK;
+        String name = prefix + piece.getClass().getSimpleName().toLowerCase();
+
+        // Recupera l'ID usando il tipo risorsa centralizzato nelle costanti
+        return context.getResources().getIdentifier(
+                name,
+                Constants.DEF_TYPE_DRAWABLE,
+                context.getPackageName()
+        );
     }
 }

@@ -5,8 +5,10 @@ import androidx.room.Database;
 import androidx.room.Room;
 import androidx.room.RoomDatabase;
 
-// FIX: Versione aggiornata a 3 per supportare la nuova tabella con userId
-@Database(entities = {LevelProgress.class}, version = 3)
+import com.example.chess.util.Constants; // Assicurati che l'import sia corretto per il tuo progetto
+
+// Usa la costante per la versione del database
+@Database(entities = {LevelProgress.class}, version = Constants.DATABASE_VERSION)
 public abstract class ChessDatabase extends RoomDatabase {
 
     public abstract LevelDao levelDao();
@@ -18,7 +20,7 @@ public abstract class ChessDatabase extends RoomDatabase {
             synchronized (ChessDatabase.class) {
                 if (INSTANCE == null) {
                     INSTANCE = Room.databaseBuilder(context.getApplicationContext(),
-                                    ChessDatabase.class, "chess_database")
+                                    ChessDatabase.class, Constants.DATABASE_NAME) // Usa la costante per il nome
                             // Fondamentale: cancella i vecchi dati incompatibili
                             // e ricrea le tabelle con la nuova struttura
                             .fallbackToDestructiveMigration()

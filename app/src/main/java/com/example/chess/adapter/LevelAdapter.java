@@ -11,6 +11,8 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 import com.example.chess.R;
 import com.example.chess.model.QuizLevel;
+import com.example.chess.util.Constants;
+
 import java.util.List;
 
 public class LevelAdapter extends RecyclerView.Adapter<LevelAdapter.LevelViewHolder> {
@@ -50,37 +52,35 @@ public class LevelAdapter extends RecyclerView.Adapter<LevelAdapter.LevelViewHol
         // Calcoliamo il numero del livello (la position parte da 0, quindi aggiungiamo 1)
         int levelNumber = position + 1;
 
-        // Imposta il testo corretto in base alla posizione (es. Livello 1, Livello 2)
-        holder.titleText.setText("Livello " + levelNumber);
+        // USA LA COSTANTE PER IL PREFISSO TESTUALE
+        holder.titleText.setText(Constants.PREFIX_LEVEL + levelNumber);
         holder.descriptionText.setText(level.getTitle()); // Es: "Matto in 2"
 
         // LOGICA DI SBLOCCO/BLOCCO
         if (levelNumber <= maxUnlocked) {
             // --- LIVELLO SBLOCCATO ---
-            holder.padlockIcon.setVisibility(View.GONE); // Nascondi lucchetto
+            holder.padlockIcon.setVisibility(View.GONE);
 
-            // Colore di sfondo normale (es. grigio scuro)
-            holder.itemView.setBackgroundColor(Color.parseColor("#2C2C2C"));
+            // USA LE COSTANTI PER I COLORI SBLOCCATI
+            holder.itemView.setBackgroundColor(Color.parseColor(Constants.COLOR_CARD_UNLOCKED));
 
-            // Testo verde per far capire che è giocabile
-            holder.titleText.setTextColor(Color.parseColor("#769656"));
+            // Qui richiamo COLOR_DARK che avevi già nel tuo Constants originale
+            holder.titleText.setTextColor(Color.parseColor(Constants.COLOR_DARK));
 
             // Permetti il click per giocare
             holder.itemView.setOnClickListener(v -> listener.onItemClick(position));
 
         } else {
             // --- LIVELLO BLOCCATO ---
-            holder.padlockIcon.setVisibility(View.VISIBLE); // Mostra lucchetto
+            holder.padlockIcon.setVisibility(View.VISIBLE);
 
-            // Colore di sfondo più scuro e spento per far capire che è inattivo
-            holder.itemView.setBackgroundColor(Color.parseColor("#151515"));
+            // USA LE COSTANTI PER I COLORI BLOCCATI
+            holder.itemView.setBackgroundColor(Color.parseColor(Constants.COLOR_CARD_LOCKED));
+            holder.titleText.setTextColor(Color.parseColor(Constants.COLOR_TEXT_LOCKED));
 
-            // Testo grigio
-            holder.titleText.setTextColor(Color.parseColor("#555555"));
-
-            // Gestisci il click avvisando l'utente
+            // USA LA COSTANTE PER IL MESSAGGIO TOAST
             holder.itemView.setOnClickListener(v -> {
-                Toast.makeText(holder.itemView.getContext(), "Devi superare il livello precedente per sbloccare questo!", Toast.LENGTH_SHORT).show();
+                Toast.makeText(holder.itemView.getContext(), Constants.MSG_LEVEL_LOCKED, Toast.LENGTH_SHORT).show();
             });
         }
     }

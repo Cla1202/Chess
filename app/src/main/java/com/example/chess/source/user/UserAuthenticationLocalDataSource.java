@@ -3,6 +3,7 @@ package com.example.chess.source.user;
 import android.content.Context;
 import android.content.SharedPreferences;
 import com.example.chess.repository.user.UserResponseCallback;
+import com.example.chess.util.Constants;
 
 public class UserAuthenticationLocalDataSource extends BaseUserAuthenticationRemoteDataSource {
     private final Context context;
@@ -18,7 +19,7 @@ public class UserAuthenticationLocalDataSource extends BaseUserAuthenticationRem
             saveUserLocally(username);
             callback.onSuccess(username);
         } else {
-            callback.onFailure("Password troppo corta!");
+            callback.onFailure(Constants.PASSWORD_CORTA);
         }
     }
 

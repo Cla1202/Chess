@@ -13,6 +13,7 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
 import com.example.chess.R;
+import com.example.chess.ui.GameActivity;
 
 public class PlayFragment extends Fragment {
 
@@ -24,13 +25,8 @@ public class PlayFragment extends Fragment {
         Button btnStartGame = view.findViewById(R.id.btnStartGame);
 
         btnStartGame.setOnClickListener(v -> {
-            // Crea un "Biglietto" (Intent) per viaggiare da questo Fragment alla MainActivity
-            Intent intent = new Intent(requireActivity(), com.example.chess.ui.MainActivity.class);
-
-            // Passare al MainActivity se si vuole o no il timer
-            intent.putExtra("EXTRA_TIMER_ENABLED", false);
-
-            // Fai partire il viaggio!
+            Intent intent = new Intent(requireActivity(), GameActivity.class);
+            intent.putExtra(GameActivity.EXTRA_MODE, GameActivity.MODE_LOCAL_PVP);
             startActivity(intent);
         });
 

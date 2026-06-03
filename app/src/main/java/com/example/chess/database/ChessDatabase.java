@@ -7,8 +7,7 @@ import androidx.room.RoomDatabase;
 
 import com.example.chess.util.Constants; // Assicurati che l'import sia corretto per il tuo progetto
 
-// Usa la costante per la versione del database
-@Database(entities = {LevelProgress.class}, version = Constants.DATABASE_VERSION)
+@Database(entities = {LevelProgress.class}, version = Constants.DATABASE_VERSION, exportSchema = false)
 public abstract class ChessDatabase extends RoomDatabase {
 
     public abstract LevelDao levelDao();

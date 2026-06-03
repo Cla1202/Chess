@@ -18,14 +18,13 @@ public class Board {
         this.whiteTurn = whiteTurnToStart;
     }
 
-    // --- GETTER E SETTER (Risolvono gli errori in MainActivity) ---
     public Piece[][] getGrid() { return grid; }
     public boolean isWhiteTurn() { return whiteTurn; }
     public void setWhiteTurn(boolean whiteTurn) { this.whiteTurn = whiteTurn; }
     public int getEnPassantColumn() { return enPassantColumn; }
     public void setEnPassantColumn(int col) { this.enPassantColumn = col; }
 
-    // --- GET PIECE (Risolve l'errore in ChessAdapter) ---
+
     public Piece getPiece(int x, int y) {
         if (x < 0 || x > 7 || y < 0 || y > 7) return null;
         return grid[x][y];
@@ -208,5 +207,30 @@ public class Board {
             }
         }
         return legalMoves;
+    }
+
+    public void setupCustomBoard(Piece[][] customSetup, boolean whiteTurnToStart) {
+        // 1. Svuota completamente la scacchiera attuale
+        for (int r = 0; r < 8; r++) {
+            for (int c = 0; c < 8; c++) {
+                this.grid[r][c] = null;
+            }
+        }
+
+        // 2. Copia i pezzi dal setup del quiz alla griglia di gioco
+        for (int r = 0; r < 8; r++) {
+            for (int c = 0; c < 8; c++) {
+                if (customSetup[r][c] != null) {
+                    this.grid[r][c] = customSetup[r][c];
+                    // Aggiorna le coordinate interne del pezzo in modo che corrispondano alla griglia
+                    this.grid[r][c].setX(r);
+                    this.grid[r][c].setY(c);
+                }
+            }
+        }
+
+        // 3. Imposta il turno iniziale del livello e resetta lo stato
+        this.whiteTurn = whiteTurnToStart;
+        this.enPassantColumn = -1;
     }
 }

@@ -16,7 +16,7 @@ import com.example.chess.adapter.LevelAdapter;
 import com.example.chess.database.ChessDatabase;
 import com.example.chess.model.QuizLevel;
 import com.example.chess.repository.QuizRepository;
-import com.example.chess.ui.QuizActivity;
+import com.example.chess.ui.GameActivity;
 import com.example.chess.ui.viewmodel.LevelViewModel;
 import com.example.chess.ui.viewmodel.LevelViewModelFactory;
 import java.util.List;
@@ -41,7 +41,6 @@ public class QuizFragment extends Fragment {
         LevelViewModelFactory factory = new LevelViewModelFactory(db);
         viewModel = new ViewModelProvider(this, factory).get(LevelViewModel.class);
 
-        // OSSERVIAMO IL DATABASE (Usiamo getViewLifecycleOwner)
         viewModel.getMaxCompletedLevel().observe(getViewLifecycleOwner(), maxCompleted -> {
 
             int max = (maxCompleted != null) ? maxCompleted : 0;
@@ -49,8 +48,12 @@ public class QuizFragment extends Fragment {
 
             if (adapter == null) {
                 adapter = new LevelAdapter(levels, unlocked, position -> {
-                    Intent intent = new Intent(requireActivity(), QuizActivity.class);
-                    intent.putExtra("LEVEL_INDEX", position);
+                    QuizLevel selectedLevel = levels.get(position);
+
+                    Intent intent = new Intent(requireActivity(), GameActivity.class);
+                    intent.putExtra(GameActivity.EXTRA_MODE, GameActivity.MODE_QUIZ);
+                    intent.putExtra("QUIZ_LEVEL_OBJECT", selectedLevel);
+
                     startActivity(intent);
                 });
                 recyclerView.setAdapter(adapter);

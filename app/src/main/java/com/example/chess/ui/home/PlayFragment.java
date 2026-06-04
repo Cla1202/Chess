@@ -22,6 +22,7 @@ public class PlayFragment extends Fragment {
         View view = inflater.inflate(R.layout.fragment_play, container, false);
 
         Button btnStartGame = view.findViewById(R.id.btnStartGame);
+        View btnPlayBot = view.findViewById(R.id.btnPlayBot);
 
         btnStartGame.setOnClickListener(v -> {
             // Crea un "Biglietto" (Intent) per viaggiare da questo Fragment alla MainActivity
@@ -29,8 +30,16 @@ public class PlayFragment extends Fragment {
 
             // Passare al MainActivity se si vuole o no il timer
             intent.putExtra("EXTRA_TIMER_ENABLED", false);
+            intent.putExtra("EXTRA_BOT_ENABLED", false);
 
             // Fai partire il viaggio!
+            startActivity(intent);
+        });
+
+        btnPlayBot.setOnClickListener(v -> {
+            Intent intent = new Intent(requireActivity(), com.example.chess.ui.MainActivity.class);
+            intent.putExtra("EXTRA_TIMER_ENABLED", true); // Con il bot mettiamo il timer per sfida
+            intent.putExtra("EXTRA_BOT_ENABLED", true);
             startActivity(intent);
         });
 

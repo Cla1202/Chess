@@ -1,0 +1,21 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="50dp"
+    android:height="50dp"
+    android:viewportWidth="50"
+    android:viewportHeight="50">
+    <!-- Rook: Solid cylinder, modern notches -->
+    <path
+        android:pathData="M18,12 H32 V42 H18 Z"
+        android:fillColor="#000000"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="1.5"/>
+    <path
+        android:pathData="M18,12 L18,16 M22.5,12 L22.5,16 M27.5,12 L27.5,16 M32,12 L32,16"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="1.5"/>
+    <path
+        android:pathData="M15,42 H35 V45 H15 Z"
+        android:fillColor="#000000"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="1"/>
+</vector>

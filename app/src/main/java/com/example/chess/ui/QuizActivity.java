@@ -10,7 +10,8 @@ import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.GridView;
 import android.widget.ImageView;
-import android.widget.ProgressBar; // Aggiunto
+import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -42,6 +43,8 @@ public class QuizActivity extends AppCompatActivity {
     private TextView levelTitleText;
     private TextView statusText;
     private GridView gridView;
+    private LinearLayout capturedWhiteContainer;
+    private LinearLayout capturedBlackContainer;
 
     // --- VARIABILI TIMER ---
     private ProgressBar timerBar;
@@ -60,6 +63,8 @@ public class QuizActivity extends AppCompatActivity {
         levelTitleText = findViewById(R.id.levelTitleText);
         statusText = findViewById(R.id.statusText);
         gridView = findViewById(R.id.chessGrid);
+        capturedWhiteContainer = findViewById(R.id.capturedWhiteContainer);
+        capturedBlackContainer = findViewById(R.id.capturedBlackContainer);
 
         // --- INIZIALIZZA TIMER UI ---
         timerBar = findViewById(R.id.timerBar);
@@ -87,11 +92,12 @@ public class QuizActivity extends AppCompatActivity {
         }
 
         levelTitleText.setText(currentLevel.getTitle());
-        statusText.setText("Tocca a te! Trova la mossa vincente.");
+        statusText.setText(R.string.trova_mossa_vincente);
         statusText.setTextColor(Color.WHITE);
 
         adapter = new ChessAdapter(this, board);
         gridView.setAdapter(adapter);
+        aggiornaPezziMangiati();
 
         gridView.setOnItemClickListener((parent, view, position, id) -> {
             handleQuizTouch(position);
@@ -106,7 +112,7 @@ public class QuizActivity extends AppCompatActivity {
                 hints.add(startPos);
                 hints.add(endPos);
                 adapter.setHints(hints);
-                statusText.setText("Suggerimento attivato!");
+                statusText.setText(R.string.suggerimento_attivato);
                 statusText.setTextColor(Color.CYAN);
                 hintButton.setEnabled(false);
             }
@@ -119,6 +125,59 @@ public class QuizActivity extends AppCompatActivity {
     }
 
     // --- LOGICA DEL TIMER ---
+    private void aggiornaPezziMangiati() {
+        capturedWhiteContainer.removeAllViews();
+        capturedBlackContainer.removeAllViews();
+
+        // Aggiunge i pezzi BIANCHI mangiati in ALTO
+        addCapturedPiecesToContainer(capturedWhiteContainer, board.getCapturedWhite());
+
+        // Aggiunge i pezzi NERI mangiati in BASSO
+        addCapturedPiecesToContainer(capturedBlackContainer, board.getCapturedBlack());
+    }
+
+    private void addCapturedPiecesToContainer(LinearLayout container, List<Piece> pieces) {
+        if (pieces.isEmpty()) return;
+
+        java.util.Map<String, Integer> counts = new java.util.LinkedHashMap<>();
+        java.util.Map<String, Piece> prototypes = new java.util.HashMap<>();
+        String[] order = {"Pawn", "Knight", "Bishop", "Rook", "Queen"};
+
+        for (Piece p : pieces) {
+            String type = p.getClass().getSimpleName();
+            Integer currentCount = counts.get(type);
+            counts.put(type, (currentCount == null ? 0 : currentCount) + 1);
+            prototypes.put(type, p);
+        }
+
+        int iconSize = (int) (24 * getResources().getDisplayMetrics().density);
+
+        for (String type : order) {
+            if (counts.containsKey(type)) {
+                LinearLayout itemLayout = new LinearLayout(this);
+                itemLayout.setOrientation(LinearLayout.HORIZONTAL);
+                itemLayout.setGravity(android.view.Gravity.CENTER_VERTICAL);
+                itemLayout.setPadding(8, 0, 8, 0);
+
+                ImageView iv = new ImageView(this);
+                iv.setLayoutParams(new LinearLayout.LayoutParams(iconSize, iconSize));
+                iv.setImageResource(getResIdForPiece(prototypes.get(type)));
+                itemLayout.addView(iv);
+
+                Integer count = counts.get(type);
+                if (count != null && count > 1) {
+                    TextView tv = new TextView(this);
+                    tv.setText("x" + count);
+                    tv.setTextColor(Color.WHITE);
+                    tv.setTextSize(12);
+                    tv.setPadding(4, 0, 0, 0);
+                    itemLayout.addView(tv);
+                }
+                container.addView(itemLayout);
+            }
+        }
+    }
+
     private void startTimer() {
         if (moveTimer != null) moveTimer.cancel();
 
@@ -155,9 +214,9 @@ public class QuizActivity extends AppCompatActivity {
 
     private void handleTimeOut() {
         gridView.setEnabled(false);
-        statusText.setText("TEMPO SCADUTO!");
+        statusText.setText(R.string.tempo_scaduto);
         statusText.setTextColor(Color.RED);
-        Toast.makeText(this, "Sei stato troppo lento!", Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, R.string.troppo_lento, Toast.LENGTH_SHORT).show();
 
         // Riavvia il livello dopo 2 secondi
         new Handler().postDelayed(() -> {
@@ -196,15 +255,16 @@ public class QuizActivity extends AppCompatActivity {
 
                 animateMove(selectedPosition, position, movingPiece, () -> {
                     currentMoveIndex++;
+                    aggiornaPezziMangiati();
                     selectedPosition = null;
                     adapter.setSelectedPosition(null);
                     adapter.setHints(new ArrayList<>());
 
                     if (currentMoveIndex < currentLevel.getSolutionMoves().size()) {
-                        statusText.setText("Ottimo! Risposta del computer...");
+                        statusText.setText(R.string.risposta_computer);
                         playComputerMove();
                     } else {
-                        statusText.setText("Livello Superato!");
+                        statusText.setText(R.string.livello_superato);
                         statusText.setTextColor(Color.GREEN);
                         salvaProgresso();
                     }
@@ -215,10 +275,10 @@ public class QuizActivity extends AppCompatActivity {
                 int tentativiRimasti = currentLevel.getMaxAttempts() - errorCount;
                 if (tentativiRimasti <= 0) {
                     stopTimer();
-                    statusText.setText("HAI PERSO!");
+                    statusText.setText(R.string.hai_perso);
                     gridView.setEnabled(false);
                 } else {
-                    statusText.setText("Mossa errata! Vite: " + tentativiRimasti);
+                    statusText.setText(getString(R.string.mossa_errata, tentativiRimasti));
                 }
                 selectedPosition = null;
                 adapter.setSelectedPosition(null);
@@ -239,7 +299,8 @@ public class QuizActivity extends AppCompatActivity {
 
             animateMove(startPos, endPos, movingPiece, () -> {
                 currentMoveIndex++;
-                statusText.setText("Tocca a te!");
+                aggiornaPezziMangiati();
+                statusText.setText(R.string.tocca_a_te);
                 isComputerThinking = false;
                 gridView.setEnabled(true);
 
@@ -271,6 +332,7 @@ public class QuizActivity extends AppCompatActivity {
 
         ImageView ghostPiece = new ImageView(this);
         ghostPiece.setImageResource(getResIdForPiece(piece));
+
         ghostPiece.setLayoutParams(new FrameLayout.LayoutParams(startView.getWidth(), startView.getHeight()));
         ghostPiece.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
         ghostPiece.setPadding(8, 8, 8, 8);
@@ -294,9 +356,39 @@ public class QuizActivity extends AppCompatActivity {
                 .start();
     }
 
+
     private int getResIdForPiece(Piece piece) {
-        String name = (piece.isWhite() ? "w_" : "b_") + piece.getClass().getSimpleName().toLowerCase();
-        return getResources().getIdentifier(name, "drawable", getPackageName());
+        android.content.SharedPreferences prefs = getSharedPreferences("ChessSettings", MODE_PRIVATE);
+        String style = prefs.getString("piece_style", "Classico");
+        String stylePrefix;
+
+        switch (style) {
+            case "Neo":
+                stylePrefix = "neo_";
+                break;
+            case "Moderno":
+                stylePrefix = "mod_";
+                break;
+            case "Alfa":
+                stylePrefix = "alpha_";
+                break;
+            default:
+                stylePrefix = "";
+                break;
+        }
+
+        String colorPrefix = piece.isWhite() ? "w_" : "b_";
+        String pieceName = piece.getClass().getSimpleName().toLowerCase();
+
+        String fullName = stylePrefix + colorPrefix + pieceName;
+        int resId = getResources().getIdentifier(fullName, "drawable", getPackageName());
+
+        if (resId == 0) {
+            fullName = colorPrefix + pieceName;
+            resId = getResources().getIdentifier(fullName, "drawable", getPackageName());
+        }
+
+        return resId;
     }
 
     private void salvaProgresso() {
@@ -310,7 +402,7 @@ public class QuizActivity extends AppCompatActivity {
             LevelProgress progress = new LevelProgress(currentLevelId, userId, true, errorCount);
             db.levelDao().insertProgress(progress);
             runOnUiThread(() -> {
-                Toast.makeText(this, "Progresso salvato!", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, R.string.progresso_salvato, Toast.LENGTH_SHORT).show();
                 new Handler().postDelayed(this::finish, 2000);
             });
         });

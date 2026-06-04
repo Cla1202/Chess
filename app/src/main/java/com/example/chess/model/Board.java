@@ -7,11 +7,16 @@ public class Board {
     private Piece[][] grid;
     private boolean whiteTurn = true;
     private int enPassantColumn = -1;
+    private List<Piece> capturedWhite = new ArrayList<>();
+    private List<Piece> capturedBlack = new ArrayList<>();
 
     public Board() {
         grid = new Piece[8][8];
         setupBoard();
     }
+    
+    public List<Piece> getCapturedWhite() { return capturedWhite; }
+    public List<Piece> getCapturedBlack() { return capturedBlack; }
 
     public Board(Piece[][] customGrid, boolean whiteTurnToStart) {
         this.grid = customGrid;
@@ -130,6 +135,12 @@ public class Board {
             if (isEP) grid[startX][endY] = null;
             p.setX(endX); p.setY(endY);
 
+            // AGGIUNGI AI PEZZI MANGIATI
+            if (captured != null) {
+                if (captured.isWhite()) capturedWhite.add(captured);
+                else capturedBlack.add(captured);
+            }
+
             Piece rook = null;
             int rSX = -1, rEX = -1;
             if (isCastling) {
@@ -208,5 +219,76 @@ public class Board {
             }
         }
         return legalMoves;
+    }
+
+    public String toFen() {
+        StringBuilder fen = new StringBuilder();
+
+        // 1. Posizione dei pezzi
+        for (int r = 0; r < 8; r++) {
+            int emptyCount = 0;
+            for (int c = 0; c < 8; c++) {
+                Piece p = grid[r][c];
+                if (p == null) {
+                    emptyCount++;
+                } else {
+                    if (emptyCount > 0) {
+                        fen.append(emptyCount);
+                        emptyCount = 0;
+                    }
+                    char symbol = getPieceSymbol(p);
+                    fen.append(p.isWhite() ? Character.toUpperCase(symbol) : symbol);
+                }
+            }
+            if (emptyCount > 0) fen.append(emptyCount);
+            if (r < 7) fen.append('/');
+        }
+
+        // 2. Turno (w o b)
+        fen.append(whiteTurn ? " w " : " b ");
+
+        // 3. Arrocco
+        int castlingStartLen = fen.length();
+        Piece wKing = grid[7][4];
+        if (wKing instanceof King && !((King) wKing).hasMoved()) {
+            Piece rK = grid[7][7];
+            if (rK instanceof Rook && !((Rook) rK).hasMoved()) fen.append('K');
+            Piece rQ = grid[7][0];
+            if (rQ instanceof Rook && !((Rook) rQ).hasMoved()) fen.append('Q');
+        }
+        Piece bKing = grid[0][4];
+        if (bKing instanceof King && !((King) bKing).hasMoved()) {
+            Piece rk = grid[0][7];
+            if (rk instanceof Rook && !((Rook) rk).hasMoved()) fen.append('k');
+            Piece rq = grid[0][0];
+            if (rq instanceof Rook && !((Rook) rq).hasMoved()) fen.append('q');
+        }
+        if (fen.length() == castlingStartLen) fen.append("-");
+
+        // 4. En Passant
+        fen.append(" ");
+        if (enPassantColumn != -1) {
+            int row = whiteTurn ? 2 : 5;
+            char file = (char) ('a' + enPassantColumn);
+            int rank = 8 - row;
+            fen.append(file).append(rank);
+        } else {
+            fen.append("-");
+        }
+
+        // 5. Mosse e mezzo-mosse
+        fen.append(" 0 1");
+
+        return fen.toString();
+    }
+
+    private char getPieceSymbol(Piece p) {
+        if (p instanceof Pawn) return 'p';
+        if (p instanceof Knight) return 'n';
+        if (p instanceof Bishop) return 'b';
+        if (p instanceof Rook) return 'r';
+        if (p instanceof Queen) return 'q';
+        if (p instanceof King) return 'k';
+        return ' ';
     }
 }

@@ -3,14 +3,14 @@ package com.example.chess.ui;
 import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
-import android.os.CountDownTimer;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.GridView;
 import android.widget.ImageView;
-import android.widget.ProgressBar;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -23,6 +23,13 @@ import com.example.chess.model.Board;
 import com.example.chess.model.Piece;
 import com.example.chess.ui.viewmodel.GameViewModel;
 import com.example.chess.util.MoveCalculator;
+import com.example.chess.service.StockfishService;
+import com.example.chess.util.ChessUtil;
+import retrofit2.Retrofit;
+import retrofit2.converter.gson.GsonConverterFactory;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -36,13 +43,10 @@ public class MainActivity extends AppCompatActivity {
     private Integer selectedPosition = null;
     private TextView statusText;
     private GridView gridView;
+    private LinearLayout capturedWhiteContainer;
+    private LinearLayout capturedBlackContainer;
 
-    // --- VARIABILI TIMER ---
-    private ProgressBar timerBar;
-    private TextView timerText;
-    private CountDownTimer moveTimer;
-    private final long TIME_LIMIT_MS = 30000; // 30 secondi per mossa
-    private boolean isTimerEnabled = false;
+    private boolean isBotEnabled = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -51,18 +55,10 @@ public class MainActivity extends AppCompatActivity {
 
         statusText = findViewById(R.id.statusText);
         gridView = findViewById(R.id.chessGrid);
+        capturedWhiteContainer = findViewById(R.id.capturedWhiteContainer);
+        capturedBlackContainer = findViewById(R.id.capturedBlackContainer);
 
-        // Inizializza Timer UI
-        timerBar = findViewById(R.id.timerBar);
-        timerText = findViewById(R.id.timerText);
-
-        isTimerEnabled = getIntent().getBooleanExtra("EXTRA_TIMER_ENABLED", false);
-        if (!isTimerEnabled) {
-            timerBar.setVisibility(View.GONE);
-            timerText.setVisibility(View.GONE);
-        } else {
-            startTimer();
-        }
+        isBotEnabled = getIntent().getBooleanExtra("EXTRA_BOT_ENABLED", false);
 
         Button btnExit = findViewById(R.id.btnExit);
         if (btnExit != null) {
@@ -83,14 +79,17 @@ public class MainActivity extends AppCompatActivity {
         gridView.setAdapter(adapter);
 
         aggiornaStatoGioco();
+        aggiornaPezziMangiati();
 
         gridView.setOnItemClickListener((parent, view, position, id) -> {
+            if (isBotEnabled && !viewModel.getBoard().isWhiteTurn()) return;
             handleMove(position);
         });
     }
 
     private void handleMove(int position) {
         Board board = viewModel.getBoard();
+
         int row = MoveCalculator.toRow(position);
         int col = MoveCalculator.toCol(position);
 
@@ -100,11 +99,8 @@ public class MainActivity extends AppCompatActivity {
                 selectedPosition = position;
                 adapter.setSelectedPosition(position);
 
-                // Recupera tutte le mosse legali per il pezzo selezionato
                 List<Integer> legalMoves = board.getLegalMovesForPiece(row, col);
-                // Passa la lista all'adapter per visualizzare i suggerimenti
                 adapter.setHints(legalMoves);
-
                 adapter.notifyDataSetChanged();
             }
         } else {
@@ -113,19 +109,19 @@ public class MainActivity extends AppCompatActivity {
             Piece movingPiece = board.getPiece(startRow, startCol);
 
             if (board.movePiece(startRow, startCol, row, col)) {
-                if (isTimerEnabled) stopTimer();
-
                 gridView.setEnabled(false);
 
                 animateMove(selectedPosition, position, movingPiece, () -> {
                     aggiornaStatoGioco();
+                    aggiornaPezziMangiati();
                     selectedPosition = null;
                     adapter.setSelectedPosition(null);
-                    adapter.setHints(new ArrayList<>()); // Svuota i suggerimenti dopo la mossa
+                    adapter.setHints(new ArrayList<>());
                     adapter.notifyDataSetChanged();
-                    gridView.setEnabled(true);
-
-                    if (isTimerEnabled) startTimer();
+                    
+                    if (!isBotEnabled || viewModel.getBoard().isWhiteTurn()) {
+                        gridView.setEnabled(true);
+                    }
                 });
 
             } else {
@@ -137,46 +133,55 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    // --- LOGICA DEL TIMER ---
-    private void startTimer() {
-        if (!isTimerEnabled) return;
+    private void aggiornaPezziMangiati() {
+        capturedWhiteContainer.removeAllViews();
+        capturedBlackContainer.removeAllViews();
 
-        if (moveTimer != null) moveTimer.cancel();
-
-        timerBar.setMax((int) TIME_LIMIT_MS);
-        timerBar.setProgress((int) TIME_LIMIT_MS);
-
-        moveTimer = new CountDownTimer(TIME_LIMIT_MS, 50) {
-            @Override
-            public void onTick(long millisUntilFinished) {
-                timerBar.setProgress((int) millisUntilFinished);
-                int seconds = (int) (millisUntilFinished / 1000);
-                timerText.setText(String.format("00:%02d", seconds));
-
-                if (millisUntilFinished < 5000) timerText.setTextColor(Color.RED);
-                else timerText.setTextColor(Color.parseColor("#FF5722"));
-            }
-
-            @Override
-            public void onFinish() {
-                timerBar.setProgress(0);
-                timerText.setText("00:00");
-                handleTimeOut();
-            }
-        }.start();
+        Board board = viewModel.getBoard();
+        addCapturedPiecesToContainer(capturedWhiteContainer, board.getCapturedWhite());
+        addCapturedPiecesToContainer(capturedBlackContainer, board.getCapturedBlack());
     }
 
-    private void stopTimer() {
-        if (!isTimerEnabled) return;
-        if (moveTimer != null) moveTimer.cancel();
-    }
+    private void addCapturedPiecesToContainer(LinearLayout container, List<Piece> pieces) {
+        if (pieces.isEmpty()) return;
 
-    private void handleTimeOut() {
-        // Nel gioco libero, se scade il tempo, il turno passa all'altro
-        Toast.makeText(this, "Tempo scaduto! Cambio turno.", Toast.LENGTH_SHORT).show();
-        viewModel.getBoard().setWhiteTurn(!viewModel.getBoard().isWhiteTurn());
-        aggiornaStatoGioco();
-        startTimer(); // Riparte per l'altro giocatore
+        java.util.Map<String, Integer> counts = new java.util.LinkedHashMap<>();
+        java.util.Map<String, Piece> prototypes = new java.util.HashMap<>();
+        String[] order = {"Pawn", "Knight", "Bishop", "Rook", "Queen"};
+
+        for (Piece p : pieces) {
+            String type = p.getClass().getSimpleName();
+            Integer currentCount = counts.get(type);
+            counts.put(type, (currentCount == null ? 0 : currentCount) + 1);
+            prototypes.put(type, p);
+        }
+
+        int iconSize = (int) (24 * getResources().getDisplayMetrics().density);
+
+        for (String type : order) {
+            if (counts.containsKey(type)) {
+                LinearLayout itemLayout = new LinearLayout(this);
+                itemLayout.setOrientation(LinearLayout.HORIZONTAL);
+                itemLayout.setGravity(android.view.Gravity.CENTER_VERTICAL);
+                itemLayout.setPadding(8, 0, 8, 0);
+
+                ImageView iv = new ImageView(this);
+                iv.setLayoutParams(new LinearLayout.LayoutParams(iconSize, iconSize));
+                iv.setImageResource(getResIdForPiece(prototypes.get(type)));
+                itemLayout.addView(iv);
+
+                Integer count = counts.get(type);
+                if (count != null && count > 1) {
+                    TextView tv = new TextView(this);
+                    tv.setText("x" + count);
+                    tv.setTextColor(Color.WHITE);
+                    tv.setTextSize(12);
+                    tv.setPadding(4, 0, 0, 0);
+                    itemLayout.addView(tv);
+                }
+                container.addView(itemLayout);
+            }
+        }
     }
 
     private void animateMove(int startPosition, int endPosition, Piece piece, Runnable onComplete) {
@@ -198,7 +203,6 @@ public class MainActivity extends AppCompatActivity {
         ghostPiece.setY(startView.getY() + gridView.getY());
         boardContainer.addView(ghostPiece);
 
-        // FIX PER FRAME LAYOUT (Contiene ImageView + TextView coordinate)
         if (startView instanceof ViewGroup) {
             ImageView realPieceImage = (ImageView) ((ViewGroup) startView).getChildAt(0);
             realPieceImage.setImageResource(0);
@@ -216,8 +220,27 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private int getResIdForPiece(Piece piece) {
-        String name = (piece.isWhite() ? "w_" : "b_") + piece.getClass().getSimpleName().toLowerCase();
-        return getResources().getIdentifier(name, "drawable", getPackageName());
+        android.content.SharedPreferences prefs = getSharedPreferences("ChessSettings", MODE_PRIVATE);
+        String style = prefs.getString("piece_style", "Classico");
+        String stylePrefix;
+
+        switch (style) {
+            case "Neo": stylePrefix = "neo_"; break;
+            case "Moderno": stylePrefix = "mod_"; break;
+            case "Alfa": stylePrefix = "alpha_"; break;
+            default: stylePrefix = ""; break;
+        }
+
+        String colorPrefix = piece.isWhite() ? "w_" : "b_";
+        String pieceName = piece.getClass().getSimpleName().toLowerCase();
+        String fullName = stylePrefix + colorPrefix + pieceName;
+        int resId = getResources().getIdentifier(fullName, "drawable", getPackageName());
+
+        if (resId == 0) {
+            fullName = colorPrefix + pieceName;
+            resId = getResources().getIdentifier(fullName, "drawable", getPackageName());
+        }
+        return resId;
     }
 
     private void aggiornaStatoGioco() {
@@ -227,28 +250,78 @@ public class MainActivity extends AppCompatActivity {
         boolean haMosseLegali = board.hasAnyLegalMoves(turnoBianco);
 
         if (!haMosseLegali) {
-            if (isTimerEnabled) stopTimer(); // Ferma tutto se la partita è finita
             if (inScacco) {
-                statusText.setText("🏆 SCACCO MATTO! Vince il " + (turnoBianco ? "NERO" : "BIANCO"));
+                String vincitore = getString(turnoBianco ? R.string.nero : R.string.bianco).toUpperCase();
+                statusText.setText(getString(R.string.scacco_matto_vince, vincitore));
             } else {
-                statusText.setText("🤝 STALLO (Pareggio)");
+                statusText.setText(R.string.stallo);
             }
         } else {
-            statusText.setText("Turno: " + (turnoBianco ? "Bianco" : "Nero") + (inScacco ? " (SCACCO!)" : ""));
+            String colore = getString(turnoBianco ? R.string.bianco : R.string.nero);
+            String scaccoInfo = inScacco ? getString(R.string.scacco) : "";
+            statusText.setText(getString(R.string.turno, colore, scaccoInfo));
+            
+            if (isBotEnabled && !turnoBianco) {
+                makeBotMove();
+            }
         }
+    }
+
+    private void makeBotMove() {
+        statusText.setText(R.string.bot_pensa);
+        gridView.setEnabled(false);
+
+        Retrofit retrofit = new Retrofit.Builder()
+                .baseUrl("https://stockfish.online/")
+                .addConverterFactory(GsonConverterFactory.create())
+                .build();
+
+        StockfishService service = retrofit.create(StockfishService.class);
+        service.getBestMove(viewModel.getBoard().toFen(), 5).enqueue(new Callback<StockfishService.StockfishResponse>() {
+            @Override
+            public void onResponse(Call<StockfishService.StockfishResponse> call, Response<StockfishService.StockfishResponse> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    String bestMove = response.body().bestmove.replace("bestmove ", "").trim();
+                    if (bestMove.length() >= 4) {
+                        int startIdx = ChessUtil.algebraicToIndex(bestMove.substring(0, 2));
+                        int endIdx = ChessUtil.algebraicToIndex(bestMove.substring(2, 4));
+                        new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(() -> {
+                            handleMove(startIdx);
+                            new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(() -> handleMove(endIdx), 400);
+                        }, 600);
+                        return;
+                    }
+                }
+                makeRandomMove();
+            }
+            @Override
+            public void onFailure(Call<StockfishService.StockfishResponse> call, Throwable t) { makeRandomMove(); }
+        });
+    }
+
+    private void makeRandomMove() {
+        Board board = viewModel.getBoard();
+        List<Integer> allStartSquares = new ArrayList<>();
+        for (int i = 0; i < 64; i++) {
+            Piece p = board.getPiece(i / 8, i % 8);
+            if (p != null && p.isWhite() == board.isWhiteTurn() && !board.getLegalMovesForPiece(i / 8, i % 8).isEmpty()) {
+                allStartSquares.add(i);
+            }
+        }
+        if (!allStartSquares.isEmpty()) {
+            int startIdx = allStartSquares.get((int) (Math.random() * allStartSquares.size()));
+            List<Integer> legalMoves = board.getLegalMovesForPiece(startIdx / 8, startIdx % 8);
+            int endIdx = legalMoves.get((int) (Math.random() * legalMoves.size()));
+            new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(() -> {
+                handleMove(startIdx);
+                new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(() -> handleMove(endIdx), 400);
+            }, 600);
+        } else { gridView.setEnabled(true); }
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-        stopTimer();
         if (viewModel != null) viewModel.getRepository().saveCurrentGame(viewModel.getBoard());
     }
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        stopTimer();
-    }
-
 }

@@ -30,4 +30,7 @@ public interface LevelDao {
     // Utile se volessi mostrare una lista di "Livelli Superati" nel profilo.
     @Query("SELECT * FROM level_progress WHERE userId = :userId AND isCompleted = 1")
     List<LevelProgress> getAllCompletedLevelsForUser(String userId);
+
+    @Query("DELETE FROM level_progress")
+    void deleteAllProgress();
 }

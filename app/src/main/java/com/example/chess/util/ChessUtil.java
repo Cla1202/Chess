@@ -1,6 +1,27 @@
 package com.example.chess.util;
 
+import android.content.Context;
+import android.content.SharedPreferences;
+import android.content.res.Configuration;
+import android.content.res.Resources;
+import android.util.DisplayMetrics;
+import java.util.Locale;
+
 public class ChessUtil {
+
+    public static void applyLocale(Context context) {
+        SharedPreferences prefs = context.getSharedPreferences("ChessSettings", Context.MODE_PRIVATE);
+        String langCode = prefs.getString("language", "it");
+        
+        Locale locale = new Locale(langCode);
+        Locale.setDefault(locale);
+        
+        Resources resources = context.getResources();
+        Configuration config = resources.getConfiguration();
+        DisplayMetrics dm = resources.getDisplayMetrics();
+        config.setLocale(locale);
+        resources.updateConfiguration(config, dm);
+    }
 
     /**
      * Converte una posizione scacchistica (es. "e2") nell'indice della GridView (0-63).

@@ -1,10 +1,19 @@
 package com.example.chess.util;
 
 public class Constants {
-    // COLORI
-    public static final String COLOR_LIGHT = "#EEEED2";
+    // COLORI TEMI SCACCHIERA
+    public static final String THEME_CLASSIC_LIGHT = "#EEEED2";
+    public static final String THEME_CLASSIC_DARK = "#769656";
+    public static final String THEME_WOOD_LIGHT = "#F0D9B5";
+    public static final String THEME_WOOD_DARK = "#B58863";
+    public static final String THEME_OCEAN_LIGHT = "#DEE3E6";
+    public static final String THEME_OCEAN_DARK = "#8CA2AD";
+    public static final String THEME_GREY_LIGHT = "#E1E1E1";
+    public static final String THEME_GREY_DARK = "#707070";
+
+    // COLORI COMPATIBILITÀ
     public static final String COLOR_DARK = "#769656";
-    public static final String COLOR_SELECTED = "#F5F682"; // Giallo evidenziatore
+    public static final String COLOR_LIGHT = "#EEEED2";
     public static final String COLOR_SQUARE_LIGHT = "#EEEEEE";
 
     // MESSAGGI DI STATO

@@ -23,6 +23,7 @@ import androidx.credentials.exceptions.GetCredentialException;
 
 import com.example.chess.R;
 import com.example.chess.ui.home.HomeActivity;
+import com.example.chess.util.ChessUtil;
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption;
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential;
 import com.google.android.libraries.identity.googleid.GoogleIdTokenParsingException;
@@ -39,6 +40,7 @@ public class LoginActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        ChessUtil.applyLocale(this);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
 

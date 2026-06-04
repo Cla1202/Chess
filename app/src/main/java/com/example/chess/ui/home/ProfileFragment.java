@@ -35,7 +35,7 @@ public class ProfileFragment extends Fragment {
         if (user != null) {
             // Se c'è un utente, scriviamo i suoi dati a schermo
             // Se il nome è nullo (succede raramente), mettiamo un nome di default
-            String displayName = user.getDisplayName() != null ? user.getDisplayName() : "Giocatore Sconosciuto";
+            String displayName = user.getDisplayName() != null ? user.getDisplayName() : getString(R.string.unimib_chess);
 
             nameText.setText(displayName);
             emailText.setText(user.getEmail());

@@ -1,8 +1,9 @@
 package com.example.chess.model;
 
+import java.io.Serializable;
 import java.util.List;
 
-public class QuizLevel {
+public class QuizLevel implements Serializable {
     private String title;
     private Piece[][] initialBoardSetup;
     private List<MoveRequest> solutionMoves;

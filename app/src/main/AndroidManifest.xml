@@ -12,9 +12,6 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Chess">
         <activity
-            android:name=".ui.viewmodel.MainActivity"
-            android:exported="false" />
-        <activity
             android:name=".ui.home.HomeActivity"
             android:exported="false"
             android:screenOrientation="fullSensor" />
@@ -27,23 +24,19 @@
             android:exported="false"
             android:screenOrientation="fullSensor" />
         <activity
-            android:name=".ui.QuizActivity"
-            android:exported="false"
-            android:screenOrientation="fullSensor" />
-        <activity
             android:name=".ui.LoginActivity"
             android:exported="true"
             android:screenOrientation="fullSensor">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
         <activity
-            android:name=".ui.MainActivity"
+            android:name=".ui.GameActivity"
             android:exported="false"
-            android:screenOrientation="fullSensor"></activity>
+            android:screenOrientation="fullSensor" />
+
     </application>
 
 </manifest>

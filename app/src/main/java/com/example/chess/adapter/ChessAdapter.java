@@ -125,15 +125,6 @@ public class ChessAdapter extends BaseAdapter {
     }
 
     private int getResIdForPiece(Piece piece) {
-        // Genera il nome unendo il prefisso statico al nome della classe del pezzo
-        String prefix = piece.isWhite() ? Constants.PREFIX_WHITE : Constants.PREFIX_BLACK;
-        String name = prefix + piece.getClass().getSimpleName().toLowerCase();
-
-        // Recupera l'ID usando il tipo risorsa centralizzato nelle costanti
-        return context.getResources().getIdentifier(
-                name,
-                Constants.DEF_TYPE_DRAWABLE,
-                context.getPackageName()
-        );
+        return com.example.chess.util.ChessUtil.getResIdForPiece(context, piece);
     }
 }

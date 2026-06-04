@@ -1,8 +1,9 @@
 package com.example.chess.model;
 
+import java.io.Serializable;
 import java.util.List;
 
-public abstract class Piece {
+public abstract class Piece implements Serializable {
     protected int x, y; // Coordinate 0-7
     protected boolean isWhite;
 

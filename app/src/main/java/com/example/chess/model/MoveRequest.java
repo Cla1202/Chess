@@ -1,6 +1,8 @@
 package com.example.chess.model;
 
-public class MoveRequest {
+import java.io.Serializable;
+
+public class MoveRequest implements Serializable {
     public int startRow;
     public int startCol;
     public int endRow;

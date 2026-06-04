@@ -38,8 +38,10 @@ public class LevelSelectionActivity extends AppCompatActivity {
         viewModel = new ViewModelProvider(this, factory).get(LevelViewModel.class);
 
         adapter = new LevelAdapter(levels, 1, position -> {
-            Intent intent = new Intent(LevelSelectionActivity.this, QuizActivity.class);
-            intent.putExtra("LEVEL_INDEX", position);
+            Intent intent = new Intent(LevelSelectionActivity.this, GameActivity.class);
+            intent.putExtra(GameActivity.EXTRA_MODE, GameActivity.MODE_QUIZ);
+            QuizLevel selectedLevel = levels.get(position);
+            intent.putExtra("QUIZ_LEVEL_OBJECT", selectedLevel);
             startActivity(intent);
         });
         recyclerView.setAdapter(adapter);

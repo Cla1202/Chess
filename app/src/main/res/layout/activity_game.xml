@@ -4,104 +4,128 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:padding="16dp"
-    android:background="#2E2E2E">
+    android:background="@color/grigio_fumo">
 
+    <!-- HEADER (Opzionale, solo per Quiz) -->
     <TextView
         android:id="@+id/levelTitleText"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="center"
-        android:text="Titolo Livello"
-        android:textColor="#FFFFFF"
-        android:textSize="20sp"
-        android:textStyle="bold"
-        android:layout_marginBottom="8dp"/>
+        android:textColor="@color/gold"
+        android:textStyle="normal"
+        android:textSize="14sp"
+        android:layout_marginBottom="4dp"/>
 
-    <TextView
-        android:id="@+id/statusText"
+    <!-- SPAZIO SUPERIORE PER IL CENTRAMENTO -->
+    <View
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:gravity="center"
-        android:text="Tocca al Bianco"
-        android:textColor="#FF5722"
-        android:textSize="18sp"
-        android:layout_marginBottom="16dp"/>
+        android:layout_height="0dp"
+        android:layout_weight="1" />
 
+    <!-- BLOCCO GIOCO (Tutto centrato insieme) -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center_vertical"
-        android:layout_marginBottom="16dp">
+        android:orientation="vertical"
+        android:gravity="center">
 
-        <ProgressBar
-            android:id="@+id/timerBar"
-            style="?android:attr/progressBarStyleHorizontal"
-            android:layout_width="0dp"
+        <!-- 1. SCRITTA DINAMICA (Sopra i pezzi bianchi) -->
+        <TextView
+            android:id="@+id/statusText"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="1" />
+            android:gravity="center"
+            android:textColor="@color/white"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="12dp"/>
 
+        <!-- 2. PEZZI BIANCHI (Sopra la scacchiera) -->
+        <LinearLayout
+            android:id="@+id/capturedWhiteContainer"
+            android:layout_width="match_parent"
+            android:layout_height="30dp"
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:layout_marginBottom="12dp"
+            android:alpha="0.7"/>
+
+        <!-- 3. SCACCHIERA -->
+        <FrameLayout
+            android:id="@+id/boardContainer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center">
+            <com.example.chess.util.SquareGridView
+                android:id="@+id/chessGrid"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:numColumns="8"
+                android:stretchMode="columnWidth"
+                android:gravity="center"/>
+        </FrameLayout>
+
+        <!-- 4. PEZZI NERI (Sotto la scacchiera) -->
+        <LinearLayout
+            android:id="@+id/capturedBlackContainer"
+            android:layout_width="match_parent"
+            android:layout_height="35dp"
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:layout_marginTop="16dp"/>
+    </LinearLayout>
+
+    <!-- SPAZIO INFERIORE PER IL CENTRAMENTO -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1" />
+
+    <!-- FOOTER CONTROLLI -->
+    <LinearLayout
+        android:id="@+id/timerContainer"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:layout_marginBottom="12dp">
         <TextView
             android:id="@+id/timerText"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
             android:text="00:30"
-            android:textColor="#FF5722"
-            android:textSize="16sp"
+            android:textColor="@color/arancione"
+            android:textSize="20sp"
             android:textStyle="bold" />
-    </LinearLayout>
-
-    <Space
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1" />
-
-    <FrameLayout
-        android:id="@+id/boardContainer"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center">
-
-        <com.example.chess.util.SquareGridView
-            android:id="@+id/chessGrid"
+        <ProgressBar
+            android:id="@+id/timerBar"
+            style="?android:attr/progressBarStyleHorizontal"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:numColumns="8"
-            android:stretchMode="columnWidth"
-            android:gravity="center"/>
-    </FrameLayout>
-
-    <Space
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1" />
+            android:layout_height="8dp"
+            android:layout_marginStart="32dp"
+            android:layout_marginEnd="32dp"
+            android:progressTint="@color/arancione" />
+    </LinearLayout>
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:layout_marginTop="16dp"
-        android:weightSum="2">
-
+        android:orientation="horizontal">
         <Button
             android:id="@+id/btnExit"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:layout_marginEnd="8dp"
-            android:text="Esci dal Gioco"/>
-
+            android:text="@string/torna_al_menu"
+            android:backgroundTint="@color/red" />
         <Button
             android:id="@+id/btnHelp"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:layout_marginStart="8dp"
-            android:text="Aiuto"
-            android:backgroundTint="#FF9800"
-            android:textColor="#FFFFFF"
+            android:text="@string/aiuto"
             android:visibility="gone" />
     </LinearLayout>
-
 </LinearLayout>

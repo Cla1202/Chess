@@ -7,11 +7,16 @@ public class Board {
     private Piece[][] grid;
     private boolean whiteTurn = true;
     private int enPassantColumn = -1;
+    private List<Piece> capturedWhite = new ArrayList<>();
+    private List<Piece> capturedBlack = new ArrayList<>();
 
     public Board() {
         grid = new Piece[8][8];
         setupBoard();
     }
+    
+    public List<Piece> getCapturedWhite() { return capturedWhite; }
+    public List<Piece> getCapturedBlack() { return capturedBlack; }
 
     public Board(Piece[][] customGrid, boolean whiteTurnToStart) {
         this.grid = customGrid;
@@ -24,14 +29,12 @@ public class Board {
     public int getEnPassantColumn() { return enPassantColumn; }
     public void setEnPassantColumn(int col) { this.enPassantColumn = col; }
 
-
     public Piece getPiece(int x, int y) {
         if (x < 0 || x > 7 || y < 0 || y > 7) return null;
         return grid[x][y];
     }
 
     private void setupBoard() {
-        // NERI
         grid[0][0] = new Rook(0, 0, false);
         grid[0][1] = new Knight(0, 1, false);
         grid[0][2] = new Bishop(0, 2, false);
@@ -42,7 +45,6 @@ public class Board {
         grid[0][7] = new Rook(0, 7, false);
         for (int i = 0; i < 8; i++) grid[1][i] = new Pawn(1, i, false);
 
-        // BIANCHI
         for (int i = 0; i < 8; i++) grid[6][i] = new Pawn(6, i, true);
         grid[7][0] = new Rook(7, 0, true);
         grid[7][1] = new Knight(7, 1, true);
@@ -85,7 +87,6 @@ public class Board {
         return isSquareAttacked(kX, kY, !isWhite);
     }
 
-    // --- HAS ANY LEGAL MOVES: controlla se la mossa che vuoi fare è legale (se non porta a scacco)
     public boolean hasAnyLegalMoves(boolean isWhite) {
         for (int startX = 0; startX < 8; startX++) {
             for (int startY = 0; startY < 8; startY++) {
@@ -98,12 +99,9 @@ public class Board {
                                 int oldX = p.getX(), oldY = p.getY();
                                 grid[endX][endY] = p; grid[startX][startY] = null;
                                 p.setX(endX); p.setY(endY);
-
                                 boolean safe = !isKingInCheck(isWhite);
-
                                 grid[startX][startY] = p; grid[endX][endY] = cap;
                                 p.setX(oldX); p.setY(oldY);
-
                                 if (safe) return true;
                             }
                         }
@@ -115,6 +113,10 @@ public class Board {
     }
 
     public boolean movePiece(int startX, int startY, int endX, int endY) {
+        return movePiece(startX, startY, endX, endY, 'q');
+    }
+
+    public boolean movePiece(int startX, int startY, int endX, int endY, char promotionType) {
         Piece p = grid[startX][startY];
         if (p == null || p.isWhite() != whiteTurn) return false;
 
@@ -128,6 +130,11 @@ public class Board {
             grid[endX][endY] = p; grid[startX][startY] = null;
             if (isEP) grid[startX][endY] = null;
             p.setX(endX); p.setY(endY);
+
+            if (captured != null) {
+                if (captured.isWhite()) capturedWhite.add(captured);
+                else capturedBlack.add(captured);
+            }
 
             Piece rook = null;
             int rSX = -1, rEX = -1;
@@ -145,6 +152,10 @@ public class Board {
                 grid[startX][startY] = p; p.setX(oldX); p.setY(oldY);
                 if (isEP) { grid[startX][endY] = captured; grid[endX][endY] = null; }
                 else { grid[endX][endY] = captured; }
+                if (captured != null) {
+                    if (captured.isWhite()) capturedWhite.remove(capturedWhite.size() - 1);
+                    else capturedBlack.remove(capturedBlack.size() - 1);
+                }
                 if (isCastling && rook != null) {
                     grid[startX][rSX] = rook; grid[startX][rEX] = null;
                     rook.setX(startX); rook.setY(rSX);
@@ -155,7 +166,18 @@ public class Board {
             if (p instanceof King) ((King) p).setHasMoved(true);
             if (p instanceof Rook) ((Rook) p).setHasMoved(true);
             if (isCastling && rook instanceof Rook) ((Rook) rook).setHasMoved(true);
-            if (p instanceof Pawn && (endX == 0 || endX == 7)) grid[endX][endY] = new Queen(endX, endY, p.isWhite());
+            
+            // PROMOZIONE
+            if (p instanceof Pawn && (endX == 0 || endX == 7)) {
+                Piece promoted;
+                switch (Character.toLowerCase(promotionType)) {
+                    case 'r': promoted = new Rook(endX, endY, p.isWhite()); break;
+                    case 'n': promoted = new Knight(endX, endY, p.isWhite()); break;
+                    case 'b': promoted = new Bishop(endX, endY, p.isWhite()); break;
+                    default: promoted = new Queen(endX, endY, p.isWhite()); break;
+                }
+                grid[endX][endY] = promoted;
+            }
 
             enPassantColumn = (p instanceof Pawn && Math.abs(endX - startX) == 2) ? endY : -1;
             whiteTurn = !whiteTurn;
@@ -167,70 +189,93 @@ public class Board {
     public boolean isValidMove(int startX, int startY, int endX, int endY) {
         Piece p = grid[startX][startY];
         if (p == null) return false;
-
-        // 1. Controlla se la mossa è valida per le regole del pezzo specifico
-        if (!p.isValidMove(endX, endY, this)) {
-            return false;
-        }
-
-        // 2. Simulazione della mossa per vedere se il Re finisce sotto scacco
+        if (!p.isValidMove(endX, endY, this)) return false;
         Piece captured = grid[endX][endY];
-        int oldX = p.getX();
-        int oldY = p.getY();
-
-        // Muovi temporaneamente
-        grid[endX][endY] = p;
-        grid[startX][startY] = null;
-        p.setX(endX);
-        p.setY(endY);
-
-        // Controlla se il Re è al sicuro
+        int oldX = p.getX(), oldY = p.getY();
+        grid[endX][endY] = p; grid[startX][startY] = null;
+        p.setX(endX); p.setY(endY);
         boolean isSafe = !isKingInCheck(p.isWhite());
-
-        // Torna alla posizione originale (Annulla mossa)
-        grid[startX][startY] = p;
-        grid[endX][endY] = captured;
-        p.setX(oldX);
-        p.setY(oldY);
-
+        grid[startX][startY] = p; grid[endX][endY] = captured;
+        p.setX(oldX); p.setY(oldY);
         return isSafe;
     }
 
     public List<Integer> getLegalMovesForPiece(int row, int col) {
         List<Integer> legalMoves = new ArrayList<>();
-        // Usiamo isValidMove che abbiamo appena creato per scansionare la scacchiera
         for (int targetRow = 0; targetRow < 8; targetRow++) {
             for (int targetCol = 0; targetCol < 8; targetCol++) {
-                if (isValidMove(row, col, targetRow, targetCol)) {
-                    legalMoves.add(targetRow * 8 + targetCol);
-                }
+                if (isValidMove(row, col, targetRow, targetCol)) legalMoves.add(targetRow * 8 + targetCol);
             }
         }
         return legalMoves;
     }
 
+    public String toFen() {
+        StringBuilder fen = new StringBuilder();
+        for (int r = 0; r < 8; r++) {
+            int emptyCount = 0;
+            for (int c = 0; c < 8; c++) {
+                Piece p = grid[r][c];
+                if (p == null) emptyCount++;
+                else {
+                    if (emptyCount > 0) { fen.append(emptyCount); emptyCount = 0; }
+                    char s = getPieceSymbol(p);
+                    fen.append(p.isWhite() ? Character.toUpperCase(s) : s);
+                }
+            }
+            if (emptyCount > 0) fen.append(emptyCount);
+            if (r < 7) fen.append('/');
+        }
+        fen.append(whiteTurn ? " w " : " b ");
+        int castlingStartLen = fen.length();
+        Piece wK = grid[7][4];
+        if (wK instanceof King && !((King) wK).hasMoved()) {
+            if (grid[7][7] instanceof Rook && !((Rook) grid[7][7]).hasMoved()) fen.append('K');
+            if (grid[7][0] instanceof Rook && !((Rook) grid[7][0]).hasMoved()) fen.append('Q');
+        }
+        Piece bK = grid[0][4];
+        if (bK instanceof King && !((King) bK).hasMoved()) {
+            if (grid[0][7] instanceof Rook && !((Rook) grid[0][7]).hasMoved()) fen.append('k');
+            if (grid[0][0] instanceof Rook && !((Rook) grid[0][0]).hasMoved()) fen.append('q');
+        }
+        if (fen.length() == castlingStartLen) fen.append("-");
+        fen.append(" ");
+        if (enPassantColumn != -1) {
+            int r = whiteTurn ? 2 : 5;
+            fen.append((char) ('a' + enPassantColumn)).append(8 - r);
+        } else fen.append("-");
+        fen.append(" 0 1");
+        return fen.toString();
+    }
+
+    private char getPieceSymbol(Piece p) {
+        if (p instanceof Pawn) return 'p';
+        if (p instanceof Knight) return 'n';
+        if (p instanceof Bishop) return 'b';
+        if (p instanceof Rook) return 'r';
+        if (p instanceof Queen) return 'q';
+        if (p instanceof King) return 'k';
+        return ' ';
+    }
+
     public void setupCustomBoard(Piece[][] customSetup, boolean whiteTurnToStart) {
-        // 1. Svuota completamente la scacchiera attuale
         for (int r = 0; r < 8; r++) {
             for (int c = 0; c < 8; c++) {
                 this.grid[r][c] = null;
             }
         }
-
-        // 2. Copia i pezzi dal setup del quiz alla griglia di gioco
         for (int r = 0; r < 8; r++) {
             for (int c = 0; c < 8; c++) {
                 if (customSetup[r][c] != null) {
                     this.grid[r][c] = customSetup[r][c];
-                    // Aggiorna le coordinate interne del pezzo in modo che corrispondano alla griglia
                     this.grid[r][c].setX(r);
                     this.grid[r][c].setY(c);
                 }
             }
         }
-
-        // 3. Imposta il turno iniziale del livello e resetta lo stato
         this.whiteTurn = whiteTurnToStart;
         this.enPassantColumn = -1;
+        this.capturedWhite.clear();
+        this.capturedBlack.clear();
     }
 }

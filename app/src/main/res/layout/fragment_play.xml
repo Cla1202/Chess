@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/grigio_scuro">
@@ -16,7 +17,6 @@
             android:layout_height="120dp"
             android:src="@drawable/ic_play"
             android:layout_marginBottom="24dp"
-            xmlns:app="http://schemas.android.com/apk/res-auto"
             app:tint="@color/gold" />
 
         <TextView
@@ -28,15 +28,32 @@
             android:textStyle="bold"
             android:layout_marginBottom="32dp"/>
 
-        <Button
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/btnStartGame"
-            android:layout_width="200dp"
+            android:layout_width="220dp"
             android:layout_height="60dp"
             android:text="@string/gioca_ora"
-            android:textSize="18sp"
+            android:textSize="16sp"
+            android:textAllCaps="false"
             android:backgroundTint="@color/green"
-            android:textColor="@color/white"/>
+            android:textColor="@color/white"
+            app:icon="@drawable/ic_friend"
+            app:iconGravity="textStart"
+            app:iconTint="@color/white"
+            android:layout_marginBottom="16dp"/>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnPlayBot"
+            android:layout_width="220dp"
+            android:layout_height="60dp"
+            android:text="@string/gioca_con_bot"
+            android:textSize="16sp"
+            android:textAllCaps="false"
+            android:textColor="@color/white"
+            app:icon="@drawable/ic_bot"
+            app:iconGravity="textStart"
+            app:iconTint="@color/white"
+            android:backgroundTint="@color/arancione" />
 
     </LinearLayout>
-
 </RelativeLayout>

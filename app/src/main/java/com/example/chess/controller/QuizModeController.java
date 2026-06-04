@@ -19,9 +19,7 @@ public class QuizModeController implements GameModeController {
     private Board board;
     private boolean isHintActive = false;
 
-    public QuizModeController(QuizLevel quizLevel) {
-        this.quizLevel = quizLevel;
-    }
+    public QuizModeController(QuizLevel quizLevel) { this.quizLevel = quizLevel; }
 
     @Override
     public void initializeGame(Board board) {
@@ -32,65 +30,41 @@ public class QuizModeController implements GameModeController {
     @Override
     public void handleSquareClick(int position, GameCallback callback) {
         if (isComputerThinking) return;
-
-        int row = position / 8;
-        int col = position % 8;
-
+        int row = position / 8, col = position % 8;
         if (selectedPosition == null) {
             Piece p = board.getPiece(row, col);
-            if (p != null && p.isWhite() == board.isWhiteTurn()) {
-                selectedPosition = position;
-                callback.refreshUI();
-            }
+            if (p != null && p.isWhite() == board.isWhiteTurn()) { selectedPosition = position; callback.refreshUI(); }
         } else {
-            Piece clickedPiece = board.getPiece(row, col);
-            if (clickedPiece != null && clickedPiece.isWhite() == board.isWhiteTurn()) {
-                selectedPosition = position;
-                callback.refreshUI();
-                return;
-            }
-            int startRow = selectedPosition / 8;
-            int startCol = selectedPosition % 8;
-            MoveRequest expectedMove = quizLevel.getSolutionMoves().get(currentMoveIndex);
-
-            //Checking if it's the right move
-            if (startRow == expectedMove.startRow && startCol == expectedMove.startCol &&
-                    row == expectedMove.endRow && col == expectedMove.endCol) {
-
+            Piece clicked = board.getPiece(row, col);
+            if (clicked != null && clicked.isWhite() == board.isWhiteTurn()) { selectedPosition = position; callback.refreshUI(); return; }
+            int sR = selectedPosition / 8, sC = selectedPosition % 8;
+            MoveRequest expected = quizLevel.getSolutionMoves().get(currentMoveIndex);
+            if (sR == expected.startRow && sC == expected.startCol && row == expected.endRow && col == expected.endCol) {
                 callback.stopTimerView();
                 isHintActive = false;
-
-                Piece movingPiece = board.getPiece(startRow, startCol);
-                board.movePiece(startRow, startCol, row, col);
-
-                int prevSelected = selectedPosition;
-                selectedPosition = null;
-
-                callback.animatePieceMove(prevSelected, position, movingPiece, () -> {
+                Piece moving = board.getPiece(sR, sC);
+                board.movePiece(sR, sC, row, col);
+                int prev = selectedPosition; selectedPosition = null;
+                callback.animatePieceMove(prev, position, moving, () -> {
                     currentMoveIndex++;
+                    callback.updateCapturedPieces();
                     if (currentMoveIndex < quizLevel.getSolutionMoves().size()) {
                         callback.updateStatusText("Ottimo! Risposta del computer...", Color.WHITE);
                         playComputerMove(callback);
                     } else {
                         callback.updateStatusText("Livello Superato!", Color.GREEN);
                         callback.showToast("Progresso salvato!");
-                        // Qui andrebbe inserito il salvataggio su DB Room asincrono se necessario
                         callback.finishGame();
                     }
                 });
             } else {
                 errorCount++;
-                int remainingTries = quizLevel.getMaxAttempts() - errorCount;
+                int rem = quizLevel.getMaxAttempts() - errorCount;
                 isHintActive = false;
-                if (remainingTries <= 0) {
-                    callback.stopTimerView();
-                    callback.updateStatusText("HAI PERSO!", Color.RED);
-                    callback.finishGame();
-                } else {
-                    callback.updateStatusText("Mossa errata! Vite: " + remainingTries, Color.RED);
-                }
-                selectedPosition = null;
-                callback.refreshUI();
+                if (rem <= 0) {
+                    callback.stopTimerView(); callback.updateStatusText("HAI PERSO!", Color.RED); callback.finishGame();
+                } else callback.updateStatusText("Mossa errata! Vite: " + rem, Color.RED);
+                selectedPosition = null; callback.refreshUI();
             }
         }
     }
@@ -98,15 +72,12 @@ public class QuizModeController implements GameModeController {
     private void playComputerMove(GameCallback callback) {
         isComputerThinking = true;
         new Handler(Looper.getMainLooper()).postDelayed(() -> {
-            MoveRequest computerMove = quizLevel.getSolutionMoves().get(currentMoveIndex);
-            int startPos = computerMove.startRow * 8 + computerMove.startCol;
-            int endPos = computerMove.endRow * 8 + computerMove.endCol;
-            Piece movingPiece = board.getPiece(computerMove.startRow, computerMove.startCol);
-
-            board.movePiece(computerMove.startRow, computerMove.startCol, computerMove.endRow, computerMove.endCol);
-
-            callback.animatePieceMove(startPos, endPos, movingPiece, () -> {
+            MoveRequest move = quizLevel.getSolutionMoves().get(currentMoveIndex);
+            Piece p = board.getPiece(move.startRow, move.startCol);
+            board.movePiece(move.startRow, move.startCol, move.endRow, move.endCol);
+            callback.animatePieceMove(move.startRow * 8 + move.startCol, move.endRow * 8 + move.endCol, p, () -> {
                 currentMoveIndex++;
+                callback.updateCapturedPieces();
                 callback.updateStatusText("Tocca a te!", Color.WHITE);
                 isComputerThinking = false;
                 callback.refreshUI();
@@ -115,53 +86,24 @@ public class QuizModeController implements GameModeController {
         }, 1000);
     }
 
-    @Override
-    public void handleTimeOut(GameCallback callback) {
+    @Override public void handleTimeOut(GameCallback callback) {
         callback.updateStatusText("TEMPO SCADUTO!", Color.RED);
-        callback.showToast("Sei stato troppo lento!");
         new Handler(Looper.getMainLooper()).postDelayed(callback::finishGame, 2000);
     }
-
-    @Override
-    public void onPause(Board board) {}
-
+    @Override public void onPause(Board board) {}
     public Integer getSelectedPosition() { return selectedPosition; }
-    public void clearSelection() { selectedPosition = null; }
-    // METODO UTILE PER L'ADAPTER: Permette a GameActivity di sapere se deve filtrare le mosse legali
     public boolean isHintActive() { return isHintActive; }
-
-    // Ritorna solo la casella finale esatta del quiz
     public List<Integer> getHintPositions() {
-        List<Integer> hintDest = new ArrayList<>();
-        if (currentMoveIndex < quizLevel.getSolutionMoves().size()) {
-            MoveRequest expectedMove = quizLevel.getSolutionMoves().get(currentMoveIndex);
-            hintDest.add(expectedMove.endRow * 8 + expectedMove.endCol);
-        }
-        return hintDest;
+        List<Integer> dests = new ArrayList<>();
+        if (currentMoveIndex < quizLevel.getSolutionMoves().size()) dests.add(quizLevel.getSolutionMoves().get(currentMoveIndex).endRow * 8 + quizLevel.getSolutionMoves().get(currentMoveIndex).endCol);
+        return dests;
     }
     public void showHint(GameCallback callback) {
-        if (isComputerThinking || currentMoveIndex >= quizLevel.getSolutionMoves().size()) {
-            return;
-        }
-
-        MoveRequest expectedMove = quizLevel.getSolutionMoves().get(currentMoveIndex);
-        int startPosition = expectedMove.startRow * 8 + expectedMove.startCol;
-
-        selectedPosition = startPosition;
+        if (isComputerThinking || currentMoveIndex >= quizLevel.getSolutionMoves().size()) return;
+        MoveRequest m = quizLevel.getSolutionMoves().get(currentMoveIndex);
+        selectedPosition = m.startRow * 8 + m.startCol;
         isHintActive = true;
-
-        int endPosition = expectedMove.endRow * 8 + expectedMove.endCol;
-        ArrayList<Integer> exactDest = new ArrayList<>();
-        exactDest.add(endPosition);
-
-        callback.showToast("Suggerimento attivato! Guarda la scacchiera.");
-
-        Piece p = board.getPiece(expectedMove.startRow, expectedMove.startCol);
-        if (p != null) {
-            String pieceName = p.getClass().getSimpleName().toLowerCase();
-            callback.updateStatusText("Suggerimento: Muovi " + pieceName, Color.parseColor("#FF9800"));
-        }
-
+        callback.showToast("Suggerimento attivato!");
         callback.refreshUI();
     }
 }

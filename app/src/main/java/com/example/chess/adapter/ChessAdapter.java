@@ -1,130 +1,86 @@
 package com.example.chess.adapter;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.graphics.Color;
-import android.graphics.Typeface;
-import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AbsListView;
 import android.widget.BaseAdapter;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.GridView;
-
+import com.example.chess.R;
 import com.example.chess.model.Board;
 import com.example.chess.model.Piece;
-
+import com.example.chess.util.Constants;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.example.chess.R;
-import com.example.chess.util.Constants;
-
 public class ChessAdapter extends BaseAdapter {
-
     private Context context;
     private Board board;
-    private Integer selectedPosition = null;
-    private List<Integer> hintPositions = new ArrayList<>();
+    private Integer selected = null;
+    private List<Integer> hints = new ArrayList<>();
+    private SharedPreferences prefs;
 
     public ChessAdapter(Context context, Board board) {
-        this.context = context;
-        this.board = board;
+        this.context = context; this.board = board;
+        this.prefs = context.getSharedPreferences("ChessSettings", Context.MODE_PRIVATE);
     }
+    @Override public int getCount() { return 64; }
+    @Override public Object getItem(int p) { return null; }
+    @Override public long getItemId(int p) { return p; }
+    public void setHints(List<Integer> h) { this.hints = h; notifyDataSetChanged(); }
+    public void setSelectedPosition(Integer p) { this.selected = p; }
 
     @Override
-    public int getCount() { return 64; }
-
-    @Override
-    public Object getItem(int position) { return null; }
-
-    @Override
-    public long getItemId(int position) { return position; }
-
-    public void setHints(List<Integer> positions) {
-        this.hintPositions = positions;
-        notifyDataSetChanged();
-    }
-
-    public void setSelectedPosition(Integer position) {
-        this.selectedPosition = position;
-    }
-
-
-    @Override
-    public View getView(int position, View convertView, ViewGroup parent) {
-        ViewHolder holder;
-
+    public View getView(int p, View convertView, ViewGroup parent) {
+        ViewHolder h;
         if (convertView == null) {
             convertView = LayoutInflater.from(context).inflate(R.layout.item_chess_square, parent, false);
+            int s = parent.getWidth() / 8;
+            if (s == 0) s = context.getResources().getDisplayMetrics().widthPixels / 8;
+            convertView.setLayoutParams(new GridView.LayoutParams(s, s));
+            h = new ViewHolder(); h.container = convertView.findViewById(R.id.squareContainer);
+            h.piece = convertView.findViewById(R.id.pieceImage); h.dot = convertView.findViewById(R.id.hintDot);
+            h.rank = convertView.findViewById(R.id.rankText); h.file = convertView.findViewById(R.id.fileText);
+            convertView.setTag(h);
+        } else h = (ViewHolder) convertView.getTag();
 
-            // Calcolo dimensione quadrata
-            int size = parent.getWidth() / 8;
-            if (size == 0) size = context.getResources().getDisplayMetrics().widthPixels / 8;
-            convertView.setLayoutParams(new GridView.LayoutParams(size, size));
-
-            holder = new ViewHolder();
-            holder.container = convertView.findViewById(R.id.squareContainer);
-            holder.pieceImage = convertView.findViewById(R.id.pieceImage);
-            holder.hintDot = convertView.findViewById(R.id.hintDot);
-            holder.rankText = convertView.findViewById(R.id.rankText); // Aggiungi questi nel tuo XML
-            holder.fileText = convertView.findViewById(R.id.fileText);
-            convertView.setTag(holder);
-        } else {
-            holder = (ViewHolder) convertView.getTag();
+        int row = p / 8, col = p % 8;
+        String theme = prefs.getString("board_theme", "Verde Classico");
+        String l = Constants.THEME_CLASSIC_LIGHT, d = Constants.THEME_CLASSIC_DARK;
+        switch(theme) {
+            case "Legno Scuro": l = Constants.THEME_WOOD_LIGHT; d = Constants.THEME_WOOD_DARK; break;
+            case "Blu Oceano": l = Constants.THEME_OCEAN_LIGHT; d = Constants.THEME_OCEAN_DARK; break;
+            case "Grigio Moderno": l = Constants.THEME_GREY_LIGHT; d = Constants.THEME_GREY_DARK; break;
         }
+        boolean isL = (row + col) % 2 == 0;
+        h.container.setBackgroundColor(Color.parseColor(isL ? l : d));
+        h.dot.setVisibility(hints.contains(p) ? View.VISIBLE : View.GONE);
+        if (selected != null && selected == p) h.container.setBackgroundColor(Color.parseColor(Constants.STEEL_BLUE));
 
-        int row = position / 8;
-        int col = position % 8;
+        h.rank.setVisibility(col == 0 ? View.VISIBLE : View.GONE);
+        if (col == 0) { h.rank.setText("" + (8 - row)); h.rank.setTextColor(Color.parseColor(isL ? d : l)); }
+        h.file.setVisibility(row == 7 ? View.VISIBLE : View.GONE);
+        if (row == 7) { h.file.setText("" + (char)('a' + col)); h.file.setTextColor(Color.parseColor(isL ? d : l)); }
 
-        // --- 1. COLORI BASE E COORDINATE ---
-        boolean isLight = (row + col) % 2 == 0;
-        int baseColor = Color.parseColor(isLight ? Constants.COLOR_SQUARE_LIGHT: Constants.COLOR_DARK);
-        int contrastColor = Color.parseColor(isLight ? Constants.COLOR_DARK : Constants.COLOR_SQUARE_LIGHT);
-
-        holder.container.setBackgroundColor(baseColor);
-
-        // --- 2. GESTIONE SELEZIONE E PALLINI (HINTS) ---
-        // Il pallino è un elemento separato, non cambia lo sfondo!
-        holder.hintDot.setVisibility(hintPositions != null && hintPositions.contains(position) ? View.VISIBLE : View.GONE);
-
-        // Solo la selezione cambia lo sfondo
-        if (selectedPosition != null && selectedPosition == position) {
-            holder.container.setBackgroundColor(Color.parseColor(Constants.STEEL_BLUE));
-        }
-
-        // --- 3. COORDINATE (Numeri e Lettere) ---
-        holder.rankText.setVisibility(col == 0 ? View.VISIBLE : View.GONE);
-        if (col == 0) {
-            holder.rankText.setText(String.valueOf(8 - row));
-            holder.rankText.setTextColor(contrastColor);
-        }
-
-        holder.fileText.setVisibility(row == 7 ? View.VISIBLE : View.GONE);
-        if (row == 7) {
-            holder.fileText.setText(String.valueOf((char) ('a' + col)));
-            holder.fileText.setTextColor(contrastColor);
-        }
-
-        // --- 4. PEZZI ---
         Piece piece = board.getPiece(row, col);
-        holder.pieceImage.setImageResource(piece != null ? getResIdForPiece(piece) : 0);
-
+        if (piece != null) h.piece.setImageResource(getResId(piece)); else h.piece.setImageResource(0);
         return convertView;
     }
 
-    private static class ViewHolder {
-        FrameLayout container;
-        ImageView pieceImage;
-        View hintDot;
-        TextView rankText; // Per i numeri 1-8
-        TextView fileText; // Per le lettere a-h
+    private int getResId(Piece piece) {
+        String style = prefs.getString("piece_style", "Classico");
+        String pref = "";
+        switch(style) { case "Neo": pref="neo_"; break; case "Moderno": pref="mod_"; break; case "Alfa": pref="alpha_"; break; }
+        String name = pref + (piece.isWhite()?"w_":"b_") + piece.getClass().getSimpleName().toLowerCase();
+        int id = context.getResources().getIdentifier(name, "drawable", context.getPackageName());
+        if (id == 0) id = context.getResources().getIdentifier((piece.isWhite()?"w_":"b_") + piece.getClass().getSimpleName().toLowerCase(), "drawable", context.getPackageName());
+        return id;
     }
 
-    private int getResIdForPiece(Piece piece) {
-        return com.example.chess.util.ChessUtil.getResIdForPiece(context, piece);
-    }
+    private static class ViewHolder { FrameLayout container; ImageView piece; View dot; TextView rank, file; }
 }

@@ -47,10 +47,11 @@
 
         <ImageView
             android:id="@+id/lockIcon"
-            android:layout_width="50dp"
-            android:layout_height="50dp"
-            android:src="@drawable/ic_lock"
-            />
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:src="@drawable/ic_lock_modern"
+            android:layout_margin="5dp"
+            android:contentDescription="@string/livello_bloccato" />
 
     </LinearLayout>
 

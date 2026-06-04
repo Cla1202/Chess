@@ -39,6 +39,7 @@ public class LoginActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        com.example.chess.util.ChessUtil.applyLocale(this);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
 

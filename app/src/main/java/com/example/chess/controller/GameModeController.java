@@ -20,5 +20,13 @@ public interface GameModeController {
         void finishGame();
         void startTimerView();
         void stopTimerView();
+        void updateCapturedPieces();
+        void showPromotionDialog(boolean isWhite, PromotionListener listener);
+        String getStr(int resId);
+        String getStr(int resId, Object... args);
+    }
+
+    interface PromotionListener {
+        void onPieceSelected(char type);
     }
 }

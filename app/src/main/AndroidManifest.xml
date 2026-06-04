@@ -16,10 +16,6 @@
             android:exported="false"
             android:screenOrientation="fullSensor" />
         <activity
-            android:name=".ui.LevelSelectionActivity"
-            android:exported="false"
-            android:screenOrientation="fullSensor" />
-        <activity
             android:name=".ui.RegisterActivity"
             android:exported="false"
             android:screenOrientation="fullSensor" />

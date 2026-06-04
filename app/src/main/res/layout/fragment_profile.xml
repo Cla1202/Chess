@@ -52,7 +52,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="LIVELLO ATTUALE"
+                android:text="@string/livello_attuale"
                 android:textColor="#CCCCCC"
                 android:textSize="14sp"
                 android:letterSpacing="0.1" />
@@ -89,7 +89,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="QUIZ RISOLTI"
+                    android:text="@string/quiz_risolti"
                     android:textColor="#CCCCCC"
                     android:textSize="12sp" />
 
@@ -117,7 +117,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="PRECISIONE"
+                    android:text="@string/precisione"
                     android:textColor="#CCCCCC"
                     android:textSize="12sp" />
 
@@ -144,7 +144,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="SERIE ESATTE"
+                    android:text="@string/serie_esatte"
                     android:textColor="#CCCCCC"
                     android:textSize="12sp" />
 
@@ -171,7 +171,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="TEMPO MEDIO"
+                    android:text="@string/tempo_medio"
                     android:textColor="#CCCCCC"
                     android:textSize="12sp" />
 

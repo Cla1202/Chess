@@ -247,4 +247,40 @@ public class GameActivity extends AppCompatActivity implements GameModeControlle
     @Override public String getStr(int resId, Object... args) { return getString(resId, args); }
 
     @Override protected void onPause() { super.onPause(); stopTimerView(); controller.onPause(viewModel.getBoard()); }
+    // ==========================================
+    // SALVATAGGIO DEI PROGRESSI DEL QUIZ
+    // ==========================================
+    // ==========================================
+    // SALVATAGGIO DEI PROGRESSI DEL QUIZ NEL DATABASE ROOM
+    // ==========================================
+    @Override
+    public void onLevelCompleted(String levelIdCompleted) {
+        // 1. Aumentiamo il contatore dei quiz per il profilo (questo va bene nelle SharedPreferences)
+        android.content.SharedPreferences prefs = getSharedPreferences("ChessAppPrefs", MODE_PRIVATE);
+        int quizGiaFatti = prefs.getInt("quiz_completati", 0);
+        prefs.edit().putInt("quiz_completati", quizGiaFatti + 1).apply();
+
+        // 2. SBLOCCO IL LIVELLO IN ROOM DATABASE (IN BACKGROUND!)
+        new Thread(() -> {
+            try {
+                // Estraiamo il numero dal titolo (Es. da "Livello 1" estraiamo l'intero 1)
+                // Se il tuo id è formattato diversamente, fammelo sapere
+                String numericPart = levelIdCompleted.replaceAll("[^0-9]", "");
+                int levelNumber = numericPart.isEmpty() ? 1 : Integer.parseInt(numericPart);
+
+                // Recuperiamo l'utente loggato per associargli il salvataggio
+                com.google.firebase.auth.FirebaseUser user = com.google.firebase.auth.FirebaseAuth.getInstance().getCurrentUser();
+                String userId = (user != null) ? user.getUid() : "guest_user";
+
+                // Creiamo l'oggetto da salvare nel DB: Livello completato con 0 errori registrati
+                com.example.chess.database.LevelProgress progress = new com.example.chess.database.LevelProgress(levelNumber, userId, true, 0);
+
+                // Eseguiamo l'inserimento nel DB
+                com.example.chess.database.ChessDatabase.getInstance(getApplicationContext()).levelDao().insertProgress(progress);
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }).start();
+    }
 }

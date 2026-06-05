@@ -24,6 +24,8 @@ public interface GameModeController {
         void showPromotionDialog(boolean isWhite, PromotionListener listener);
         String getStr(int resId);
         String getStr(int resId, Object... args);
+        // NUOVA RIGA: Per comunicare all'Activity che il livello è finito
+        void onLevelCompleted(String levelId);
     }
 
     interface PromotionListener {

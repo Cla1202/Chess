@@ -23,4 +23,6 @@ public class QuizLevel implements Serializable {
     public List<MoveRequest> getSolutionMoves() { return solutionMoves; }
     public boolean isWhiteTurnToStart() { return whiteTurnToStart; }
     public int getMaxAttempts() { return maxAttempts; }
+
+
 }

@@ -45,15 +45,24 @@ public class QuizModeController implements GameModeController {
                 Piece moving = board.getPiece(sR, sC);
                 board.movePiece(sR, sC, row, col);
                 int prev = selectedPosition; selectedPosition = null;
+
                 callback.animatePieceMove(prev, position, moving, () -> {
                     currentMoveIndex++;
                     callback.updateCapturedPieces();
+
+                    // 1. FIX "PEZZO FANTASMA": Aggiorna la griglia per far apparire il pezzo vero!
+                    callback.refreshUI();
+
                     if (currentMoveIndex < quizLevel.getSolutionMoves().size()) {
                         callback.updateStatusText("Ottimo! Risposta del computer...", Color.WHITE);
                         playComputerMove(callback);
                     } else {
                         callback.updateStatusText("Livello Superato!", Color.GREEN);
                         callback.showToast("Progresso salvato!");
+
+                        // 2. FIX "LIVELLO BLOCCATO": Segnala all'Activity di salvare i dati
+                        callback.onLevelCompleted(quizLevel.getTitle());
+
                         callback.finishGame();
                     }
                 });
@@ -90,14 +99,17 @@ public class QuizModeController implements GameModeController {
         callback.updateStatusText("TEMPO SCADUTO!", Color.RED);
         new Handler(Looper.getMainLooper()).postDelayed(callback::finishGame, 2000);
     }
+
     @Override public void onPause(Board board) {}
     public Integer getSelectedPosition() { return selectedPosition; }
     public boolean isHintActive() { return isHintActive; }
+
     public List<Integer> getHintPositions() {
         List<Integer> dests = new ArrayList<>();
         if (currentMoveIndex < quizLevel.getSolutionMoves().size()) dests.add(quizLevel.getSolutionMoves().get(currentMoveIndex).endRow * 8 + quizLevel.getSolutionMoves().get(currentMoveIndex).endCol);
         return dests;
     }
+
     public void showHint(GameCallback callback) {
         if (isComputerThinking || currentMoveIndex >= quizLevel.getSolutionMoves().size()) return;
         MoveRequest m = quizLevel.getSolutionMoves().get(currentMoveIndex);

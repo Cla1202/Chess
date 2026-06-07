@@ -4,13 +4,15 @@ import java.io.Serializable;
 import java.util.List;
 
 public class QuizLevel implements Serializable {
+    private int id;
     private String title;
     private Piece[][] initialBoardSetup;
     private List<MoveRequest> solutionMoves;
     private boolean whiteTurnToStart;
     private int maxAttempts;
 
-    public QuizLevel(String title, Piece[][] initialBoardSetup, boolean whiteTurnToStart, List<MoveRequest> solutionMoves, int maxAttempts) {
+    public QuizLevel(int id, String title, Piece[][] initialBoardSetup, boolean whiteTurnToStart, List<MoveRequest> solutionMoves, int maxAttempts) {
+        this.id = id;
         this.title = title;
         this.initialBoardSetup = initialBoardSetup;
         this.whiteTurnToStart = whiteTurnToStart;
@@ -18,6 +20,7 @@ public class QuizLevel implements Serializable {
         this.maxAttempts = maxAttempts;
     }
 
+    public int getId() { return id; }
     public String getTitle() { return title; }
     public Piece[][] getInitialBoardSetup() { return initialBoardSetup; }
     public List<MoveRequest> getSolutionMoves() { return solutionMoves; }

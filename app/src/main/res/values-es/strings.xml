@@ -67,6 +67,7 @@
     <string name="preferenze">PREFERENCIAS</string>
     <string name="conferma_mossa">Confirmación de Movimiento</string>
     <string name="vibrazione">Vibración</string>
+    <string name="attiva_timer">Activar Temporizador de Quiz</string>
     <string name="reset_progressi">Restablecer Progreso del Quiz</string>
     <string name="lingua">Idioma</string>
     <string name="lingua_italiano">Italiano</string>

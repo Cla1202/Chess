@@ -17,20 +17,14 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.lifecycle.ViewModelProvider;
 import com.example.chess.R;
 import com.example.chess.adapter.ChessAdapter;
-import com.example.chess.controller.BotGameController;
-import com.example.chess.controller.GameModeController;
-import com.example.chess.controller.LocalTwoPlayerController;
-import com.example.chess.controller.QuizModeController;
 import com.example.chess.model.Board;
 import com.example.chess.model.Piece;
 import com.example.chess.model.QuizLevel;
 import com.example.chess.ui.viewmodel.GameViewModel;
 import com.example.chess.util.ChessUtil;
-import com.example.chess.util.MoveCalculator;
-import java.util.ArrayList;
 import java.util.List;
 
-public class GameActivity extends AppCompatActivity implements GameModeController.GameCallback {
+public class GameActivity extends AppCompatActivity {
     public static final String EXTRA_MODE = "EXTRA_MODE";
     public static final String MODE_LOCAL_PVP = "LOCAL_PVP";
     public static final String MODE_QUIZ = "QUIZ";
@@ -44,7 +38,6 @@ public class GameActivity extends AppCompatActivity implements GameModeControlle
     private LinearLayout capturedWhiteContainer, capturedBlackContainer;
     private CountDownTimer moveTimer;
     private final long TIME_LIMIT_MS = 30000;
-    private GameModeController controller;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -61,71 +54,93 @@ public class GameActivity extends AppCompatActivity implements GameModeControlle
         capturedBlackContainer = findViewById(R.id.capturedBlackContainer);
 
         viewModel = new ViewModelProvider(this).get(GameViewModel.class);
-        Board board = viewModel.getBoard();
 
         String mode = getIntent().getStringExtra(EXTRA_MODE);
         if (mode == null) mode = MODE_LOCAL_PVP;
+        QuizLevel level = (QuizLevel) getIntent().getSerializableExtra("QUIZ_LEVEL_OBJECT");
 
-        switch (mode) {
-            case MODE_QUIZ:
-                QuizLevel level = (QuizLevel) getIntent().getSerializableExtra("QUIZ_LEVEL_OBJECT");
-                controller = new QuizModeController(level);
-                if (levelTitleText != null) levelTitleText.setText(level.getTitle());
-                break;
-            case MODE_BOT:
-                controller = new BotGameController();
-                if (levelTitleText != null) levelTitleText.setVisibility(View.GONE);
-                View botTimerContainer = findViewById(R.id.timerContainer);
-                if (botTimerContainer != null) botTimerContainer.setVisibility(View.GONE);
-                break;
-            default:
-                controller = new LocalTwoPlayerController();
-                if (levelTitleText != null) levelTitleText.setVisibility(View.GONE);
-                View pvpTimerContainer = findViewById(R.id.timerContainer);
-                if (pvpTimerContainer != null) pvpTimerContainer.setVisibility(View.GONE);
-                break;
+        viewModel.initGame(mode, level);
+
+        if (MODE_QUIZ.equals(mode) && level != null) {
+            if (levelTitleText != null) levelTitleText.setText(level.getTitle());
+        } else {
+            if (levelTitleText != null) levelTitleText.setVisibility(View.GONE);
+            View timerContainer = findViewById(R.id.timerContainer);
+            if (timerContainer != null) timerContainer.setVisibility(View.GONE);
         }
 
         findViewById(R.id.btnExit).setOnClickListener(v -> finish());
         Button btnHelp = findViewById(R.id.btnHelp);
         if (btnHelp != null && MODE_QUIZ.equals(mode)) {
             btnHelp.setVisibility(View.VISIBLE);
-            btnHelp.setOnClickListener(v -> { if(controller instanceof QuizModeController) ((QuizModeController)controller).showHint(this); });
+            btnHelp.setOnClickListener(v -> viewModel.showQuizHint());
         }
 
-        controller.initializeGame(board);
-        adapter = new ChessAdapter(this, board);
+        adapter = new ChessAdapter(this, viewModel.getBoard());
         gridView.setAdapter(adapter);
-        gridView.setOnItemClickListener((p, v, pos, id) -> controller.handleSquareClick(pos, this));
+        gridView.setOnItemClickListener((p, v, pos, id) -> viewModel.handleSquareClick(pos));
 
+        observeViewModel();
         updateCapturedPieces();
-        refreshUI();
     }
 
-    @Override
-    public void refreshUI() {
-        Integer sel = null;
-        if (controller instanceof LocalTwoPlayerController) sel = ((LocalTwoPlayerController)controller).getSelectedPosition();
-        else if (controller instanceof QuizModeController) sel = ((QuizModeController)controller).getSelectedPosition();
-        else if (controller instanceof BotGameController) sel = ((BotGameController)controller).getSelectedPosition();
-        
-        adapter.setSelectedPosition(sel);
-        if (sel != null) {
-            if (controller instanceof QuizModeController && ((QuizModeController)controller).isHintActive()) {
-                adapter.setHints(((QuizModeController)controller).getHintPositions());
-            } else {
-                adapter.setHints(viewModel.getBoard().getLegalMovesForPiece(sel/8, sel%8));
+    private void observeViewModel() {
+        viewModel.getSelectedPosition().observe(this, sel -> {
+            adapter.setSelectedPosition(sel);
+            adapter.notifyDataSetChanged();
+        });
+
+        viewModel.getHints().observe(this, hints -> {
+            adapter.setHints(hints);
+            adapter.notifyDataSetChanged();
+        });
+
+        viewModel.getStatus().observe(this, statusInfo -> {
+            if (statusInfo != null) {
+                statusText.setText(statusInfo.text);
+                statusText.setTextColor(statusInfo.color);
             }
-        } else adapter.setHints(new ArrayList<>());
-        adapter.notifyDataSetChanged();
+        });
+
+        viewModel.getIsThinking().observe(this, thinking -> {
+            gridView.setEnabled(!thinking);
+        });
+
+        viewModel.getGameEvent().observe(this, event -> {
+            if (event == null) return;
+            switch (event.type) {
+                case REFRESH_UI:
+                    adapter.notifyDataSetChanged();
+                    break;
+                case TOAST:
+                    Toast.makeText(this, event.data, Toast.LENGTH_SHORT).show();
+                    break;
+                case FINISH:
+                    gridView.setEnabled(false);
+                    break;
+                case START_TIMER:
+                    startTimerView();
+                    break;
+                case STOP_TIMER:
+                    stopTimerView();
+                    break;
+                case UPDATE_CAPTURED:
+                    updateCapturedPieces();
+                    break;
+                case ANIMATE_MOVE:
+                    animatePieceMove(event.startPos, event.endPos, event.piece, event.onComplete);
+                    break;
+                case SHOW_PROMOTION:
+                    showPromotionDialog(event.isWhite, event.listener);
+                    break;
+                case LEVEL_COMPLETED:
+                    handleLevelCompleted(event.data);
+                    break;
+            }
+        });
     }
 
-    @Override public void showToast(String m) { Toast.makeText(this, m, Toast.LENGTH_SHORT).show(); }
-    @Override public void updateStatusText(String t, int c) { statusText.setText(t); statusText.setTextColor(c); }
-    @Override public void finishGame() { gridView.setEnabled(false); }
-
-    @Override
-    public void startTimerView() {
+    private void startTimerView() {
         if (!MODE_QUIZ.equals(getIntent().getStringExtra(EXTRA_MODE))) return;
         if (moveTimer != null) moveTimer.cancel();
         moveTimer = new CountDownTimer(TIME_LIMIT_MS, 50) {
@@ -133,14 +148,14 @@ public class GameActivity extends AppCompatActivity implements GameModeControlle
                 timerBar.setProgress((int) ms);
                 timerText.setText(String.format("00:%02d", ms/1000));
             }
-            @Override public void onFinish() { controller.handleTimeOut(GameActivity.this); }
+            @Override public void onFinish() { viewModel.handleTimeOut(); }
         }.start();
     }
 
-    @Override public void stopTimerView() { if (moveTimer != null) moveTimer.cancel(); }
+    private void stopTimerView() { if (moveTimer != null) moveTimer.cancel(); }
 
-    @Override
-    public void updateCapturedPieces() {
+    private void updateCapturedPieces() {
+        if (capturedWhiteContainer == null || capturedBlackContainer == null) return;
         capturedWhiteContainer.removeAllViews();
         capturedBlackContainer.removeAllViews();
         Board b = viewModel.getBoard();
@@ -178,12 +193,14 @@ public class GameActivity extends AppCompatActivity implements GameModeControlle
         }
     }
 
-    @Override
-    public void animatePieceMove(int s, int e, Piece piece, Runnable onComplete) {
+    private void animatePieceMove(int s, int e, Piece piece, Runnable onComplete) {
         FrameLayout container = findViewById(R.id.boardContainer);
         View sV = gridView.getChildAt(s - gridView.getFirstVisiblePosition());
         View eV = gridView.getChildAt(e - gridView.getFirstVisiblePosition());
-        if (sV == null || eV == null) { onComplete.run(); return; }
+        if (sV == null || eV == null) { 
+            if (onComplete != null) onComplete.run(); 
+            return; 
+        }
         ImageView ghost = new ImageView(this);
         ghost.setImageResource(getResIdForPiece(piece));
         ghost.setLayoutParams(new FrameLayout.LayoutParams(sV.getWidth(), sV.getHeight()));
@@ -192,7 +209,9 @@ public class GameActivity extends AppCompatActivity implements GameModeControlle
         if (sV instanceof ViewGroup) ((ImageView)((ViewGroup)sV).getChildAt(0)).setImageResource(0);
         gridView.setEnabled(false);
         ghost.animate().x(eV.getX() + gridView.getX()).y(eV.getY() + gridView.getY()).setDuration(300).withEndAction(() -> {
-            container.removeView(ghost); gridView.setEnabled(true); onComplete.run();
+            container.removeView(ghost); 
+            gridView.setEnabled(true); 
+            if (onComplete != null) onComplete.run();
         }).start();
     }
 
@@ -206,13 +225,12 @@ public class GameActivity extends AppCompatActivity implements GameModeControlle
         return id;
     }
 
-    @Override
-    public void showPromotionDialog(boolean isWhite, GameModeController.PromotionListener listener) {
+    private void showPromotionDialog(boolean isWhite, GameViewModel.PromotionListener listener) {
         String[] names = {getString(R.string.regina), getString(R.string.torre), getString(R.string.alfiere), getString(R.string.cavallo)};
         char[] codes = {'q', 'r', 'b', 'n'};
         String[] types = {"queen", "rook", "bishop", "knight"};
 
-        android.widget.ListAdapter adapter = new android.widget.BaseAdapter() {
+        android.widget.ListAdapter dialogAdapter = new android.widget.BaseAdapter() {
             @Override public int getCount() { return names.length; }
             @Override public Object getItem(int i) { return names[i]; }
             @Override public long getItemId(int i) { return i; }
@@ -229,7 +247,7 @@ public class GameActivity extends AppCompatActivity implements GameModeControlle
         new androidx.appcompat.app.AlertDialog.Builder(this)
                 .setTitle(R.string.scegli_promozione)
                 .setCancelable(false)
-                .setAdapter(adapter, (dialog, which) -> listener.onPieceSelected(codes[which]))
+                .setAdapter(dialogAdapter, (dialog, which) -> listener.onPieceSelected(codes[which]))
                 .show();
     }
 
@@ -243,44 +261,24 @@ public class GameActivity extends AppCompatActivity implements GameModeControlle
         return id;
     }
 
-    @Override public String getStr(int resId) { return getString(resId); }
-    @Override public String getStr(int resId, Object... args) { return getString(resId, args); }
-
-    @Override protected void onPause() { super.onPause(); stopTimerView(); controller.onPause(viewModel.getBoard()); }
-    // ==========================================
-    // SALVATAGGIO DEI PROGRESSI DEL QUIZ
-    // ==========================================
-    // ==========================================
-    // SALVATAGGIO DEI PROGRESSI DEL QUIZ NEL DATABASE ROOM
-    // ==========================================
-    @Override
-    public void onLevelCompleted(String levelIdCompleted) {
-        // 1. Aumentiamo il contatore dei quiz per il profilo (questo va bene nelle SharedPreferences)
+    private void handleLevelCompleted(String levelIdCompleted) {
         android.content.SharedPreferences prefs = getSharedPreferences("ChessAppPrefs", MODE_PRIVATE);
         int quizGiaFatti = prefs.getInt("quiz_completati", 0);
         prefs.edit().putInt("quiz_completati", quizGiaFatti + 1).apply();
 
-        // 2. SBLOCCO IL LIVELLO IN ROOM DATABASE (IN BACKGROUND!)
         new Thread(() -> {
             try {
-                // Estraiamo il numero dal titolo (Es. da "Livello 1" estraiamo l'intero 1)
-                // Se il tuo id è formattato diversamente, fammelo sapere
                 String numericPart = levelIdCompleted.replaceAll("[^0-9]", "");
                 int levelNumber = numericPart.isEmpty() ? 1 : Integer.parseInt(numericPart);
-
-                // Recuperiamo l'utente loggato per associargli il salvataggio
                 com.google.firebase.auth.FirebaseUser user = com.google.firebase.auth.FirebaseAuth.getInstance().getCurrentUser();
                 String userId = (user != null) ? user.getUid() : "guest_user";
-
-                // Creiamo l'oggetto da salvare nel DB: Livello completato con 0 errori registrati
                 com.example.chess.database.LevelProgress progress = new com.example.chess.database.LevelProgress(levelNumber, userId, true, 0);
-
-                // Eseguiamo l'inserimento nel DB
                 com.example.chess.database.ChessDatabase.getInstance(getApplicationContext()).levelDao().insertProgress(progress);
-
             } catch (Exception e) {
                 e.printStackTrace();
             }
         }).start();
     }
+
+    @Override protected void onPause() { super.onPause(); stopTimerView(); viewModel.onPause(); }
 }

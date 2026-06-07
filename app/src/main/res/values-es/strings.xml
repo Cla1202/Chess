@@ -99,4 +99,9 @@
     <string name="nav_quiz">Quiz</string>
     <string name="nav_play">Jugar</string>
     <string name="livello_bloccato">Nivel bloqueado</string>
+    <string name="novizio">Novato</string>
+    <string name="apprendista">Aprendiz</string>
+    <string name="esperto">Experto</string>
+    <string name="gran_maestro">Gran Maestro</string>
+    <string name="attiva_timer">Activar Temporizador de Quiz</string>
 </resources>

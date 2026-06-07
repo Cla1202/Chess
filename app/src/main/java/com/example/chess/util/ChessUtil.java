@@ -4,7 +4,7 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.content.res.Resources;
-import android.util.DisplayMetrics;
+
 import java.util.Locale;
 
 public class ChessUtil {
@@ -14,11 +14,24 @@ public class ChessUtil {
         String langCode = prefs.getString("language", "it");
         Locale locale = new Locale(langCode);
         Locale.setDefault(locale);
+        
         Resources res = context.getResources();
-        Configuration config = res.getConfiguration();
-        DisplayMetrics dm = res.getDisplayMetrics();
+        Configuration config = new Configuration(res.getConfiguration());
         config.setLocale(locale);
-        res.updateConfiguration(config, dm);
+        
+        // Per Android 7.0+ (API 24)
+        context.createConfigurationContext(config);
+        // Per compatibilità e aggiornamento immediato delle risorse correnti
+        res.updateConfiguration(config, res.getDisplayMetrics());
+    }
+
+    public static Context getLocalizedContext(Context context) {
+        SharedPreferences prefs = context.getSharedPreferences("ChessSettings", Context.MODE_PRIVATE);
+        String langCode = prefs.getString("language", "it");
+        Locale locale = new Locale(langCode);
+        Configuration config = new Configuration(context.getResources().getConfiguration());
+        config.setLocale(locale);
+        return context.createConfigurationContext(config);
     }
 
     public static int algebraicToIndex(String algebraic) {

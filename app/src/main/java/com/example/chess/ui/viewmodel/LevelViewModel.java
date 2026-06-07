@@ -13,6 +13,7 @@ public class LevelViewModel extends ViewModel {
     private final ChessDatabase database;
     private final MutableLiveData<String> currentUserId = new MutableLiveData<>();
     private final LiveData<Integer> maxCompletedLevel;
+    private final LiveData<java.util.List<com.example.chess.database.LevelProgress>> allCompletedLevels;
 
     public LevelViewModel(ChessDatabase database) {
         this.database = database;
@@ -20,6 +21,10 @@ public class LevelViewModel extends ViewModel {
         // Colleghiamo il LiveData al database filtrando per utente
         this.maxCompletedLevel = Transformations.switchMap(currentUserId, userId ->
                 database.levelDao().getMaxCompletedLevelLive(userId)
+        );
+
+        this.allCompletedLevels = Transformations.switchMap(currentUserId, userId ->
+                database.levelDao().getAllCompletedLevelsLive(userId)
         );
 
         // --- AGGIUNTA FONDAMENTALE ---
@@ -38,5 +43,9 @@ public class LevelViewModel extends ViewModel {
 
     public LiveData<Integer> getMaxCompletedLevel() {
         return maxCompletedLevel;
+    }
+
+    public LiveData<java.util.List<com.example.chess.database.LevelProgress>> getAllCompletedLevels() {
+        return allCompletedLevels;
     }
 }

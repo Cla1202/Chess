@@ -72,7 +72,7 @@ public class QuizRepository {
         List<MoveRequest> soluzione = new ArrayList<>();
         soluzione.add(mossa("d3", "h7"));
 
-        return new QuizLevel("Livello 1: Benvenuto!", setupLevel, true, soluzione, 3);
+        return new QuizLevel(1, "Livello 1: Benvenuto!", setupLevel, true, soluzione, 3);
     }
 
     // ==========================================
@@ -91,7 +91,7 @@ public class QuizRepository {
         List<MoveRequest> soluzione = new ArrayList<>();
         soluzione.add(mossa("d4", "g7"));
 
-        return new QuizLevel("Livello 2: Batteria Letale", setupLevel, true, soluzione, 3);
+        return new QuizLevel(2, "Livello 2: Batteria Letale", setupLevel, true, soluzione, 3);
     }
 
     // ==========================================
@@ -113,7 +113,7 @@ public class QuizRepository {
         soluzione.add(mossa("d8", "g8"));
         soluzione.add(mossa("h6", "f7"));
 
-        return new QuizLevel("Livello 3: Sacrificio (in 2)", setupLevel, true, soluzione, 3);
+        return new QuizLevel(3, "Livello 3: Sacrificio (in 2)", setupLevel, true, soluzione, 3);
     }
 
     // ==========================================
@@ -132,7 +132,7 @@ public class QuizRepository {
         List<MoveRequest> soluzione = new ArrayList<>();
         soluzione.add(mossa("a7", "e7"));
 
-        return new QuizLevel("Livello 4: Le Spalline", setupLevel, true, soluzione, 3);
+        return new QuizLevel(4, "Livello 4: Le Spalline", setupLevel, true, soluzione, 3);
     }
 
     // ==========================================
@@ -154,7 +154,7 @@ public class QuizRepository {
         soluzione.add(mossa("h7", "h6"));
         soluzione.add(mossa("g5", "g7"));
 
-        return new QuizLevel("Livello 5: Infiltrazione (in 2)", setupLevel, true, soluzione, 3);
+        return new QuizLevel(5, "Livello 5: Infiltrazione (in 2)", setupLevel, true, soluzione, 3);
     }
 
     // ==========================================
@@ -172,7 +172,7 @@ public class QuizRepository {
         List<MoveRequest> soluzione = new ArrayList<>();
         soluzione.add(mossa("h1", "h7"));
 
-        return new QuizLevel("Livello 6: Matto Arabo", setupLevel, true, soluzione, 3);
+        return new QuizLevel(6, "Livello 6: Matto Arabo", setupLevel, true, soluzione, 3);
     }
 
     // ==========================================
@@ -196,7 +196,7 @@ public class QuizRepository {
         soluzione.add(mossa("a8", "d8"));
         soluzione.add(mossa("e1", "e8"));
 
-        return new QuizLevel("Livello 7: Deviazione (in 2)", setupLevel, true, soluzione, 3);
+        return new QuizLevel(7, "Livello 7: Deviazione (in 2)", setupLevel, true, soluzione, 3);
     }
 
     // ==========================================
@@ -219,7 +219,7 @@ public class QuizRepository {
         soluzione.add(mossa("h8", "h7"));
         soluzione.add(mossa("h1", "h3"));
 
-        return new QuizLevel("Livello 8: Matto di Anastasia", setupLevel, true, soluzione, 3);
+        return new QuizLevel(8, "Livello 8: Matto di Anastasia", setupLevel, true, soluzione, 3);
     }
 
     // ==========================================
@@ -244,7 +244,7 @@ public class QuizRepository {
         soluzione.add(mossa("b7", "c6"));
         soluzione.add(mossa("g2", "a6"));
 
-        return new QuizLevel("Livello 9: Matto di Boden", setupLevel, true, soluzione, 3);
+        return new QuizLevel(9, "Livello 9: Matto di Boden", setupLevel, true, soluzione, 3);
     }
 
     // ==========================================
@@ -266,7 +266,7 @@ public class QuizRepository {
         soluzione.add(mossa("d8", "g8"));
         soluzione.add(mossa("h6", "f7"));
 
-        return new QuizLevel("Livello 10: Matto Affogato", setupLevel, true, soluzione, 3);
+        return new QuizLevel(10, "Livello 10: Matto Affogato", setupLevel, true, soluzione, 3);
     }
 
     // ==========================================
@@ -291,7 +291,7 @@ public class QuizRepository {
         soluzione.add(mossa("h8", "h7"));
         soluzione.add(mossa("a3", "h3"));
 
-        return new QuizLevel("Livello 11: Anastasia (Matto in 3)", setupLevel, true, soluzione, 3);
+        return new QuizLevel(11, "Livello 11: Anastasia (Matto in 3)", setupLevel, true, soluzione, 3);
     }
 
     // ==========================================
@@ -316,7 +316,7 @@ public class QuizRepository {
         soluzione.add(mossa("h7", "g8"));
         soluzione.add(mossa("h3", "h8"));
 
-        return new QuizLevel("Livello 12: Damiano (Matto in 3)", setupLevel, true, soluzione, 3);
+        return new QuizLevel(12, "Livello 12: Damiano (Matto in 3)", setupLevel, true, soluzione, 3);
     }
 
     // ==========================================
@@ -342,7 +342,7 @@ public class QuizRepository {
         soluzione.add(mossa("f8", "g8"));
         soluzione.add(mossa("h6", "f7"));
 
-        return new QuizLevel("Livello 13: Matto di Philidor (in 4)", setupLevel, true, soluzione, 5);
+        return new QuizLevel(13, "Livello 13: Matto di Philidor (in 4)", setupLevel, true, soluzione, 5);
     }
 
     // ==========================================
@@ -365,7 +365,7 @@ public class QuizRepository {
         soluzione.add(mossa("e8", "e7"));
         soluzione.add(mossa("c3", "d5"));
 
-        return new QuizLevel("Livello 14: Matto di Légal", setupLevel, true, soluzione, 3);
+        return new QuizLevel(14, "Livello 14: Matto di Légal", setupLevel, true, soluzione, 3);
     }
 
     // ==========================================
@@ -388,7 +388,7 @@ public class QuizRepository {
         soluzione.add(mossa("g8", "h8"));
         soluzione.add(mossa("g7", "f7"));
 
-        return new QuizLevel("Livello 15: Matto di Morphy", setupLevel, true, soluzione, 3);
+        return new QuizLevel(15, "Livello 15: Matto di Morphy", setupLevel, true, soluzione, 3);
     }
 
     // ==========================================
@@ -416,6 +416,6 @@ public class QuizRepository {
         setupLevel[riga("b2")][col("b2")] = new Bishop(riga("b2"), col("b2"), true);
         soluzione.add(mossa("b2", "f6"));
 
-        return new QuizLevel("Livello 16: Sacrificio Finale", setupLevel, true, soluzione, 3);
+        return new QuizLevel(16, "Livello 16: Sacrificio Finale", setupLevel, true, soluzione, 3);
     }
 }

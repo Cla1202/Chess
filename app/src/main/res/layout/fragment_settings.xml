@@ -73,6 +73,18 @@
                     android:id="@+id/switch_vibration"
                     android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_alignParentEnd="true" android:layout_centerVertical="true" />
             </RelativeLayout>
+
+            <View android:layout_width="match_parent" android:layout_height="1dp" android:background="@color/grigio_fumo" />
+
+            <RelativeLayout
+                android:layout_width="match_parent" android:layout_height="48dp">
+                <TextView
+                    android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/attiva_timer"
+                    android:textColor="@color/white" android:layout_centerVertical="true" />
+                <androidx.appcompat.widget.SwitchCompat
+                    android:id="@+id/switch_timer"
+                    android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_alignParentEnd="true" android:layout_centerVertical="true" />
+            </RelativeLayout>
         </LinearLayout>
 
         <Button

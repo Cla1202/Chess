@@ -32,10 +32,12 @@ public class SettingsFragment extends Fragment {
         TextView tvPiece = v.findViewById(R.id.tv_piece_style_value);
         TextView tvLang = v.findViewById(R.id.tv_language_value);
         SwitchCompat swVibr = v.findViewById(R.id.switch_vibration);
+        SwitchCompat swTimer = v.findViewById(R.id.switch_timer);
 
         tvBoard.setText(prefs.getString("board_theme", "Verde Classico"));
         tvPiece.setText(prefs.getString("piece_style", "Neo"));
         swVibr.setChecked(prefs.getBoolean("vibration_enabled", true));
+        swTimer.setChecked(prefs.getBoolean("timer_enabled", true));
         
         String lang = prefs.getString("language", "it");
         tvLang.setText(lang.equals("en") ? R.string.lingua_inglese : (lang.equals("es") ? R.string.lingua_spagnolo : R.string.lingua_italiano));
@@ -65,6 +67,7 @@ public class SettingsFragment extends Fragment {
         });
 
         swVibr.setOnCheckedChangeListener((b, checked) -> prefs.edit().putBoolean("vibration_enabled", checked).apply());
+        swTimer.setOnCheckedChangeListener((b, checked) -> prefs.edit().putBoolean("timer_enabled", checked).apply());
 
         v.findViewById(R.id.btn_reset_progress).setOnClickListener(view -> {
             new AlertDialog.Builder(requireContext()).setTitle("Reset").setMessage("Cancellare tutto?").setPositiveButton("Sì", (d, w) -> {

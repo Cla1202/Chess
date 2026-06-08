@@ -104,4 +104,13 @@
     <string name="esperto">Experto</string>
     <string name="gran_maestro">Gran Maestro</string>
     <string name="attiva_timer">Activar Temporizador de Quiz</string>
+    <string name="invia_email_di_reset">Enviar correo de restablecimiento</string>
+    <string name="torna_al_login">Volver al Login</string>
+    <string name="ripristina_password">Restablecer contraseña</string>
+    <string name="intermedio">Intermedio</string>
+    <string name="_150">150</string>
+    <string name="_85">85%</string>
+    <string name="_12_ud83d_udd25">12 🔥</string>
+    <string name="_45s">45s</string>
+    <string name="password_dimenticata">¿Contraseña olvidada?</string>
 </resources>

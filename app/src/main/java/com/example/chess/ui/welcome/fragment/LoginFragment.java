@@ -42,7 +42,6 @@ public class LoginFragment extends Fragment {
     private EditText etPassword;
     private Button btnLogin;
     private ImageButton btnGoogleLogin;
-    private ImageButton btnFacebookLogin;
     private TextView tvRegisterLink;
     private TextView tvForgotPasswordLink;
 
@@ -72,7 +71,6 @@ public class LoginFragment extends Fragment {
         etPassword = view.findViewById(R.id.passwordInput);
         btnLogin = view.findViewById(R.id.loginButton);
         btnGoogleLogin = view.findViewById(R.id.googleLoginButton);
-        btnFacebookLogin = view.findViewById(R.id.facebookLoginButton);
         tvRegisterLink = view.findViewById(R.id.registerLink);
         tvForgotPasswordLink = view.findViewById(R.id.forgotPasswordLink);
 
@@ -86,7 +84,7 @@ public class LoginFragment extends Fragment {
             }
         });
 
-        // 1. LOGIN CON EMAIL E PASSWORD TRAMITE VIEWMODEL
+        // 1. LOGIN WITH EMAIL AND PASSWORD VIA VIEWMODEL
         btnLogin.setOnClickListener(v -> {
             String email = etUsername.getText().toString().trim();
             String password = etPassword.getText().toString().trim();
@@ -96,12 +94,12 @@ public class LoginFragment extends Fragment {
                 return;
             }
 
-            // MODIFICA FONDAMENTALE: Passiamo null come primo parametro (campo Name)
+            // ESSENTIAL MODIFICATION: Pass null as the first parameter (Name field)
             userViewModel.getUser(null, email, password, true).observe(getViewLifecycleOwner(), result -> {
                 if (result.isSuccess()) {
                     User loggedUser = ((Result.Success) result).getUser();
 
-                    // Mostriamo il nome personalizzato nel Toast di bentornato
+                    // Display custom name in the welcome Toast
                     Toast.makeText(getContext(), "Bentornato, " + loggedUser.getName() + "!", Toast.LENGTH_SHORT).show();
 
                     Intent intent = new Intent(getActivity(), HomeActivity.class);
@@ -117,10 +115,6 @@ public class LoginFragment extends Fragment {
         });
 
         btnGoogleLogin.setOnClickListener(v -> avviaLoginGoogleModerno());
-
-        btnFacebookLogin.setOnClickListener(v ->
-                Toast.makeText(getContext(), "Login con Facebook in fase di sviluppo", Toast.LENGTH_SHORT).show()
-        );
     }
 
     private void avviaLoginGoogleModerno() {
@@ -159,13 +153,17 @@ public class LoginFragment extends Fragment {
                     @Override
                     public void onError(@NonNull GetCredentialException e) {
                         Log.e("GOOGLE_LOGIN", "Errore: " + e.getMessage());
-                        Toast.makeText(activity, "Errore: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                        if (e.getMessage() != null && e.getMessage().contains("No credentials available")) {
+                            Toast.makeText(activity, "Nessun account Google trovato sul dispositivo o accesso non configurato correttamente.", Toast.LENGTH_LONG).show();
+                        } else {
+                            Toast.makeText(activity, "Errore Google: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                        }
                     }
                 }
         );
     }
 
-    // 2. LOGIN CON GOOGLE TRAMITE VIEWMODEL
+    // 2. LOGIN WITH GOOGLE VIA VIEWMODEL
     private void authenticateWithGoogleToken(String idToken) {
         userViewModel.getGoogleUser(idToken).observe(getViewLifecycleOwner(), result -> {
             if (result.isSuccess()) {

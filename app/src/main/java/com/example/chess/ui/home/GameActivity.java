@@ -37,7 +37,7 @@ public class GameActivity extends AppCompatActivity {
     private ProgressBar timerBar;
     private LinearLayout capturedWhiteContainer, capturedBlackContainer;
 
-    // Variabile per memorizzare l'utente corrente
+    // Variable to store the current user
     private User currentUser;
 
     @Override
@@ -60,7 +60,7 @@ public class GameActivity extends AppCompatActivity {
 
         viewModel = new ViewModelProvider(this).get(GameViewModel.class);
 
-        // 1. Recupero dell'oggetto User passato tramite Intent
+        // 1. Retrieval of the User object passed via Intent
         if (getIntent() != null && getIntent().hasExtra("CURRENT_USER")) {
             currentUser = getIntent().getParcelableExtra("CURRENT_USER");
         }
@@ -71,12 +71,12 @@ public class GameActivity extends AppCompatActivity {
         android.content.SharedPreferences prefs = getSharedPreferences("ChessSettings", MODE_PRIVATE);
         boolean timerEnabled = prefs.getBoolean("timer_enabled", true);
 
-        // 2. FONDAMENTALE: Passiamo l'ID utente al ViewModel prima di inizializzare il gioco
+        // 2. ESSENTIAL: Pass the user ID to the ViewModel before initializing the game
         if (currentUser != null) {
             viewModel.setCurrentUserId(currentUser.getIdToken());
         }
 
-        // 3. Inizializziamo il gioco
+        // 3. Initialize the game
         viewModel.init(mode, level, timerEnabled);
 
         setupObservers();

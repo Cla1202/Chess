@@ -13,9 +13,9 @@
         android:padding="32dp">
 
         <ImageView
-            android:layout_width="80dp"
-            android:layout_height="80dp"
-            android:src="@drawable/w_king"
+            android:layout_width="120dp"
+            android:layout_height="120dp"
+            android:src="@drawable/ic_app_logo_modern"
             android:layout_marginBottom="16dp"
             android:contentDescription="@null"/>
 
@@ -118,19 +118,7 @@
                 android:padding="12dp"
                 android:scaleType="fitCenter"
                 android:elevation="4dp"
-                android:layout_marginEnd="24dp"
                 android:contentDescription="@string/google"/>
-
-            <ImageButton
-                android:id="@+id/facebookLoginButton"
-                android:layout_width="56dp"
-                android:layout_height="56dp"
-                android:background="@drawable/social_button_background"
-                android:src="@drawable/ic_facebook"
-                android:padding="12dp"
-                android:scaleType="fitCenter"
-                android:elevation="4dp"
-                android:contentDescription="@string/facebook"/>
         </LinearLayout>
 
         <LinearLayout

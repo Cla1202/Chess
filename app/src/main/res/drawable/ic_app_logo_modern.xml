@@ -1,0 +1,43 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="200dp"
+    android:height="200dp"
+    android:viewportWidth="200"
+    android:viewportHeight="200">
+
+    <!-- Outermost Glow/Shadow -->
+    <path
+        android:pathData="M100,100m-90,0a90,90 0,1 1,180 0a90,90 0,1 1,-180 0"
+        android:strokeWidth="1"
+        android:strokeColor="#1AFFFFFF"/>
+
+    <!-- Geometric stylized Knight - The "Cool" piece -->
+    <path
+        android:fillColor="#D4AF37"
+        android:pathData="M70,160 L130,160 L125,145 L75,145 Z" />
+
+    <path
+        android:fillColor="#D4AF37"
+        android:pathData="M80,140 L120,140 L115,130 L85,130 Z" />
+
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M85,125
+                  C85,125 75,110 70,90
+                  C65,60 85,40 110,45
+                  C130,50 145,70 135,100
+                  L110,95
+                  L125,125 Z" />
+
+    <!-- Eye/Detail for the Knight -->
+    <path
+        android:fillColor="#2B2B2B"
+        android:pathData="M95,65 A3,3 0,1 1,94.9,65 Z" />
+
+    <!-- Electric Blue Accent Line -->
+    <path
+        android:pathData="M70,165 L130,165"
+        android:strokeWidth="3"
+        android:strokeColor="#00E5FF"
+        android:strokeLineCap="round"/>
+
+</vector>

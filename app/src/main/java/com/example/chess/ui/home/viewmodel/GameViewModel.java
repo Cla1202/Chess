@@ -38,7 +38,7 @@ public class GameViewModel extends AndroidViewModel {
     private QuizLevel quizLevel;
     private long startTimeMillis;
 
-    // Variabile per memorizzare l'ID dell'utente loggato senza dipendere da Firebase
+    // Variable to store the logged-in user ID without depending on Firebase
     private String currentUserId = "guest";
 
     private final MutableLiveData<Integer> selectedPosition = new MutableLiveData<>(null);
@@ -62,7 +62,7 @@ public class GameViewModel extends AndroidViewModel {
         this.repository = new ChessRepository(application);
     }
 
-    // Nuovo metodo per ricevere l'ID utente dall'Activity
+    // New method to receive the user ID from the Activity
     public void setCurrentUserId(String userId) {
         if (userId != null && !userId.isEmpty()) {
             this.currentUserId = userId;
@@ -258,7 +258,7 @@ public class GameViewModel extends AndroidViewModel {
         showToast(getStr(R.string.progresso_salvato));
     }
 
-    // Metodo aggiornato: restituisce l'ID impostato dall'Activity senza usare Firebase
+    // Updated method: returns the ID set by the Activity without using Firebase
     private String getCurrentUserId() {
         return currentUserId;
     }

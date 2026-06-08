@@ -20,8 +20,8 @@ public class LevelViewModel extends ViewModel {
     public LevelViewModel(ChessDatabase database) {
         this.database = database;
 
-        // Il LiveData reagisce e interroga il DAO automaticamente
-        // ogni volta che cambia il valore di currentUserId
+        // The LiveData reacts and queries the DAO automatically
+        // every time the value of currentUserId changes
         this.maxCompletedLevel = Transformations.switchMap(currentUserId, userId ->
                 database.levelDao().getMaxCompletedLevelLive(userId)
         );
@@ -31,22 +31,22 @@ public class LevelViewModel extends ViewModel {
         );
     }
 
-    // Metodo privato per aggiornare l'ID in modo reattivo
+    // Private method to update the ID reactively
     private void setUserId(String userId) {
-        // Aggiorniamo il LiveData solo se l'ID è cambiato, per evitare loop infiniti
+        // We update the LiveData only if the ID has changed, to avoid infinite loops
         if (currentUserId.getValue() == null || !currentUserId.getValue().equals(userId)) {
             currentUserId.setValue(userId);
         }
     }
 
-    // 1. Recupera il livello massimo superato per questo specifico utente
+    // 1. Retrieve the maximum level completed for this specific user
     public LiveData<Integer> getMaxCompletedLevel(String userId) {
         setUserId(userId);
         return maxCompletedLevel;
     }
 
-    // 2. Recupera tutti i livelli completati per questo specifico utente
-    // (Questo è il metodo che ora usa il tuo ProfileFragment!)
+    // 2. Retrieve all completed levels for this specific user
+    // (This is the method your ProfileFragment now uses!)
     public LiveData<List<LevelProgress>> getAllCompletedLevels(String userId) {
         setUserId(userId);
         return allCompletedLevels;

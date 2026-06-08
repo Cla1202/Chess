@@ -72,7 +72,7 @@ public class SettingsFragment extends Fragment {
         swVibr.setOnCheckedChangeListener((b, checked) -> prefs.edit().putBoolean("vibration_enabled", checked).apply());
         swTimer.setOnCheckedChangeListener((b, checked) -> prefs.edit().putBoolean("timer_enabled", checked).apply());
 
-        // Modifica: Azzera i progressi SOLO per l'utente loggato
+        // Modification: Reset progress ONLY for the logged-in user
         v.findViewById(R.id.btn_reset_progress).setOnClickListener(view -> {
             new AlertDialog.Builder(requireContext())
                     .setTitle("Reset")
@@ -84,7 +84,7 @@ public class SettingsFragment extends Fragment {
                                 String userId = activity.getCurrentUser().getIdToken();
 
                                 Executors.newSingleThreadExecutor().execute(() -> {
-                                    // Usa il nuovo metodo del DAO che cancella solo i dati di userId
+                                    // Use the new DAO method that only deletes data for userId
                                     ChessDatabase.getInstance(requireContext()).levelDao().deleteProgressForUser(userId);
 
                                     requireActivity().runOnUiThread(() ->

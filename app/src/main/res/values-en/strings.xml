@@ -104,4 +104,13 @@
     <string name="esperto">Expert</string>
     <string name="gran_maestro">Grandmaster</string>
     <string name="attiva_timer">Enable Quiz Timer</string>
+    <string name="password_dimenticata">Forgot password?</string>
+    <string name="intermedio">Intermediate</string>
+    <string name="_150">150</string>
+    <string name="_85">85%</string>
+    <string name="_12_ud83d_udd25">12 \uD83D\uDD25</string>
+    <string name="_45s">45s</string>
+    <string name="ripristina_password">Reset Password</string>
+    <string name="invia_email_di_reset">Send Reset Email</string>
+    <string name="torna_al_login">Back to Login</string>
 </resources>

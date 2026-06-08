@@ -91,6 +91,5 @@
             android:text="@string/hai_gi_un_account_accedi"
             android:textColor="#D4AF37"
             android:textStyle="bold" />
-
     </LinearLayout>
 </ScrollView>

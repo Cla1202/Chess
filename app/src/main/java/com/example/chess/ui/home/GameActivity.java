@@ -1,4 +1,4 @@
-package com.example.chess.ui;
+package com.example.chess.ui.home;
 
 import android.graphics.Color;
 import android.os.Bundle;
@@ -17,8 +17,8 @@ import com.example.chess.R;
 import com.example.chess.adapter.ChessAdapter;
 import com.example.chess.model.Piece;
 import com.example.chess.model.QuizLevel;
-import com.example.chess.ui.viewmodel.GameViewModel;
-import com.example.chess.util.ChessUtil;
+import com.example.chess.ui.home.viewmodel.GameViewModel;
+
 import java.util.List;
 import java.util.Locale;
 

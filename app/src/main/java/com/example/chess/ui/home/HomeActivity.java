@@ -4,6 +4,10 @@ import android.os.Bundle;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import com.example.chess.R;
+import com.example.chess.ui.home.fragment.PlayFragment;
+import com.example.chess.ui.home.fragment.ProfileFragment;
+import com.example.chess.ui.home.fragment.QuizFragment;
+import com.example.chess.ui.home.fragment.SettingsFragment;
 import com.example.chess.util.ChessUtil;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 

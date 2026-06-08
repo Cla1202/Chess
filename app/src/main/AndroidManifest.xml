@@ -16,11 +16,7 @@
             android:exported="false"
             android:screenOrientation="fullSensor" />
         <activity
-            android:name=".ui.RegisterActivity"
-            android:exported="false"
-            android:screenOrientation="fullSensor" />
-        <activity
-            android:name=".ui.LoginActivity"
+            android:name=".ui.welcome.LoginActivity"
             android:exported="true"
             android:screenOrientation="fullSensor">
             <intent-filter>
@@ -29,7 +25,7 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".ui.GameActivity"
+            android:name=".ui.home.GameActivity"
             android:exported="false"
             android:screenOrientation="fullSensor" />
 

@@ -1,4 +1,4 @@
-package com.example.chess.ui.home;
+package com.example.chess.ui.home.fragment;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -9,7 +9,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import com.example.chess.R;
-import com.example.chess.ui.GameActivity;
+import com.example.chess.ui.home.GameActivity;
 
 public class PlayFragment extends Fragment {
     @Nullable

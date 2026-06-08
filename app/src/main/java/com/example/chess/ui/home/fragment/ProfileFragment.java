@@ -1,4 +1,4 @@
-package com.example.chess.ui.home;
+package com.example.chess.ui.home.fragment;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -14,9 +14,9 @@ import androidx.lifecycle.ViewModelProvider;
 import com.example.chess.R;
 import com.example.chess.database.ChessDatabase;
 import com.example.chess.database.LevelProgress;
-import com.example.chess.ui.LoginActivity;
-import com.example.chess.ui.viewmodel.LevelViewModel;
-import com.example.chess.ui.viewmodel.LevelViewModelFactory;
+import com.example.chess.ui.welcome.LoginActivity;
+import com.example.chess.ui.home.viewmodel.LevelViewModel;
+import com.example.chess.ui.home.viewmodel.LevelViewModelFactory;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import java.util.List;

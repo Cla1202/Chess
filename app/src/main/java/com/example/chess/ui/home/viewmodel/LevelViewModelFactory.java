@@ -1,4 +1,4 @@
-package com.example.chess.ui.viewmodel;
+package com.example.chess.ui.home.viewmodel;
 
 import androidx.annotation.NonNull;
 import androidx.lifecycle.ViewModel;

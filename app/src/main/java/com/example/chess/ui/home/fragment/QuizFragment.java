@@ -1,4 +1,4 @@
-package com.example.chess.ui.home;
+package com.example.chess.ui.home.fragment;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -16,9 +16,9 @@ import com.example.chess.adapter.LevelAdapter;
 import com.example.chess.database.ChessDatabase;
 import com.example.chess.model.QuizLevel;
 import com.example.chess.repository.QuizRepository;
-import com.example.chess.ui.GameActivity;
-import com.example.chess.ui.viewmodel.LevelViewModel;
-import com.example.chess.ui.viewmodel.LevelViewModelFactory;
+import com.example.chess.ui.home.GameActivity;
+import com.example.chess.ui.home.viewmodel.LevelViewModel;
+import com.example.chess.ui.home.viewmodel.LevelViewModelFactory;
 import java.util.List;
 
 public class QuizFragment extends Fragment {

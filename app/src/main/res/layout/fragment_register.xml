@@ -26,7 +26,7 @@
             android:layout_width="match_parent"
             android:layout_height="55dp"
             android:hint="@string/nome_completo"
-            android:textColorHint="#CCCCCC"
+            android:textColorHint="@color/grigio_chiaro"
             android:textColor="@color/white"
             android:background="@drawable/bg_input_field"
             android:paddingStart="16dp"
@@ -39,7 +39,7 @@
             android:layout_width="match_parent"
             android:layout_height="55dp"
             android:hint="@string/email"
-            android:textColorHint="#CCCCCC"
+            android:textColorHint="@color/grigio_chiaro"
             android:textColor="@color/white"
             android:background="@drawable/bg_input_field"
             android:paddingStart="16dp"
@@ -52,7 +52,7 @@
             android:layout_width="match_parent"
             android:layout_height="55dp"
             android:hint="@string/password"
-            android:textColorHint="#CCCCCC"
+            android:textColorHint="@color/grigio_chiaro"
             android:textColor="@color/white"
             android:background="@drawable/bg_input_field"
             android:paddingStart="16dp"
@@ -65,7 +65,7 @@
             android:layout_width="match_parent"
             android:layout_height="55dp"
             android:hint="@string/conferma_password"
-            android:textColorHint="#CCCCCC"
+            android:textColorHint="@color/grigio_chiaro"
             android:textColor="@color/white"
             android:background="@drawable/bg_input_field"
             android:paddingStart="16dp"
@@ -81,7 +81,7 @@
             android:textColor="@color/white"
             android:textSize="16sp"
             android:textStyle="bold"
-            android:backgroundTint="#D4AF37"
+            android:backgroundTint="@color/gold_premium"
             android:layout_marginBottom="24dp" />
 
         <TextView
@@ -89,7 +89,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/hai_gi_un_account_accedi"
-            android:textColor="#D4AF37"
+            android:textColor="@color/gold_premium"
             android:textStyle="bold" />
     </LinearLayout>
 </ScrollView>

@@ -4,13 +4,12 @@ import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
 import com.example.chess.model.Result;
+import com.example.chess.model.User;
 import com.example.chess.repository.user.IChessUserRepository;
 
 public class UserViewModel extends ViewModel {
-    private static final String TAG = UserViewModel.class.getSimpleName();
 
     private final IChessUserRepository userRepository;
-    private MutableLiveData<Result> userMutableLiveData;
     private boolean authenticationError;
 
     public UserViewModel(IChessUserRepository userRepository) {
@@ -18,54 +17,37 @@ public class UserViewModel extends ViewModel {
         this.authenticationError = false;
     }
 
-    // Login classico (Email/Password) o Registrazione
-    public MutableLiveData<Result> getUserMutableLiveData(String email, String password, boolean isUserRegistered) {
-        if (userMutableLiveData == null) {
-            getUserData(email, password, isUserRegistered);
-        }
-        return userMutableLiveData;
+    // 1. Metodo per Login e Registrazione classica (con supporto al parametro Name)
+    public MutableLiveData<Result> getUser(String name, String email, String password, boolean isUserRegistered) {
+        return userRepository.getUser(name, email, password, isUserRegistered);
     }
 
-    // Login con Google
-    public MutableLiveData<Result> getGoogleUserMutableLiveData(String token) {
-        if (userMutableLiveData == null) {
-            getGoogleUserData(token);
-        }
-        return userMutableLiveData;
+    // 2. Metodo per Login con Google
+    public MutableLiveData<Result> getGoogleUser(String idToken) {
+        return userRepository.getGoogleUser(idToken);
     }
 
-    // Disconnessione
+    // 3. Metodo per il recupero password
+    public MutableLiveData<Result> resetPassword(String email) {
+        return userRepository.resetPassword(email);
+    }
+
+    // 4. Metodo per il Logout
     public MutableLiveData<Result> logout() {
-        if (userMutableLiveData == null) {
-            userMutableLiveData = userRepository.logout();
-        } else {
-            userRepository.logout();
-        }
-        return userMutableLiveData;
+        return userRepository.logout();
     }
 
-    // Recupero la sessione corrente, se esiste
-    public Object getLoggedUser() { // Cambia Object con la tua classe User se ce l'hai
+    // 5. Metodo per ottenere l'utente connesso dal database locale
+    public User getLoggedUser() {
         return userRepository.getLoggedUser();
     }
 
+    // Getter e Setter per gli errori di autenticazione
     public boolean isAuthenticationError() {
         return authenticationError;
     }
 
     public void setAuthenticationError(boolean authenticationError) {
         this.authenticationError = authenticationError;
-    }
-
-    private void getUserData(String email, String password, boolean isUserRegistered) {
-        userMutableLiveData = userRepository.getUser(email, password, isUserRegistered);
-    }
-
-    private void getGoogleUserData(String token) {
-        userMutableLiveData = userRepository.getGoogleUser(token);
-    }
-    // Dentro UserViewModel.java
-    public MutableLiveData<Result> resetPassword(String email) {
-        return userRepository.resetPassword(email);
     }
 }

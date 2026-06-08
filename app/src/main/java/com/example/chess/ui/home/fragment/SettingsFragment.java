@@ -7,15 +7,19 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.widget.SwitchCompat;
 import androidx.fragment.app.Fragment;
+
 import com.example.chess.R;
 import com.example.chess.database.ChessDatabase;
+import com.example.chess.ui.home.HomeActivity;
 import com.example.chess.util.ChessUtil;
+
 import java.util.concurrent.Executors;
 
 public class SettingsFragment extends Fragment {
@@ -37,7 +41,7 @@ public class SettingsFragment extends Fragment {
         tvPiece.setText(prefs.getString("piece_style", "Neo"));
         swVibr.setChecked(prefs.getBoolean("vibration_enabled", true));
         swTimer.setChecked(prefs.getBoolean("timer_enabled", true));
-        
+
         String lang = prefs.getString("language", "it");
         tvLang.setText(lang.equals("en") ? R.string.lingua_inglese : (lang.equals("es") ? R.string.lingua_spagnolo : R.string.lingua_italiano));
 
@@ -68,12 +72,30 @@ public class SettingsFragment extends Fragment {
         swVibr.setOnCheckedChangeListener((b, checked) -> prefs.edit().putBoolean("vibration_enabled", checked).apply());
         swTimer.setOnCheckedChangeListener((b, checked) -> prefs.edit().putBoolean("timer_enabled", checked).apply());
 
+        // Modifica: Azzera i progressi SOLO per l'utente loggato
         v.findViewById(R.id.btn_reset_progress).setOnClickListener(view -> {
-            new AlertDialog.Builder(requireContext()).setTitle("Reset").setMessage("Cancellare tutto?").setPositiveButton("Sì", (d, w) -> {
-                Executors.newSingleThreadExecutor().execute(() -> {
-                    ChessDatabase.getInstance(requireContext()).levelDao().deleteAllProgress();
-                });
-            }).setNegativeButton("No", null).show();
+            new AlertDialog.Builder(requireContext())
+                    .setTitle("Reset")
+                    .setMessage("Sei sicuro di voler cancellare i tuoi progressi nei Quiz?")
+                    .setPositiveButton("Sì", (d, w) -> {
+                        if (getActivity() instanceof HomeActivity) {
+                            HomeActivity activity = (HomeActivity) getActivity();
+                            if (activity.getCurrentUser() != null) {
+                                String userId = activity.getCurrentUser().getIdToken();
+
+                                Executors.newSingleThreadExecutor().execute(() -> {
+                                    // Usa il nuovo metodo del DAO che cancella solo i dati di userId
+                                    ChessDatabase.getInstance(requireContext()).levelDao().deleteProgressForUser(userId);
+
+                                    requireActivity().runOnUiThread(() ->
+                                            Toast.makeText(requireContext(), "Progressi azzerati!", Toast.LENGTH_SHORT).show()
+                                    );
+                                });
+                            }
+                        }
+                    })
+                    .setNegativeButton("No", null)
+                    .show();
         });
 
         v.findViewById(R.id.btn_exit_app).setOnClickListener(view -> {

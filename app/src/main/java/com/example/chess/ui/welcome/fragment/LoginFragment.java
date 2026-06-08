@@ -12,6 +12,7 @@ import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
@@ -22,13 +23,18 @@ import androidx.credentials.GetCredentialRequest;
 import androidx.credentials.GetCredentialResponse;
 import androidx.credentials.exceptions.GetCredentialException;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProvider;
+
 import com.example.chess.R;
+import com.example.chess.model.Result;
+import com.example.chess.model.User;
+import com.example.chess.repository.user.UserRepository;
 import com.example.chess.ui.home.HomeActivity;
+import com.example.chess.ui.welcome.viewmodel.UserViewModel;
+import com.example.chess.ui.welcome.viewmodel.UserViewModelFactory;
 import com.example.chess.ui.welcome.LoginActivity;
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption;
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential;
-import com.google.firebase.auth.AuthCredential;
-import com.google.firebase.auth.GoogleAuthProvider;
 
 public class LoginFragment extends Fragment {
 
@@ -39,6 +45,18 @@ public class LoginFragment extends Fragment {
     private ImageButton btnFacebookLogin;
     private TextView tvRegisterLink;
     private TextView tvForgotPasswordLink;
+
+    private UserViewModel userViewModel;
+
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        UserRepository userRepository = new UserRepository();
+        userViewModel = new ViewModelProvider(
+                requireActivity(),
+                new UserViewModelFactory(userRepository)
+        ).get(UserViewModel.class);
+    }
 
     @Nullable
     @Override
@@ -62,13 +80,13 @@ public class LoginFragment extends Fragment {
                 ((LoginActivity) requireActivity()).loadFragment(new RegisterFragment(), true)
         );
 
-        // Dentro il metodo onViewCreated di LoginFragment.java
         tvForgotPasswordLink.setOnClickListener(v -> {
             if (getActivity() instanceof LoginActivity) {
                 ((LoginActivity) getActivity()).loadFragment(new ResetPasswordFragment(), true);
             }
         });
 
+        // 1. LOGIN CON EMAIL E PASSWORD TRAMITE VIEWMODEL
         btnLogin.setOnClickListener(v -> {
             String email = etUsername.getText().toString().trim();
             String password = etPassword.getText().toString().trim();
@@ -78,19 +96,24 @@ public class LoginFragment extends Fragment {
                 return;
             }
 
-            LoginActivity activity = (LoginActivity) requireActivity();
-            activity.getAuth().signInWithEmailAndPassword(email, password)
-                    .addOnCompleteListener(task -> {
-                        if (task.isSuccessful()) {
-                            Toast.makeText(getContext(), "Accesso effettuato!", Toast.LENGTH_SHORT).show();
-                            Intent intent = new Intent(activity, HomeActivity.class);
-                            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-                            startActivity(intent);
-                            activity.finish();
-                        } else {
-                            Toast.makeText(getContext(), "Errore: " + task.getException().getMessage(), Toast.LENGTH_LONG).show();
-                        }
-                    });
+            // MODIFICA FONDAMENTALE: Passiamo null come primo parametro (campo Name)
+            userViewModel.getUser(null, email, password, true).observe(getViewLifecycleOwner(), result -> {
+                if (result.isSuccess()) {
+                    User loggedUser = ((Result.Success) result).getUser();
+
+                    // Mostriamo il nome personalizzato nel Toast di bentornato
+                    Toast.makeText(getContext(), "Bentornato, " + loggedUser.getName() + "!", Toast.LENGTH_SHORT).show();
+
+                    Intent intent = new Intent(getActivity(), HomeActivity.class);
+                    intent.putExtra("CURRENT_USER", loggedUser);
+                    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                    startActivity(intent);
+                    requireActivity().finish();
+                } else {
+                    String errorMessage = ((Result.Error) result).getMessage();
+                    Toast.makeText(getContext(), "Errore: " + errorMessage, Toast.LENGTH_LONG).show();
+                }
+            });
         });
 
         btnGoogleLogin.setOnClickListener(v -> avviaLoginGoogleModerno());
@@ -126,7 +149,7 @@ public class LoginFragment extends Fragment {
                                 credential.getType().equals(GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL)) {
                             try {
                                 GoogleIdTokenCredential cred = GoogleIdTokenCredential.createFrom(credential.getData());
-                                firebaseAuthWithGoogle(cred.getIdToken());
+                                authenticateWithGoogleToken(cred.getIdToken());
                             } catch (Exception e) {
                                 Toast.makeText(activity, "Errore lettura Token", Toast.LENGTH_SHORT).show();
                             }
@@ -142,21 +165,23 @@ public class LoginFragment extends Fragment {
         );
     }
 
-    private void firebaseAuthWithGoogle(String idToken) {
-        LoginActivity activity = (LoginActivity) requireActivity();
-        AuthCredential credential = GoogleAuthProvider.getCredential(idToken, null);
+    // 2. LOGIN CON GOOGLE TRAMITE VIEWMODEL
+    private void authenticateWithGoogleToken(String idToken) {
+        userViewModel.getGoogleUser(idToken).observe(getViewLifecycleOwner(), result -> {
+            if (result.isSuccess()) {
+                User loggedUser = ((Result.Success) result).getUser();
 
-        activity.getAuth().signInWithCredential(credential)
-                .addOnCompleteListener(task -> {
-                    if (task.isSuccessful()) {
-                        Toast.makeText(activity, "Accesso con Google completato", Toast.LENGTH_SHORT).show();
-                        Intent intent = new Intent(activity, HomeActivity.class);
-                        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-                        startActivity(intent);
-                        activity.finish();
-                    } else {
-                        Toast.makeText(activity, "Errore Firebase Google: " + task.getException().getMessage(), Toast.LENGTH_LONG).show();
-                    }
-                });
+                Toast.makeText(getContext(), "Accesso con Google completato", Toast.LENGTH_SHORT).show();
+
+                Intent intent = new Intent(getActivity(), HomeActivity.class);
+                intent.putExtra("CURRENT_USER", loggedUser);
+                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                startActivity(intent);
+                requireActivity().finish();
+            } else {
+                String errorMessage = ((Result.Error) result).getMessage();
+                Toast.makeText(getContext(), "Errore Google Firebase: " + errorMessage, Toast.LENGTH_LONG).show();
+            }
+        });
     }
 }

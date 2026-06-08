@@ -7,6 +7,7 @@ import com.google.firebase.auth.AuthCredential;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.GoogleAuthProvider;
+import com.google.firebase.auth.UserProfileChangeRequest; // <-- IMPORTAZIONE AGGIUNTA
 
 public class UserRepository implements IChessUserRepository {
 
@@ -16,26 +17,46 @@ public class UserRepository implements IChessUserRepository {
         this.mAuth = FirebaseAuth.getInstance();
     }
 
+    // AGGIORNATO: Accetta il parametro name all'inizio
     @Override
-    public MutableLiveData<Result> getUser(String email, String password, boolean isUserRegistered) {
+    public MutableLiveData<Result> getUser(String name, String email, String password, boolean isUserRegistered) {
         MutableLiveData<Result> mutableLiveData = new MutableLiveData<>();
 
         if (isUserRegistered) {
-            // L'utente è già registrato -> Fai il LOGIN
+            // LOGIN CLASSICO (Il nome non serve, Firebase lo ha già sul server)
             mAuth.signInWithEmailAndPassword(email, password)
                     .addOnCompleteListener(task -> {
                         if (task.isSuccessful()) {
-                            mutableLiveData.postValue(new Result.Success(task.getResult().getUser()));
+                            User myUser = mapFirebaseUserToCustomUser(task.getResult().getUser());
+                            mutableLiveData.postValue(new Result.Success(myUser));
                         } else {
                             mutableLiveData.postValue(new Result.Error(task.getException().getMessage()));
                         }
                     });
         } else {
-            // L'utente NON è registrato -> Fai la REGISTRAZIONE
+            // REGISTRAZIONE NUOVO UTENTE
             mAuth.createUserWithEmailAndPassword(email, password)
                     .addOnCompleteListener(task -> {
                         if (task.isSuccessful()) {
-                            mutableLiveData.postValue(new Result.Success(task.getResult().getUser()));
+                            FirebaseUser firebaseUser = task.getResult().getUser();
+
+                            // Se la creazione ha successo e abbiamo un nome inserito, lo salviamo su Firebase Auth
+                            if (firebaseUser != null && name != null && !name.isEmpty()) {
+                                UserProfileChangeRequest profileUpdates = new UserProfileChangeRequest.Builder()
+                                        .setDisplayName(name)
+                                        .build();
+
+                                firebaseUser.updateProfile(profileUpdates)
+                                        .addOnCompleteListener(profileTask -> {
+                                            // Una volta associato il nome su Firebase, creiamo il nostro User locale e inviamo il Success
+                                            User myUser = new User(name, firebaseUser.getEmail(), firebaseUser.getUid());
+                                            mutableLiveData.postValue(new Result.Success(myUser));
+                                        });
+                            } else {
+                                // Fallback se il nome dovesse essere vuoto
+                                User myUser = mapFirebaseUserToCustomUser(firebaseUser);
+                                mutableLiveData.postValue(new Result.Success(myUser));
+                            }
                         } else {
                             mutableLiveData.postValue(new Result.Error(task.getException().getMessage()));
                         }
@@ -53,7 +74,8 @@ public class UserRepository implements IChessUserRepository {
         mAuth.signInWithCredential(credential)
                 .addOnCompleteListener(task -> {
                     if (task.isSuccessful()) {
-                        mutableLiveData.postValue(new Result.Success(task.getResult().getUser()));
+                        User myUser = mapFirebaseUserToCustomUser(task.getResult().getUser());
+                        mutableLiveData.postValue(new Result.Success(myUser));
                     } else {
                         mutableLiveData.postValue(new Result.Error(task.getException().getMessage()));
                     }
@@ -66,42 +88,45 @@ public class UserRepository implements IChessUserRepository {
     public MutableLiveData<Result> logout() {
         mAuth.signOut();
         MutableLiveData<Result> mutableLiveData = new MutableLiveData<>();
-        // Segnaliamo che l'operazione ha avuto successo passando null come utente
         mutableLiveData.postValue(new Result.Success(null));
         return mutableLiveData;
     }
 
     @Override
-    public FirebaseUser getLoggedUser() {
-        return mAuth.getCurrentUser();
-    }
-
-    // Dentro UserRepository.java
-    @Override
     public MutableLiveData<Result> resetPassword(String email) {
         MutableLiveData<Result> mutableLiveData = new MutableLiveData<>();
-
         mAuth.sendPasswordResetEmail(email)
                 .addOnCompleteListener(task -> {
                     if (task.isSuccessful()) {
-                        // Passiamo null come utente perché l'operazione non restituisce un FirebaseUser
                         mutableLiveData.postValue(new Result.Success(null));
                     } else {
                         mutableLiveData.postValue(new Result.Error(task.getException().getMessage()));
                     }
                 });
-
         return mutableLiveData;
     }
 
-    // Dentro UserRepository.java, aggiungi questo metodo privato
+    @Override
+    public User getLoggedUser() {
+        FirebaseUser firebaseUser = mAuth.getCurrentUser();
+        return mapFirebaseUserToCustomUser(firebaseUser);
+    }
+
     private User mapFirebaseUserToCustomUser(FirebaseUser firebaseUser) {
         if (firebaseUser == null) return null;
 
-        // Convertiamo l'utente Firebase nel nostro modello.
-        // Usiamo getUid() come token identificativo.
+        // Se il displayName su Firebase è nullo o vuoto, facciamo un fallback pulito sulla prima parte dell'email
+        String name = firebaseUser.getDisplayName();
+        if (name == null || name.isEmpty()) {
+            if (firebaseUser.getEmail() != null) {
+                name = firebaseUser.getEmail().split("@")[0];
+            } else {
+                name = "Giocatore";
+            }
+        }
+
         return new User(
-                firebaseUser.getDisplayName(), // Può essere null se registrato con sola email
+                name,
                 firebaseUser.getEmail(),
                 firebaseUser.getUid()
         );

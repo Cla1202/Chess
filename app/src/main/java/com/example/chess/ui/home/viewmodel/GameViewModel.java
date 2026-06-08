@@ -22,7 +22,6 @@ import com.example.chess.service.StockfishService;
 import com.example.chess.util.ChessUtil;
 import com.example.chess.util.Constants;
 import com.example.chess.util.MoveCalculator;
-import com.google.firebase.auth.FirebaseAuth;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -39,12 +38,15 @@ public class GameViewModel extends AndroidViewModel {
     private QuizLevel quizLevel;
     private long startTimeMillis;
 
+    // Variabile per memorizzare l'ID dell'utente loggato senza dipendere da Firebase
+    private String currentUserId = "guest";
+
     private final MutableLiveData<Integer> selectedPosition = new MutableLiveData<>(null);
     private final MutableLiveData<List<Integer>> hints = new MutableLiveData<>(new ArrayList<>());
     private final MutableLiveData<StatusInfo> status = new MutableLiveData<>();
     private final MutableLiveData<Boolean> isThinking = new MutableLiveData<>(false);
     private final MutableLiveData<GameEvent> gameEvent = new MutableLiveData<>();
-    
+
     private final MutableLiveData<Long> remainingTime = new MutableLiveData<>(30000L);
     private final MutableLiveData<Boolean> isTimerVisible = new MutableLiveData<>(false);
 
@@ -58,6 +60,13 @@ public class GameViewModel extends AndroidViewModel {
     public GameViewModel(@NonNull Application application) {
         super(application);
         this.repository = new ChessRepository(application);
+    }
+
+    // Nuovo metodo per ricevere l'ID utente dall'Activity
+    public void setCurrentUserId(String userId) {
+        if (userId != null && !userId.isEmpty()) {
+            this.currentUserId = userId;
+        }
     }
 
     public void init(String mode, QuizLevel level, boolean timerSettingEnabled) {
@@ -249,9 +258,9 @@ public class GameViewModel extends AndroidViewModel {
         showToast(getStr(R.string.progresso_salvato));
     }
 
+    // Metodo aggiornato: restituisce l'ID impostato dall'Activity senza usare Firebase
     private String getCurrentUserId() {
-        com.google.firebase.auth.FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
-        return (user != null) ? user.getUid() : "guest";
+        return currentUserId;
     }
 
     public void showQuizHint() {

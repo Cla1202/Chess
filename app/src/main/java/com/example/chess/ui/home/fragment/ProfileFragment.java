@@ -7,18 +7,22 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
+
 import com.example.chess.R;
 import com.example.chess.database.ChessDatabase;
 import com.example.chess.database.LevelProgress;
-import com.example.chess.ui.welcome.LoginActivity;
+import com.example.chess.model.User;
+import com.example.chess.ui.home.HomeActivity;
 import com.example.chess.ui.home.viewmodel.LevelViewModel;
 import com.example.chess.ui.home.viewmodel.LevelViewModelFactory;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
+import com.example.chess.ui.welcome.LoginActivity;
+
 import java.util.List;
 import java.util.Locale;
 
@@ -38,30 +42,49 @@ public class ProfileFragment extends Fragment {
         TextView currentLevelText = view.findViewById(R.id.quizLevelText);
         Button logoutButton = view.findViewById(R.id.logoutButton);
 
-        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
-        if (user != null) {
-            String displayName = user.getDisplayName() != null ? user.getDisplayName() : getString(R.string.giocatore_sconosciuto);
-            nameText.setText(displayName);
-            emailText.setText(user.getEmail());
-        }
+        // 1. Recuperiamo l'Activity madre (HomeActivity) per accedere all'utente e al ViewModel
+        HomeActivity activity = (HomeActivity) getActivity();
+        if (activity == null) return view;
 
+        User currentUser = activity.getCurrentUser();
+
+        // 2. Inizializziamo il ViewModel per i Livelli
         ChessDatabase db = ChessDatabase.getInstance(requireContext());
         LevelViewModelFactory factory = new LevelViewModelFactory(db);
-        LevelViewModel viewModel = new ViewModelProvider(this, factory).get(LevelViewModel.class);
+        LevelViewModel levelViewModel = new ViewModelProvider(this, factory).get(LevelViewModel.class);
 
-        viewModel.getAllCompletedLevels().observe(getViewLifecycleOwner(), progressList -> {
-            if (progressList != null && !progressList.isEmpty()) {
-                calculateAndDisplayStats(progressList, totalQuizzesText, accuracyText, streakText, avgTimeText, currentLevelText);
-            } else {
-                resetStatsUI(totalQuizzesText, accuracyText, streakText, avgTimeText, currentLevelText);
-            }
-        });
+        if (currentUser != null) {
+            // Mostriamo i dati dell'utente personalizzato
+            String displayName = (currentUser.getName() != null && !currentUser.getName().isEmpty())
+                    ? currentUser.getName()
+                    : getString(R.string.giocatore_sconosciuto);
 
+            nameText.setText(displayName);
+            emailText.setText(currentUser.getEmail());
+
+            // 3. Osserviamo SOLO i progressi di questo specifico utente
+            // NOTA: Assicurati che nel tuo LevelViewModel il metodo richieda l'userId!
+            levelViewModel.getAllCompletedLevels(currentUser.getIdToken()).observe(getViewLifecycleOwner(), progressList -> {
+                if (progressList != null && !progressList.isEmpty()) {
+                    calculateAndDisplayStats(progressList, totalQuizzesText, accuracyText, streakText, avgTimeText, currentLevelText);
+                } else {
+                    resetStatsUI(totalQuizzesText, accuracyText, streakText, avgTimeText, currentLevelText);
+                }
+            });
+        }
+
+        // 4. Logout pulito tramite MVVM
         logoutButton.setOnClickListener(v -> {
-            FirebaseAuth.getInstance().signOut();
-            Intent intent = new Intent(requireActivity(), LoginActivity.class);
-            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-            startActivity(intent);
+            activity.getUserViewModel().logout().observe(getViewLifecycleOwner(), result -> {
+                if (result.isSuccess()) {
+                    Intent intent = new Intent(requireActivity(), LoginActivity.class);
+                    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                    startActivity(intent);
+                    requireActivity().finish();
+                } else {
+                    Toast.makeText(getContext(), "Errore durante il logout", Toast.LENGTH_SHORT).show();
+                }
+            });
         });
 
         return view;
@@ -77,7 +100,7 @@ public class ProfileFragment extends Fragment {
             if (p.mistakesMade == 0) perfectSolved++;
             totalTime += p.timeSpentMillis;
         }
-        
+
         int accuracy = (int) (((double) perfectSolved / total) * 100);
         accTv.setText(String.format(Locale.getDefault(), "%d%%", accuracy));
 

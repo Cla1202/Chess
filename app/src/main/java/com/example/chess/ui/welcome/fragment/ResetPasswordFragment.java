@@ -1,6 +1,7 @@
 package com.example.chess.ui.welcome.fragment;
 
 import android.os.Bundle;
+import android.util.Log;
 import android.util.Patterns;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -60,9 +61,12 @@ public class ResetPasswordFragment extends Fragment {
                 getParentFragmentManager().popBackStack()
         );
 
-        // Azione del pulsante per reimpostare la password con Firebase
+        // UNICO Listener per il pulsante: gestisce Log e chiamata Firebase
         btnResetPassword.setOnClickListener(v -> {
             String email = etResetEmail.getText().toString().trim();
+
+            // Stampa nel Logcat l'esatta stringa che viene spedita a Firebase per debug
+            Log.d("FIREBASE_RESET", "Indirizzo inviato: [" + email + "]");
 
             if (isEmailOk(email)) {
                 // Chiamata asincrona al ViewModel
@@ -70,7 +74,7 @@ public class ResetPasswordFragment extends Fragment {
                     if (result.isSuccess()) {
                         Toast.makeText(getContext(), "Email di ripristino inviata con successo!", Toast.LENGTH_SHORT).show();
 
-                        // Ritorno manuale al LoginFragment senza nav_graph
+                        // Ritorno manuale al LoginFragment
                         getParentFragmentManager().popBackStack();
                     } else {
                         // Estrazione dell'errore restituito da Firebase
@@ -78,17 +82,6 @@ public class ResetPasswordFragment extends Fragment {
                         Toast.makeText(getContext(), "Errore: " + errorMessage, Toast.LENGTH_LONG).show();
                     }
                 });
-            }
-        });
-
-        btnResetPassword.setOnClickListener(v -> {
-            String email = etResetEmail.getText().toString().trim();
-
-            // Stampa nel Logcat l'esatta stringa che viene spedita a Firebase
-            android.util.Log.d("FIREBASE_RESET", "Indirizzo inviato: [" + email + "]");
-
-            if (isEmailOk(email)) {
-                // ... tuo codice di reset ...
             }
         });
     }
@@ -106,6 +99,4 @@ public class ResetPasswordFragment extends Fragment {
             return true;
         }
     }
-
-
 }

@@ -34,6 +34,6 @@ public interface LevelDao {
     @Query("SELECT * FROM level_progress WHERE userId = :userId AND isCompleted = 1 ORDER BY completionTimestamp ASC")
     LiveData<List<LevelProgress>> getAllCompletedLevelsLive(String userId);
 
-    @Query("DELETE FROM level_progress")
-    void deleteAllProgress();
+    @Query("DELETE FROM level_progress WHERE userId = :userId")
+    void deleteProgressForUser(String userId);
 }

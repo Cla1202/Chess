@@ -13,10 +13,12 @@ import android.widget.TextView;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.lifecycle.ViewModelProvider;
+
 import com.example.chess.R;
 import com.example.chess.adapter.ChessAdapter;
 import com.example.chess.model.Piece;
 import com.example.chess.model.QuizLevel;
+import com.example.chess.model.User;
 import com.example.chess.ui.home.viewmodel.GameViewModel;
 
 import java.util.List;
@@ -34,6 +36,9 @@ public class GameActivity extends AppCompatActivity {
     private TextView statusText, timerText;
     private ProgressBar timerBar;
     private LinearLayout capturedWhiteContainer, capturedBlackContainer;
+
+    // Variabile per memorizzare l'utente corrente
+    private User currentUser;
 
     @Override
     protected void attachBaseContext(android.content.Context newBase) {
@@ -54,13 +59,24 @@ public class GameActivity extends AppCompatActivity {
         capturedBlackContainer = findViewById(R.id.capturedBlackContainer);
 
         viewModel = new ViewModelProvider(this).get(GameViewModel.class);
-        
+
+        // 1. Recupero dell'oggetto User passato tramite Intent
+        if (getIntent() != null && getIntent().hasExtra("CURRENT_USER")) {
+            currentUser = getIntent().getParcelableExtra("CURRENT_USER");
+        }
+
         String mode = getIntent().getStringExtra(EXTRA_MODE);
         QuizLevel level = (QuizLevel) getIntent().getSerializableExtra("QUIZ_LEVEL_OBJECT");
 
         android.content.SharedPreferences prefs = getSharedPreferences("ChessSettings", MODE_PRIVATE);
         boolean timerEnabled = prefs.getBoolean("timer_enabled", true);
-        
+
+        // 2. FONDAMENTALE: Passiamo l'ID utente al ViewModel prima di inizializzare il gioco
+        if (currentUser != null) {
+            viewModel.setCurrentUserId(currentUser.getIdToken());
+        }
+
+        // 3. Inizializziamo il gioco
         viewModel.init(mode, level, timerEnabled);
 
         setupObservers();
@@ -75,7 +91,7 @@ public class GameActivity extends AppCompatActivity {
             btnHelp.setVisibility(MODE_QUIZ.equals(mode) ? View.VISIBLE : View.GONE);
             btnHelp.setOnClickListener(v -> viewModel.showQuizHint());
         }
-        
+
         TextView levelTitle = findViewById(R.id.levelTitleText);
         if (levelTitle != null && level != null && MODE_QUIZ.equals(mode)) levelTitle.setText(level.getTitle());
     }
@@ -85,7 +101,7 @@ public class GameActivity extends AppCompatActivity {
         viewModel.getHints().observe(this, h -> { adapter.setHints(h); adapter.notifyDataSetChanged(); });
         viewModel.getStatus().observe(this, s -> { if (s != null) { statusText.setText(s.text); statusText.setTextColor(s.color); } });
         viewModel.getIsThinking().observe(this, thinking -> gridView.setEnabled(!thinking));
-        
+
         viewModel.getGameEvent().observe(this, event -> {
             if (event == null) return;
             switch (event.type) {

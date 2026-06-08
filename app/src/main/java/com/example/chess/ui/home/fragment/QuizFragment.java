@@ -43,7 +43,7 @@ public class QuizFragment extends Fragment {
         QuizRepository repository = new QuizRepository();
         List<QuizLevel> levels = repository.getAllLevels();
 
-        // 1. Recuperiamo l'Activity madre per prendere l'utente loggato
+        // 1. Retrieve the parent Activity to get the logged-in user
         HomeActivity activity = (HomeActivity) getActivity();
         if (activity == null) return view;
 
@@ -57,7 +57,7 @@ public class QuizFragment extends Fragment {
         LevelViewModelFactory factory = new LevelViewModelFactory(db);
         viewModel = new ViewModelProvider(this, factory).get(LevelViewModel.class);
 
-        // 2. Passiamo il Token ID dell'utente per recuperare i SUOI livelli sbloccati
+        // 2. Pass the user's ID Token to retrieve THEIR unlocked levels
         String userId = currentUser.getIdToken();
 
         viewModel.getMaxCompletedLevel(userId).observe(getViewLifecycleOwner(), maxCompleted -> {
@@ -73,7 +73,7 @@ public class QuizFragment extends Fragment {
                     intent.putExtra(GameActivity.EXTRA_MODE, GameActivity.MODE_QUIZ);
                     intent.putExtra("QUIZ_LEVEL_OBJECT", selectedLevel);
 
-                    // 3. FONDAMENTALE: Passiamo l'utente alla GameActivity così potrà salvare i progressi!
+                    // 3. ESSENTIAL: Pass the user to GameActivity so it can save progress!
                     intent.putExtra("CURRENT_USER", currentUser);
 
                     startActivity(intent);

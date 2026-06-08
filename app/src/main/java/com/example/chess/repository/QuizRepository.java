@@ -38,7 +38,7 @@ public class QuizRepository {
         return levels;
     }
 
-    // --- TRADUTTORI DI COORDINATE ---
+    // --- COORDINATE TRANSLATORS ---
     private int col(String pos) {
         return pos.toLowerCase().charAt(0) - 'a';
     }
@@ -56,7 +56,7 @@ public class QuizRepository {
     }
 
     // ==========================================
-    // LIVELLO 1: Il Primo Scacco (Matto in 1 - Tutorial)
+    // LEVEL 1: The First Check (Mate in 1 - Tutorial)
     // ==========================================
     private QuizLevel createLevel1() {
         Piece[][] setupLevel = createEmptyBoard();
@@ -76,7 +76,7 @@ public class QuizRepository {
     }
 
     // ==========================================
-    // LIVELLO 2: Batteria Letale (Matto in 1)
+    // LEVEL 2: Lethal Battery (Mate in 1)
     // ==========================================
     private QuizLevel createLevel2() {
         Piece[][] setupLevel = createEmptyBoard();
@@ -95,7 +95,7 @@ public class QuizRepository {
     }
 
     // ==========================================
-    // LIVELLO 3: Sacrificio della Regina (Matto in 2)
+    // LEVEL 3: Queen Sacrifice (Mate in 2)
     // ==========================================
     private QuizLevel createLevel3() {
         Piece[][] setupLevel = createEmptyBoard();
@@ -117,7 +117,7 @@ public class QuizRepository {
     }
 
     // ==========================================
-    // LIVELLO 4: Matto delle Spalline (Matto in 1)
+    // LEVEL 4: Epaulette Mate (Mate in 1)
     // ==========================================
     private QuizLevel createLevel4() {
         Piece[][] setupLevel = createEmptyBoard();
@@ -136,7 +136,7 @@ public class QuizRepository {
     }
 
     // ==========================================
-    // LIVELLO 5: L'Infiltrazione (Matto in 2)
+    // LEVEL 5: The Infiltration (Mate in 2)
     // ==========================================
     private QuizLevel createLevel5() {
         Piece[][] setupLevel = createEmptyBoard();
@@ -158,7 +158,7 @@ public class QuizRepository {
     }
 
     // ==========================================
-    // LIVELLO 6: Matto Arabo (Matto in 1)
+    // LEVEL 6: Arabian Mate (Mate in 1)
     // ==========================================
     private QuizLevel createLevel6() {
         Piece[][] setupLevel = createEmptyBoard();
@@ -176,7 +176,7 @@ public class QuizRepository {
     }
 
     // ==========================================
-    // LIVELLO 7: Deviazione del Corridoio (Matto in 2)
+    // LEVEL 7: Back Rank Deviation (Mate in 2)
     // ==========================================
     private QuizLevel createLevel7() {
         Piece[][] setupLevel = createEmptyBoard();
@@ -200,7 +200,7 @@ public class QuizRepository {
     }
 
     // ==========================================
-    // LIVELLO 8: Matto di Anastasia (Sacrificio di Regina)
+    // LEVEL 8: Anastasia's Mate (Queen Sacrifice)
     // ==========================================
     private QuizLevel createLevel8() {
         Piece[][] setupLevel = createEmptyBoard();
@@ -223,7 +223,7 @@ public class QuizRepository {
     }
 
     // ==========================================
-    // LIVELLO 9: Matto di Boden (Le Forbici)
+    // LEVEL 9: Boden's Mate (The Scissors)
     // ==========================================
     private QuizLevel createLevel9() {
         Piece[][] setupLevel = createEmptyBoard();
@@ -248,7 +248,7 @@ public class QuizRepository {
     }
 
     // ==========================================
-    // LIVELLO 10: Matto Affogato (L'incubo del Re)
+    // LEVEL 10: Smothered Mate (The King's Nightmare)
     // ==========================================
     private QuizLevel createLevel10() {
         Piece[][] setupLevel = createEmptyBoard();
@@ -270,7 +270,7 @@ public class QuizRepository {
     }
 
     // ==========================================
-    // LIVELLO 11: Matto di Anastasia (Matto in 3)
+    // LEVEL 11: Anastasia's Mate (Mate in 3)
     // ==========================================
     private QuizLevel createLevel11() {
         Piece[][] setupLevel = createEmptyBoard();
@@ -295,7 +295,7 @@ public class QuizRepository {
     }
 
     // ==========================================
-    // LIVELLO 12: L'Attacco di Damiano (Matto in 3)
+    // LEVEL 12: Damiano's Attack (Mate in 3)
     // ==========================================
     private QuizLevel createLevel12() {
         Piece[][] setupLevel = createEmptyBoard();
@@ -320,7 +320,7 @@ public class QuizRepository {
     }
 
     // ==========================================
-    // LIVELLO 13: Il Lascito di Philidor (Matto in 4)
+    // LEVEL 13: Philidor's Legacy (Mate in 4)
     // ==========================================
     private QuizLevel createLevel13() {
         Piece[][] setupLevel = createEmptyBoard();
@@ -346,7 +346,7 @@ public class QuizRepository {
     }
 
     // ==========================================
-    // LIVELLO 14: Matto di Légal (Matto in 3)
+    // LEVEL 14: Légal's Mate (Mate in 3)
     // ==========================================
     private QuizLevel createLevel14() {
         Piece[][] setupLevel = createEmptyBoard();
@@ -369,7 +369,7 @@ public class QuizRepository {
     }
 
     // ==========================================
-    // LIVELLO 15: Matto di Morphy (Matto in 2)
+    // LEVEL 15: Morphy's Mate (Mate in 2)
     // ==========================================
     private QuizLevel createLevel15() {
         Piece[][] setupLevel = createEmptyBoard();
@@ -392,7 +392,7 @@ public class QuizRepository {
     }
 
     // ==========================================
-    // LIVELLO 16: Sacrificio di Smyslov (Matto in 3)
+    // LEVEL 16: Smyslov's Sacrifice (Mate in 3)
     // ==========================================
     private QuizLevel createLevel16() {
         Piece[][] setupLevel = createEmptyBoard();

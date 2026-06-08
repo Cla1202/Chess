@@ -167,7 +167,7 @@ public class Board {
             if (p instanceof Rook) ((Rook) p).setHasMoved(true);
             if (isCastling && rook instanceof Rook) ((Rook) rook).setHasMoved(true);
             
-            // PROMOZIONE
+            // PROMOTION
             if (p instanceof Pawn && (endX == 0 || endX == 7)) {
                 Piece promoted;
                 switch (Character.toLowerCase(promotionType)) {

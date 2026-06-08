@@ -4,7 +4,7 @@ import java.io.Serializable;
 import java.util.List;
 
 public abstract class Piece implements Serializable {
-    protected int x, y; // Coordinate 0-7
+    protected int x, y; // Coordinates 0-7
     protected boolean isWhite;
 
     public Piece(int x, int y, boolean isWhite) {
@@ -13,12 +13,12 @@ public abstract class Piece implements Serializable {
         this.isWhite = isWhite;
     }
 
-    // Metodo astratto: ogni pezzo dirà se può muoversi in una posizione
-    // Cambia da (int endX, int endY, Piece[][] grid)
-// a questo:
+    // Abstract method: each piece will define its valid moves
+    // Changes from (int endX, int endY, Piece[][] grid)
+    // to this:
     public abstract boolean isValidMove(int endX, int endY, Board board);
 
-    // Getter e Setter
+    // Getters and Setters
     public int getX() { return x; }
     public void setX(int x) { this.x = x; }
     public int getY() { return y; }
@@ -33,7 +33,7 @@ public abstract class Piece implements Serializable {
         int currY = startY + dy;
 
         while (currX != targetX || currY != targetY) {
-            if (board[currX][currY] != null) return false; // Ostacolo trovato
+            if (board[currX][currY] != null) return false; // Obstacle found
             currX += dx;
             currY += dy;
         }

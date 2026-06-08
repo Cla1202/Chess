@@ -31,16 +31,15 @@ public class LevelAdapter extends RecyclerView.Adapter<LevelAdapter.LevelViewHol
         this.listener = listener;
     }
 
-    // Aggiungi questo metodo per permettere al ViewModel di aggiornare i livelli in tempo reale
+    // Add this method to allow the ViewModel to update levels in real time
     public void updateMaxUnlocked(int newMaxUnlocked) {
         this.maxUnlocked = newMaxUnlocked;
-        notifyDataSetChanged(); // Ridisegna tutta la lista
+        notifyDataSetChanged(); // Redraw the entire list
     }
 
-    @NonNull
     @Override
     public LevelViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        // ASSICURATI che il nome del tuo layout XML qui sotto sia corretto (es. item_level_card)
+        // ENSURE that the name of your XML layout below is correct (e.g. item_level_card)
         View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_level_card, parent, false);
         return new LevelViewHolder(view);
     }
@@ -49,36 +48,36 @@ public class LevelAdapter extends RecyclerView.Adapter<LevelAdapter.LevelViewHol
     public void onBindViewHolder(@NonNull LevelViewHolder holder, int position) {
         QuizLevel level = levels.get(position);
 
-        // Calcoliamo il numero del livello (la position parte da 0, quindi aggiungiamo 1)
+        // Calculate the level number (position starts from 0, so we add 1)
         int levelNumber = position + 1;
 
-        // USA LA COSTANTE PER IL PREFISSO TESTUALE
+        // USE THE CONSTANT FOR THE TEXT PREFIX
         holder.titleText.setText(Constants.PREFIX_LEVEL + levelNumber);
-        holder.descriptionText.setText(level.getTitle()); // Es: "Matto in 2"
+        holder.descriptionText.setText(level.getTitle()); // e.g. "Mate in 2"
 
-        // LOGICA DI SBLOCCO/BLOCCO
+        // UNLOCK/LOCK LOGIC
         if (levelNumber <= maxUnlocked) {
-            // --- LIVELLO SBLOCCATO ---
+            // --- LEVEL UNLOCKED ---
             holder.padlockIcon.setVisibility(View.GONE);
 
-            // USA LE COSTANTI PER I COLORI SBLOCCATI
+            // USE CONSTANTS FOR UNLOCKED COLORS
             holder.itemView.setBackgroundColor(Color.parseColor(Constants.COLOR_CARD_UNLOCKED));
 
-            // Qui richiamo COLOR_DARK che avevi già nel tuo Constants originale
+            // Here I call COLOR_DARK which you already had in your original Constants
             holder.titleText.setTextColor(Color.parseColor(Constants.COLOR_DARK));
 
-            // Permetti il click per giocare
+            // Allow clicking to play
             holder.itemView.setOnClickListener(v -> listener.onItemClick(position));
 
         } else {
-            // --- LIVELLO BLOCCATO ---
+            // --- LEVEL LOCKED ---
             holder.padlockIcon.setVisibility(View.VISIBLE);
 
-            // USA LE COSTANTI PER I COLORI BLOCCATI
+            // USE CONSTANTS FOR LOCKED COLORS
             holder.itemView.setBackgroundColor(Color.parseColor(Constants.COLOR_CARD_LOCKED));
             holder.titleText.setTextColor(Color.parseColor(Constants.COLOR_TEXT_LOCKED));
 
-            // USA LA COSTANTE PER IL MESSAGGIO TOAST
+            // USE THE CONSTANT FOR THE TOAST MESSAGE
             holder.itemView.setOnClickListener(v -> {
                 Toast.makeText(holder.itemView.getContext(), Constants.MSG_LEVEL_LOCKED, Toast.LENGTH_SHORT).show();
             });
@@ -97,8 +96,8 @@ public class LevelAdapter extends RecyclerView.Adapter<LevelAdapter.LevelViewHol
 
         public LevelViewHolder(@NonNull View itemView) {
             super(itemView);
-            // ASSICURATI CHE QUESTI ID CORRISPONDANO A QUELLI DEL TUO item_level_card.xml
-            // Ad esempio, nel tuo XML il titolo potrebbe chiamarsi levelTitleTextView
+            // ENSURE THESE IDs MATCH THOSE IN YOUR item_level_card.xml
+            // For example, in your XML the title might be called levelTitleTextView
             titleText = itemView.findViewById(R.id.levelTitleText);
             descriptionText = itemView.findViewById(R.id.levelNumberText);
             padlockIcon = itemView.findViewById(R.id.lockIcon);

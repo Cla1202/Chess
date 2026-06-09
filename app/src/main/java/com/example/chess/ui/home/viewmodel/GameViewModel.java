@@ -193,6 +193,7 @@ public class GameViewModel extends AndroidViewModel {
                     playQuizComputerMove();
                 } else {
                     updateStatusText(getStr(R.string.livello_superato), StatusColorType.SUCCESS);
+                    isThinking.setValue(true);
                     saveQuizProgress();
                     new Handler(Looper.getMainLooper()).postDelayed(this::finishGame, 1500);
                 }
@@ -225,9 +226,16 @@ public class GameViewModel extends AndroidViewModel {
             pendingAnimationAction = () -> {
                 currentQuizMoveIndex++;
                 updateCapturedSignal();
-                updateStatusText(getStr(R.string.tocca_a_te), StatusColorType.NORMAL);
-                isThinking.setValue(false);
-                startTimer();
+                if (currentQuizMoveIndex < quizLevel.getSolutionMoves().size()) {
+                    updateStatusText(getStr(R.string.tocca_a_te), StatusColorType.NORMAL);
+                    isThinking.setValue(false);
+                    startTimer();
+                } else {
+                    updateStatusText(getStr(R.string.livello_superato), StatusColorType.SUCCESS);
+                    isThinking.setValue(true);
+                    saveQuizProgress();
+                    new Handler(Looper.getMainLooper()).postDelayed(this::finishGame, 1500);
+                }
             };
 
             triggerEvent(new GameEvent(GameEvent.Type.ANIMATE_MOVE, move.startRow * 8 + move.startCol, move.endRow * 8 + move.endCol, p));
@@ -322,10 +330,12 @@ public class GameViewModel extends AndroidViewModel {
     private void stopTimer() { if (countDownTimer != null) countDownTimer.cancel(); }
 
     private void saveQuizProgress() {
-        long time = System.currentTimeMillis() - startTimeMillis;
-        LevelProgress p = new LevelProgress(quizLevel.getId(), getCurrentUserId(), true, quizErrorCount, time, System.currentTimeMillis());
-        repository.saveProgress(p);
-        showToast(getStr(R.string.progresso_salvato));
+        executor.execute(() -> {
+            long time = System.currentTimeMillis() - startTimeMillis;
+            LevelProgress p = new LevelProgress(quizLevel.getId(), getCurrentUserId(), true, quizErrorCount, time, System.currentTimeMillis());
+            repository.saveProgress(p);
+            new Handler(Looper.getMainLooper()).post(() -> showToast(getStr(R.string.progresso_salvato)));
+        });
     }
 
     private String getCurrentUserId() {

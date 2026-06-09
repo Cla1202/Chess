@@ -6,7 +6,7 @@ import retrofit2.http.Query;
 
 public interface StockfishService {
     @GET("api/s/v2.php")
-    Call<String> getBestMove(@Query("fen") String fen, @Query("depth") int depth);
+    Call<StockfishResponse> getBestMove(@Query("fen") String fen, @Query("depth") int depth);
 
     class StockfishResponse {
         public boolean success;

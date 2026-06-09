@@ -7,7 +7,7 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 import retrofit2.Retrofit;
-import retrofit2.converter.scalars.ScalarsConverterFactory;
+import retrofit2.converter.gson.GsonConverterFactory;
 
 public class ChessRemoteDataSource implements BaseChessRemoteDataSource {
 
@@ -16,25 +16,25 @@ public class ChessRemoteDataSource implements BaseChessRemoteDataSource {
     public ChessRemoteDataSource() {
         Retrofit retrofit = new Retrofit.Builder()
                 .baseUrl("https://stockfish.online/")
-                .addConverterFactory(ScalarsConverterFactory.create())
+                .addConverterFactory(GsonConverterFactory.create())
                 .build();
         apiService = retrofit.create(StockfishService.class);
     }
 
     @Override
     public void getBestMove(String fen, int depth, ChessRepository.BotMoveCallback callback) {
-        apiService.getBestMove(fen, depth).enqueue(new Callback<String>() {
+        apiService.getBestMove(fen, depth).enqueue(new Callback<StockfishService.StockfishResponse>() {
             @Override
-            public void onResponse(Call<String> call, Response<String> response) {
+            public void onResponse(Call<StockfishService.StockfishResponse> call, Response<StockfishService.StockfishResponse> response) {
                 if (response.isSuccessful() && response.body() != null) {
-                    callback.onSuccess(response.body());
+                    callback.onSuccess(response.body().bestmove);
                 } else {
                     callback.onError(new Exception("API Error: " + response.code()));
                 }
             }
 
             @Override
-            public void onFailure(Call<String> call, Throwable t) {
+            public void onFailure(Call<StockfishService.StockfishResponse> call, Throwable t) {
                 callback.onError(t);
             }
         });

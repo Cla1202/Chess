@@ -15,27 +15,27 @@ public class Rook extends Piece {
         int curX = getX();
         int curY = getY();
 
-        // 1. SALVAVITA: Un pezzo non può muoversi sulla casella in cui si trova già
+        // 1. SAFETY CHECK: A piece cannot move to the square it is currently on
         if (curX == targetX && curY == targetY) return false;
 
-        // 2. Deve muoversi dritto (o cambia solo X o cambia solo Y)
+        // 2. Must move in a straight line (change either only X or only Y)
         if (curX != targetX && curY != targetY) return false;
 
-        // 3. Calcolo direzione sicuro
+        // 3. Safe direction calculation
         int dirX = Integer.compare(targetX, curX);
         int dirY = Integer.compare(targetY, curY);
 
         int x = curX + dirX;
         int y = curY + dirY;
 
-        // Controllo ostacoli in linea retta
+        // Check for obstacles in a straight line
         while (x != targetX || y != targetY) {
             if (board.getPiece(x, y) != null) return false;
             x += dirX;
             y += dirY;
         }
 
-        // 4. Controllo finale
+        // 4. Final check
         Piece target = board.getPiece(targetX, targetY);
         return target == null || target.isWhite() != isWhite();
     }

@@ -33,7 +33,7 @@ public class ResetPasswordFragment extends Fragment {
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // Inizializzazione del ViewModel tramite la Factory
+        // Initialize the ViewModel using the Factory
         UserRepository userRepository = new UserRepository();
         userViewModel = new ViewModelProvider(
                 requireActivity(),
@@ -51,48 +51,48 @@ public class ResetPasswordFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        // Collegamento dei componenti dell'interfaccia grafica
+        // Link UI components
         etResetEmail = view.findViewById(R.id.resetEmailInput);
         btnResetPassword = view.findViewById(R.id.resetPasswordButton);
         tvBackToLogin = view.findViewById(R.id.backToLoginFromResetLink);
 
-        // Torna indietro al Login rimosso dal BackStack manuale
+        // Return to Login fragment by manually popping the BackStack
         tvBackToLogin.setOnClickListener(v ->
                 getParentFragmentManager().popBackStack()
         );
 
-        // UNICO Listener per il pulsante: gestisce Log e chiamata Firebase
+        // Single listener for the button: handles Logging and the Firebase call
         btnResetPassword.setOnClickListener(v -> {
             String email = etResetEmail.getText().toString().trim();
 
-            // Stampa nel Logcat l'esatta stringa che viene spedita a Firebase per debug
-            Log.d("FIREBASE_RESET", "Indirizzo inviato: [" + email + "]");
+            // Print the exact string sent to Firebase to the Logcat for debugging
+            Log.d("FIREBASE_RESET", "Address sent: [" + email + "]");
 
             if (isEmailOk(email)) {
-                // Chiamata asincrona al ViewModel
+                // Asynchronous call to the ViewModel
                 userViewModel.resetPassword(email).observe(getViewLifecycleOwner(), result -> {
                     if (result.isSuccess()) {
-                        Toast.makeText(getContext(), "Email di ripristino inviata con successo!", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(getContext(), "Reset email sent successfully!", Toast.LENGTH_SHORT).show();
 
-                        // Ritorno manuale al LoginFragment
+                        // Manually return to LoginFragment
                         getParentFragmentManager().popBackStack();
                     } else {
-                        // Estrazione dell'errore restituito da Firebase
+                        // Extract the error returned by Firebase
                         String errorMessage = ((Result.Error) result).getMessage();
-                        Toast.makeText(getContext(), "Errore: " + errorMessage, Toast.LENGTH_LONG).show();
+                        Toast.makeText(getContext(), "Error: " + errorMessage, Toast.LENGTH_LONG).show();
                     }
                 });
             }
         });
     }
 
-    // Validazione dell'indirizzo email
+    // Email address validation
     private boolean isEmailOk(String email) {
         if (email.isEmpty()) {
-            etResetEmail.setError("L'email non può essere vuota");
+            etResetEmail.setError("Email cannot be empty");
             return false;
         } else if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
-            etResetEmail.setError("Inserisci un indirizzo email valido");
+            etResetEmail.setError("Enter a valid email address");
             return false;
         } else {
             etResetEmail.setError(null);

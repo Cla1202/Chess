@@ -22,7 +22,7 @@ public class PlayFragment extends Fragment {
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View v = inflater.inflate(R.layout.fragment_play, container, false);
 
-        // 1. Recuperiamo l'Activity madre e l'utente attualmente loggato
+        // 1. Retrieve the parent Activity and the currently logged-in user
         HomeActivity activity = (HomeActivity) getActivity();
         User currentUser = (activity != null) ? activity.getCurrentUser() : null;
 
@@ -30,7 +30,7 @@ public class PlayFragment extends Fragment {
             Intent i = new Intent(requireActivity(), GameActivity.class);
             i.putExtra(GameActivity.EXTRA_MODE, GameActivity.MODE_LOCAL_PVP);
 
-            // 2. Passiamo l'utente alla GameActivity
+            // 2. Pass the user to GameActivity
             if (currentUser != null) {
                 i.putExtra("CURRENT_USER", currentUser);
             }
@@ -42,7 +42,7 @@ public class PlayFragment extends Fragment {
             Intent i = new Intent(requireActivity(), GameActivity.class);
             i.putExtra(GameActivity.EXTRA_MODE, GameActivity.MODE_BOT);
 
-            // 2. Passiamo l'utente alla GameActivity
+            // 2. Pass the user to GameActivity
             if (currentUser != null) {
                 i.putExtra("CURRENT_USER", currentUser);
             }

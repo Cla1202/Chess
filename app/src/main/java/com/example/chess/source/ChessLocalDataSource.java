@@ -4,7 +4,7 @@ import android.content.Context;
 import android.content.SharedPreferences;
 
 import com.example.chess.model.Board;
-import com.example.chess.model.User; // Importiamo il tuo nuovo modello User
+import com.example.chess.model.User; // Import your new User model
 
 public class ChessLocalDataSource {
 
@@ -14,14 +14,14 @@ public class ChessLocalDataSource {
     private static final String KEY_USER_TOKEN = "logged_user_token";
 
     private final SharedPreferences prefs;
-    private Board savedBoard; // Rimane in memoria, pronto per Room in futuro
+    private Board savedBoard; // Remains in memory, ready for Room in the future
 
-    // Il Context viene passato qui una volta sola, convertito in ApplicationContext per sicurezza
+    // Context is passed here once and converted to ApplicationContext for safety
     public ChessLocalDataSource(Context context) {
         this.prefs = context.getApplicationContext().getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
     }
 
-    // --- GESTIONE DELLA PARTITA (SCACCHIERA) ---
+    // --- GAME MANAGEMENT (CHESSBOARD) ---
 
     public void saveGame(Board board) {
         this.savedBoard = board;
@@ -31,9 +31,9 @@ public class ChessLocalDataSource {
         return savedBoard;
     }
 
-    // --- GESTIONE DELL'UTENTE TRAMITE IL NUOVO MODELLO USER ---
+    // --- USER MANAGEMENT USING THE NEW USER MODEL ---
 
-    // Aggiornato per salvare tutti i campi del tuo oggetto User
+    // Updated to save all fields of your User object
     public void saveUser(User user) {
         if (user == null) return;
 
@@ -41,25 +41,25 @@ public class ChessLocalDataSource {
                 .putString(KEY_USER_NAME, user.getName())
                 .putString(KEY_USER_EMAIL, user.getEmail())
                 .putString(KEY_USER_TOKEN, user.getIdToken())
-                .apply(); // Salva in modo asincrono nei thread di background
+                .apply(); // Saves asynchronously on background threads
     }
 
-    // Recupera i dati dalle SharedPreferences e ricostruisce l'oggetto User completo
+    // Retrieves data from SharedPreferences and reconstructs the complete User object
     public User getSavedUser() {
         String email = prefs.getString(KEY_USER_EMAIL, null);
 
-        // Se non c'è l'email salvata, significa che non c'è nessun utente loggato
+        // If there is no saved email, it means no user is logged in
         if (email == null) {
             return null;
         }
 
-        String name = prefs.getString(KEY_USER_NAME, "Ospite");
+        String name = prefs.getString(KEY_USER_NAME, "Guest");
         String token = prefs.getString(KEY_USER_TOKEN, "");
 
         return new User(name, email, token);
     }
 
-    // Cancella completamente i dati dell'utente dalle preferenze locali (utile al logout)
+    // Completely clears user data from local preferences (useful for logout)
     public void clearUser() {
         prefs.edit()
                 .remove(KEY_USER_NAME)

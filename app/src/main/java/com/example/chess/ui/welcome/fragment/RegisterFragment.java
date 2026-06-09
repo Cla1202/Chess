@@ -38,7 +38,7 @@ public class RegisterFragment extends Fragment {
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // Inizializzazione del ViewModel associato all'Activity
+        // Initialize the ViewModel associated with the Activity
         UserRepository userRepository = new UserRepository();
         userViewModel = new ViewModelProvider(
                 requireActivity(),
@@ -73,31 +73,31 @@ public class RegisterFragment extends Fragment {
             String password = etPassword.getText().toString().trim();
             String confirmPassword = etConfirmPassword.getText().toString().trim();
 
-            // 1. Validazione dell'input
+            // 1. Input validation
             if (name.isEmpty() || email.isEmpty() || password.isEmpty() || confirmPassword.isEmpty()) {
-                Toast.makeText(getContext(), "Per favore, compila tutti i campi", Toast.LENGTH_SHORT).show();
+                Toast.makeText(getContext(), "Please fill in all fields", Toast.LENGTH_SHORT).show();
                 return;
             }
 
             if (!password.equals(confirmPassword)) {
-                Toast.makeText(getContext(), "Le password non coincidono", Toast.LENGTH_SHORT).show();
+                Toast.makeText(getContext(), "Passwords do not match", Toast.LENGTH_SHORT).show();
                 return;
             }
 
             if (password.length() < 6) {
-                Toast.makeText(getContext(), "La password deve contenere almeno 6 caratteri", Toast.LENGTH_SHORT).show();
+                Toast.makeText(getContext(), "Password must be at least 6 characters long", Toast.LENGTH_SHORT).show();
                 return;
             }
 
-            // 2. Chiamata al ViewModel con il NUOVO parametro "name"
+            // 2. ViewModel call with the NEW "name" parameter
             userViewModel.getUser(name, email, password, false).observe(getViewLifecycleOwner(), result -> {
                 if (result.isSuccess()) {
-                    // Recuperiamo l'utente appena creato (che ora ha già il nome integrato da Firebase!)
+                    // Retrieve the newly created user (which now already has the name integrated by Firebase!)
                     User newUser = ((Result.Success) result).getUser();
 
-                    Toast.makeText(getContext(), "Benvenuto, " + newUser.getName() + "!", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getContext(), "Welcome, " + newUser.getName() + "!", Toast.LENGTH_SHORT).show();
 
-                    // Passiamo direttamente alla HomeActivity
+                    // Navigate directly to HomeActivity
                     Intent intent = new Intent(getActivity(), HomeActivity.class);
                     intent.putExtra("CURRENT_USER", newUser);
                     intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
@@ -105,7 +105,7 @@ public class RegisterFragment extends Fragment {
                     requireActivity().finish();
                 } else {
                     String errorMessage = ((Result.Error) result).getMessage();
-                    Toast.makeText(getContext(), "Errore durante la registrazione: " + errorMessage, Toast.LENGTH_LONG).show();
+                    Toast.makeText(getContext(), "Registration error: " + errorMessage, Toast.LENGTH_LONG).show();
                 }
             });
         });

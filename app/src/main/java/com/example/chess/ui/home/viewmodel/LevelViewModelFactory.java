@@ -18,7 +18,7 @@ public class LevelViewModelFactory implements ViewModelProvider.Factory {
     @Override
     @SuppressWarnings("unchecked")
     public <T extends ViewModel> T create(@NonNull Class<T> modelClass) {
-        // Se Android ci chiede un LevelViewModel, noi lo creiamo passandogli il DB
+
         if (modelClass.isAssignableFrom(LevelViewModel.class)) {
             return (T) new LevelViewModel(database);
         }

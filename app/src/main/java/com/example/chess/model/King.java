@@ -12,13 +12,13 @@ public class King extends Piece {
         int diffX = Math.abs(targetX - getX());
         int diffY = Math.abs(targetY - getY());
 
-        // 1. Mossa base: Se è un passo solo, non controlliamo lo scacco qui (lo fa la Board)
+        // 1. Base move: If it's a single step, we don't check for check here (the Board class handles that)
         if (diffX <= 1 && diffY <= 1) {
             Piece target = board.getPiece(targetX, targetY);
             return target == null || target.isWhite() != isWhite();
         }
 
-        // 2. Arrocco: Solo se il Re si muove di 2 di lato
+        // 2. Castling: Only if the King moves 2 squares sideways
         if (!hasMoved && diffX == 0 && diffY == 2) {
             return canCastle(targetX, targetY, board);
         }
@@ -26,7 +26,7 @@ public class King extends Piece {
     }
 
     private boolean canCastle(int targetX, int targetY, Board board) {
-        // Controllo scacco iniziale (Evita ricorsione infinita)
+        // Initial check for being in check (prevents infinite recursion)
         if (board.isKingInCheck(isWhite)) return false;
 
         int rookCol = (targetY > getY()) ? 7 : 0;
@@ -36,7 +36,7 @@ public class King extends Piece {
             int step = (targetY > getY()) ? 1 : -1;
             for (int c = getY() + step; c != rookCol; c += step) {
                 if (board.getPiece(getX(), c) != null) return false;
-                // Controllo caselle di transito
+                // Check transit squares
                 if (Math.abs(c - getY()) <= 2) {
                     if (board.isSquareAttacked(getX(), c, !isWhite)) return false;
                 }

@@ -12,7 +12,7 @@ public class UserAuthenticationLocalDataSource extends BaseUserAuthenticationRem
     private final SharedPreferences sharedPreferences;
 
     public UserAuthenticationLocalDataSource(Context context) {
-        // Inizializziamo le SharedPreferences direttamente nel costruttore
+        // Initialize SharedPreferences directly in the constructor
         this.sharedPreferences = context.getSharedPreferences("ChessPrefs", Context.MODE_PRIVATE);
     }
 
@@ -20,18 +20,18 @@ public class UserAuthenticationLocalDataSource extends BaseUserAuthenticationRem
     public MutableLiveData<Result> getUser(String name, String email, String password, boolean isUserRegistered) {
         MutableLiveData<Result> liveData = new MutableLiveData<>();
 
-        // Manteniamo la tua logica di controllo locale sulla lunghezza della password
+        // Keep your local logic to check password length
         if (password.length() > 5) {
             saveUserLocally(email);
 
-            // Se viene passato un nome (in registrazione), usiamo quello.
-            // Altrimenti (in login), estraiamo la prima parte dell'email come prima.
+            // If a name is passed (during registration), use it.
+            // Otherwise (during login), extract the first part of the email as before.
             String mockName = (name != null && !name.isEmpty()) ? name : email.split("@")[0];
             User localUser = new User(mockName, email, "local_fake_uid");
 
             liveData.postValue(new Result.Success(localUser));
         } else {
-            // Se la password è corta, restituiamo l'errore tramite la classe Result
+            // If the password is too short, return the error using the Result class
             liveData.postValue(new Result.Error(Constants.PASSWORD_CORTA));
         }
 
@@ -42,7 +42,7 @@ public class UserAuthenticationLocalDataSource extends BaseUserAuthenticationRem
     public MutableLiveData<Result> getGoogleUser(String idToken) {
         MutableLiveData<Result> liveData = new MutableLiveData<>();
 
-        // Simuliamo il salvataggio locale per l'accesso con Google
+        // Simulate local saving for Google sign-in
         String googleEmail = "google_user@gmail.com";
         saveUserLocally(googleEmail);
 
@@ -55,7 +55,7 @@ public class UserAuthenticationLocalDataSource extends BaseUserAuthenticationRem
     @Override
     public MutableLiveData<Result> resetPassword(String email) {
         MutableLiveData<Result> liveData = new MutableLiveData<>();
-        // Nel contesto locale/mock, simuliamo semplicemente che l'invio sia riuscito
+        // In the local/mock context, simply simulate that the request was successful
         liveData.postValue(new Result.Success(null));
         return liveData;
     }
@@ -64,19 +64,19 @@ public class UserAuthenticationLocalDataSource extends BaseUserAuthenticationRem
     public MutableLiveData<Result> logout() {
         MutableLiveData<Result> liveData = new MutableLiveData<>();
 
-        // Quando l'utente fa il logout, puliamo i dati dalle SharedPreferences
+        // When the user logs out, clear data from SharedPreferences
         clearLocalUser();
 
         liveData.postValue(new Result.Success(null));
         return liveData;
     }
 
-    // Metodo helper per salvare la stringa dell'utente
+    // Helper method to save the user string
     private void saveUserLocally(String username) {
         sharedPreferences.edit().putString("logged_user", username).apply();
     }
 
-    // Metodo helper per rimuovere l'utente quando si disconnette
+    // Helper method to remove the user when they disconnect
     private void clearLocalUser() {
         sharedPreferences.edit().remove("logged_user").apply();
     }

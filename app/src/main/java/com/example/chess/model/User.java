@@ -3,7 +3,7 @@ package com.example.chess.model;
 import android.os.Parcel;
 import android.os.Parcelable;
 
-// Se usi Firebase Realtime Database/Firestore, questo import serve per non salvare il token
+
 import com.google.firebase.database.Exclude;
 
 public class User implements Parcelable {

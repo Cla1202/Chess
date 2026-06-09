@@ -14,14 +14,14 @@ public class ChessUtil {
         String langCode = prefs.getString("language", "it");
         Locale locale = new Locale(langCode);
         Locale.setDefault(locale);
-        
+
         Resources res = context.getResources();
         Configuration config = new Configuration(res.getConfiguration());
         config.setLocale(locale);
-        
-        // Per Android 7.0+ (API 24)
+
+        // For Android 7.0+ (API 24)
         context.createConfigurationContext(config);
-        // Per compatibilità e aggiornamento immediato delle risorse correnti
+        // For compatibility and immediate update of current resources
         res.updateConfiguration(config, res.getDisplayMetrics());
     }
 

@@ -8,7 +8,7 @@ public abstract class Result {
     }
 
     public static final class Success extends Result {
-        private final User user; // Usa il TUO modello User
+        private final User user;
 
         public Success(User user) {
             this.user = user;

@@ -17,32 +17,32 @@ public class UserViewModel extends ViewModel {
         this.authenticationError = false;
     }
 
-    // 1. Metodo per Login e Registrazione classica (con supporto al parametro Name)
+    // 1. Method for classic Login and Registration (with support for the Name parameter)
     public MutableLiveData<Result> getUser(String name, String email, String password, boolean isUserRegistered) {
         return userRepository.getUser(name, email, password, isUserRegistered);
     }
 
-    // 2. Metodo per Login con Google
+    // 2. Method for Google Login
     public MutableLiveData<Result> getGoogleUser(String idToken) {
         return userRepository.getGoogleUser(idToken);
     }
 
-    // 3. Metodo per il recupero password
+    // 3. Method for password reset
     public MutableLiveData<Result> resetPassword(String email) {
         return userRepository.resetPassword(email);
     }
 
-    // 4. Metodo per il Logout
+    // 4. Method for Logout
     public MutableLiveData<Result> logout() {
         return userRepository.logout();
     }
 
-    // 5. Metodo per ottenere l'utente connesso dal database locale
+    // 5. Method to get the connected user from the local database
     public User getLoggedUser() {
         return userRepository.getLoggedUser();
     }
 
-    // Getter e Setter per gli errori di autenticazione
+    // Getters and Setters for authentication errors
     public boolean isAuthenticationError() {
         return authenticationError;
     }

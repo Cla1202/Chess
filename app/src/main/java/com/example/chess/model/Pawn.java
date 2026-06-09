@@ -12,7 +12,7 @@ public class Pawn extends Piece {
         int currentX = getX();
         int currentY = getY();
 
-        // 1. Movimento dritto (1 o 2 caselle) - Già fatto
+        // 1. Straight move (1 or 2 squares)
         if (targetY == currentY) {
             if (targetX == currentX + direction) return board[targetX][targetY] == null;
             if (currentX == (isWhite() ? 6 : 1) && targetX == currentX + (2 * direction)) {
@@ -20,16 +20,16 @@ public class Pawn extends Piece {
             }
         }
 
-        // 2. Cattura Diagonale Standard
+        // 2. Standard diagonal capture
         if (Math.abs(targetY - currentY) == 1 && targetX == currentX + direction) {
             if (board[targetX][targetY] != null) {
                 return board[targetX][targetY].isWhite() != this.isWhite();
             }
 
-            // --- LOGICA EN PASSANT ---
-            // Se la casella è vuota, controlla se è un En Passant
+            // --- EN PASSANT LOGIC ---
+            // If the square is empty, check for En Passant
             if (targetY == boardObject.getEnPassantColumn()) {
-                // La riga deve essere quella corretta (riga 2 per il bianco, 5 per il nero)
+                // The row must be the correct one (row 2 for white, 5 for black)
                 int enPassantRow = isWhite() ? 2 : 5;
                 return targetX == enPassantRow;
             }

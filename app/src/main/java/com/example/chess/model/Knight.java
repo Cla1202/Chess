@@ -11,10 +11,10 @@ public class Knight extends Piece {
         int diffX = Math.abs(targetX - getX());
         int diffY = Math.abs(targetY - getY());
 
-        // Il cavallo si muove a "L": (2,1) o (1,2)
+        // The Knight moves in an "L" shape: (2,1) or (1,2)
         if ((diffX == 2 && diffY == 1) || (diffX == 1 && diffY == 2)) {
             Piece target = grid[targetX][targetY];
-            // Può muoversi se la casella è vuota o ha un nemico
+            // Can move if the square is empty or contains an enemy piece
             return target == null || target.isWhite() != isWhite();
         }
         return false;

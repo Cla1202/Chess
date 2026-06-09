@@ -10,12 +10,12 @@ public class Queen extends Piece {
         int curX = getX();
         int curY = getY();
 
-        // Deve essere o linea retta o diagonale
+        // Must be either a straight line or a diagonal
         if (curX != targetX && curY != targetY && Math.abs(targetX - curX) != Math.abs(targetY - curY)) {
             return false;
         }
 
-        // Controllo percorso libero
+        // Check if the path is clear
         int dirX = Integer.compare(targetX, curX);
         int dirY = Integer.compare(targetY, curY);
         int x = curX + dirX;

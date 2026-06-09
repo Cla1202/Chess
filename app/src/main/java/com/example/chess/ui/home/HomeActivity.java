@@ -15,8 +15,8 @@ import com.example.chess.ui.home.fragment.PlayFragment;
 import com.example.chess.ui.home.fragment.ProfileFragment;
 import com.example.chess.ui.home.fragment.QuizFragment;
 import com.example.chess.ui.home.fragment.SettingsFragment;
-import com.example.chess.ui.welcome.LoginActivity; // Assicurati che questo import sia corretto
-import com.example.chess.ui.welcome.viewmodel.UserViewModel; // Controlla il percorso del tuo ViewModel
+import com.example.chess.ui.welcome.LoginActivity; // Ensure this import is correct
+import com.example.chess.ui.welcome.viewmodel.UserViewModel; // Check your ViewModel path
 import com.example.chess.ui.welcome.viewmodel.UserViewModelFactory;
 import com.example.chess.util.ChessUtil;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
@@ -32,33 +32,33 @@ public class HomeActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_home);
 
-        // 1. Inizializziamo il ViewModel
+        // 1. Initialize the ViewModel
         UserRepository userRepository = new UserRepository();
         userViewModel = new ViewModelProvider(this, new UserViewModelFactory(userRepository)).get(UserViewModel.class);
 
-        // 2. Recuperiamo l'utente dall'Intent (se veniamo dal Login/Register)
+        // 2. Retrieve the user from the Intent (if coming from Login/Register)
         if (getIntent() != null && getIntent().hasExtra("CURRENT_USER")) {
             currentUser = getIntent().getParcelableExtra("CURRENT_USER");
         } else {
-            // Se non c'è nell'Intent, proviamo a recuperare la sessione attiva da Firebase
+            // If not in the Intent, try to retrieve the active session from Firebase
             currentUser = userViewModel.getLoggedUser();
         }
 
-        // 3. Controllo di Sicurezza: se l'utente è null, non è autorizzato a stare qui.
+        // 3. Security Check: if the user is null, they are not authorized to be here
         if (currentUser == null) {
             Intent intent = new Intent(this, LoginActivity.class);
             intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
             startActivity(intent);
             finish();
-            return; // Blocchiamo l'esecuzione del resto del codice
+            return; // Prevent the rest of the code from executing
         }
 
-        // 4. Gestione della Bottom Navigation
+        // 4. Handle Bottom Navigation
         BottomNavigationView b = findViewById(R.id.bottom_navigation);
 
         if (savedInstanceState == null) {
             getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, new ProfileFragment()).commit();
-            // Impostiamo l'icona corretta all'avvio
+            // Set the correct icon on startup
             b.setSelectedItemId(R.id.nav_profile);
         }
 
@@ -77,12 +77,12 @@ public class HomeActivity extends AppCompatActivity {
         });
     }
 
-    // 5. Metodo "Ponte" per far accedere i Fragment ai dati dell'utente
+    // 5. "Bridge" method for Fragments to access user data
     public User getCurrentUser() {
         return currentUser;
     }
 
-    // Metodo "Ponte" per permettere ai Fragment di usare il ViewModel (es. per il Logout)
+    // "Bridge" method for Fragments to use the ViewModel (e.g., for Logout)
     public UserViewModel getUserViewModel() {
         return userViewModel;
     }

@@ -2,7 +2,7 @@ package com.example.chess.repository.user;
 
 import androidx.lifecycle.MutableLiveData;
 import com.example.chess.model.Result;
-import com.example.chess.model.User; // <-- IMPORTANTE
+import com.example.chess.model.User; // <-- IMPORTANT
 
 public interface IChessUserRepository {
     MutableLiveData<Result> getUser(String name, String email, String password, boolean isUserRegistered);
@@ -10,6 +10,6 @@ public interface IChessUserRepository {
     MutableLiveData<Result> logout();
     MutableLiveData<Result> resetPassword(String email);
 
-    // Deve restituire il TUO modello User personalizzato
+    // Must return your custom User model
     User getLoggedUser();
 }

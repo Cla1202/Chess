@@ -11,23 +11,23 @@ import java.util.List;
 @Dao
 public interface LevelDao {
 
-    // 1. Inserisce o aggiorna il progresso.
-    // Grazie alla chiave primaria composta (levelId + userId),
-    // aggiornerà solo il livello giusto dell'utente giusto.
+    // 1. Inserts or updates progress.
+    // Thanks to the composite primary key (levelId + userId),
+    // it will update only the correct level for the specific user.
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     void insertProgress(LevelProgress progress);
 
-    // 2. LA PIÙ IMPORTANTE: Fornisce il livello massimo completato per l'utente loggato.
-    // Usiamo LiveData così la UI si aggiorna istantaneamente al cambio account.
+    // 2. THE MOST IMPORTANT: Provides the maximum level completed for the logged-in user.
+    // We use LiveData so the UI updates instantly when the account changes.
     @Query("SELECT MAX(levelId) FROM level_progress WHERE userId = :userId AND isCompleted = 1")
     LiveData<Integer> getMaxCompletedLevelLive(String userId);
 
-    // 3. Recupera i dettagli di un singolo livello per un utente specifico.
+    // 3. Retrieves the details of a single level for a specific user.
     @Query("SELECT * FROM level_progress WHERE levelId = :levelId AND userId = :userId")
     LevelProgress getProgressForLevel(int levelId, String userId);
 
-    // 4. (Opzionale ma consigliata) Recupera tutti i livelli completati da un utente.
-    // Utile se volessi mostrare una lista di "Livelli Superati" nel profilo.
+    // 4. (Optional but recommended) Retrieves all levels completed by a user.
+    // Useful if you want to show a list of "Completed Levels" in the profile.
     @Query("SELECT * FROM level_progress WHERE userId = :userId AND isCompleted = 1")
     List<LevelProgress> getAllCompletedLevelsForUser(String userId);
 

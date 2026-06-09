@@ -42,19 +42,19 @@ public class ProfileFragment extends Fragment {
         TextView currentLevelText = view.findViewById(R.id.quizLevelText);
         Button logoutButton = view.findViewById(R.id.logoutButton);
 
-        // 1. Recuperiamo l'Activity madre (HomeActivity) per accedere all'utente e al ViewModel
+        // 1. Retrieve the parent Activity (HomeActivity) to access the user and the ViewModel
         HomeActivity activity = (HomeActivity) getActivity();
         if (activity == null) return view;
 
         User currentUser = activity.getCurrentUser();
 
-        // 2. Inizializziamo il ViewModel per i Livelli
+        // 2. Initialize the ViewModel for Levels
         ChessDatabase db = ChessDatabase.getInstance(requireContext());
         LevelViewModelFactory factory = new LevelViewModelFactory(db);
         LevelViewModel levelViewModel = new ViewModelProvider(this, factory).get(LevelViewModel.class);
 
         if (currentUser != null) {
-            // Mostriamo i dati dell'utente personalizzato
+            // Display custom user data
             String displayName = (currentUser.getName() != null && !currentUser.getName().isEmpty())
                     ? currentUser.getName()
                     : getString(R.string.giocatore_sconosciuto);
@@ -62,8 +62,8 @@ public class ProfileFragment extends Fragment {
             nameText.setText(displayName);
             emailText.setText(currentUser.getEmail());
 
-            // 3. Osserviamo SOLO i progressi di questo specifico utente
-            // NOTA: Assicurati che nel tuo LevelViewModel il metodo richieda l'userId!
+            // 3. Observe ONLY the progress of this specific user
+            // NOTE: Ensure that in your LevelViewModel, the method requires the userId!
             levelViewModel.getAllCompletedLevels(currentUser.getIdToken()).observe(getViewLifecycleOwner(), progressList -> {
                 if (progressList != null && !progressList.isEmpty()) {
                     calculateAndDisplayStats(progressList, totalQuizzesText, accuracyText, streakText, avgTimeText, currentLevelText);
@@ -73,7 +73,7 @@ public class ProfileFragment extends Fragment {
             });
         }
 
-        // 4. Logout pulito tramite MVVM
+        // 4. Clean logout via MVVM
         logoutButton.setOnClickListener(v -> {
             activity.getUserViewModel().logout().observe(getViewLifecycleOwner(), result -> {
                 if (result.isSuccess()) {
@@ -82,7 +82,7 @@ public class ProfileFragment extends Fragment {
                     startActivity(intent);
                     requireActivity().finish();
                 } else {
-                    Toast.makeText(getContext(), "Errore durante il logout", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getContext(), "Error during logout", Toast.LENGTH_SHORT).show();
                 }
             });
         });

@@ -23,6 +23,8 @@ import com.example.chess.util.MoveCalculator;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class GameViewModel extends AndroidViewModel {
 
@@ -50,6 +52,9 @@ public class GameViewModel extends AndroidViewModel {
     private int currentQuizMoveIndex = 0;
     private int quizErrorCount = 0;
     private boolean isHintActive = false;
+
+    // ExecutorService to handle background operations in an optimized way compared to "new Thread()"
+    private final ExecutorService executor = Executors.newSingleThreadExecutor();
 
     // Variable to store the action to perform after the View animation
     private Runnable pendingAnimationAction = null;
@@ -86,17 +91,25 @@ public class GameViewModel extends AndroidViewModel {
     }
 
     private void checkQuizCompletionAndStartTimer(boolean timerSettingEnabled) {
-        if (!timerSettingEnabled) { isTimerVisible.setValue(false); return; }
-        // The asynchronous logic should ideally be in the Repository,
-        // but in this context we use a separate Thread with post for the UI
-        new Thread(() -> {
+        if (!timerSettingEnabled) {
+            isTimerVisible.setValue(false);
+            return;
+        }
+
+        // Use the executor for background work instead of "new Thread().start()"
+        executor.execute(() -> {
             LevelProgress p = repository.getProgress(quizLevel.getId(), getCurrentUserId());
             boolean isComp = (p != null && p.isCompleted);
-            new Handler(Looper.getMainLooper()).post(() -> {
-                if (!isComp) { isTimerVisible.setValue(true); startTimer(); }
-                else isTimerVisible.setValue(false);
-            });
-        }).start();
+
+            if (!isComp) {
+                // postValue updates the LiveData safely from a background thread to the Main Thread
+                isTimerVisible.postValue(true);
+                // CountDownTimer must be instantiated on the Main Thread
+                new Handler(Looper.getMainLooper()).post(this::startTimer);
+            } else {
+                isTimerVisible.postValue(false);
+            }
+        });
     }
 
     public void handleSquareClick(int position) {
@@ -153,7 +166,6 @@ public class GameViewModel extends AndroidViewModel {
         selectedPosition.setValue(null);
         hints.setValue(new ArrayList<>());
 
-        // We save the post-animation action in the ViewModel's state
         pendingAnimationAction = () -> {
             updateCapturedSignal();
             if ("BOT".equals(mode)) { if (!checkEndGameBot()) playBotMove(); }
@@ -225,7 +237,6 @@ public class GameViewModel extends AndroidViewModel {
         isThinking.setValue(true);
         updateBotStatus();
 
-        // Using the new abstract asynchronous callback in ChessRepository (no Retrofit in ViewModel)
         repository.getBestMove(board.toFen(), 5, new ChessRepository.BotMoveCallback() {
             @Override
             public void onSuccess(String bestmove) {
@@ -262,7 +273,7 @@ public class GameViewModel extends AndroidViewModel {
         if (w) {
             updateStatusText(getStr(R.string.turno_bot, getStr(R.string.bianco), inC ? getStr(R.string.scacco) : ""), inC ? StatusColorType.DANGER : StatusColorType.NORMAL);
         } else {
-            updateStatusText(getStr(R.string.bot_pensa), StatusColorType.WARNING); // Equivalent to Color.LTGRAY / waiting
+            updateStatusText(getStr(R.string.bot_pensa), StatusColorType.WARNING);
         }
     }
 
@@ -270,7 +281,7 @@ public class GameViewModel extends AndroidViewModel {
         boolean t = board.isWhiteTurn();
         if (!board.hasAnyLegalMoves(t)) {
             if (board.isKingInCheck(t)) {
-                updateStatusText(getStr(R.string.scacco_matto_vince, getStr(t ? R.string.nero : R.string.bianco).toUpperCase()), StatusColorType.WARNING); // Goldenrod
+                updateStatusText(getStr(R.string.scacco_matto_vince, getStr(t ? R.string.nero : R.string.bianco).toUpperCase()), StatusColorType.WARNING);
             } else {
                 updateStatusText(getStr(R.string.stallo), StatusColorType.WARNING);
             }
@@ -339,11 +350,20 @@ public class GameViewModel extends AndroidViewModel {
         } else hints.setValue(new ArrayList<>());
     }
 
-    // NEW: The Activity calls this method when the physical animation of the piece is completed
     public void onAnimationFinished() {
         if (pendingAnimationAction != null) {
             pendingAnimationAction.run();
             pendingAnimationAction = null;
+        }
+    }
+
+    // Override to clean up resources
+    @Override
+    protected void onCleared() {
+        super.onCleared();
+        stopTimer();
+        if (executor != null) {
+            executor.shutdown();
         }
     }
 
@@ -388,7 +408,6 @@ public class GameViewModel extends AndroidViewModel {
         public GameEvent(Type t) { this.type = t; this.data = null; }
         public GameEvent(Type t, String d) { this.type = t; this.data = d; }
 
-        // Removed Runnable onComplete (Handled by onAnimationFinished in ViewModel)
         public GameEvent(Type t, int s, int e, Piece p) {
             this.type = t; this.startPos = s; this.endPos = e; this.piece = p; this.data = null;
         }

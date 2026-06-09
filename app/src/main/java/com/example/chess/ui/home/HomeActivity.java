@@ -10,6 +10,7 @@ import androidx.lifecycle.ViewModelProvider;
 
 import com.example.chess.R;
 import com.example.chess.model.User;
+import com.example.chess.repository.user.IChessUserRepository;
 import com.example.chess.repository.user.UserRepository;
 import com.example.chess.ui.home.fragment.PlayFragment;
 import com.example.chess.ui.home.fragment.ProfileFragment;
@@ -19,6 +20,7 @@ import com.example.chess.ui.welcome.LoginActivity; // Ensure this import is corr
 import com.example.chess.ui.welcome.viewmodel.UserViewModel; // Check your ViewModel path
 import com.example.chess.ui.welcome.viewmodel.UserViewModelFactory;
 import com.example.chess.util.ChessUtil;
+import com.example.chess.util.ServiceLocator;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 public class HomeActivity extends AppCompatActivity {
@@ -33,7 +35,7 @@ public class HomeActivity extends AppCompatActivity {
         setContentView(R.layout.activity_home);
 
         // 1. Initialize the ViewModel
-        UserRepository userRepository = new UserRepository();
+        IChessUserRepository userRepository = ServiceLocator.getInstance().getUserRepository();
         userViewModel = new ViewModelProvider(this, new UserViewModelFactory(userRepository)).get(UserViewModel.class);
 
         // 2. Retrieve the user from the Intent (if coming from Login/Register)

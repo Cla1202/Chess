@@ -22,6 +22,7 @@ import com.example.chess.ui.home.HomeActivity;
 import com.example.chess.ui.home.viewmodel.LevelViewModel;
 import com.example.chess.ui.home.viewmodel.LevelViewModelFactory;
 import com.example.chess.ui.welcome.LoginActivity;
+import com.example.chess.util.ServiceLocator;
 
 import java.util.List;
 import java.util.Locale;
@@ -49,7 +50,7 @@ public class ProfileFragment extends Fragment {
         User currentUser = activity.getCurrentUser();
 
         // 2. Initialize the ViewModel for Levels
-        ChessDatabase db = ChessDatabase.getInstance(requireContext());
+        ChessDatabase db = ServiceLocator.getInstance().getChessDatabase(requireContext());
         LevelViewModelFactory factory = new LevelViewModelFactory(db);
         LevelViewModel levelViewModel = new ViewModelProvider(this, factory).get(LevelViewModel.class);
 

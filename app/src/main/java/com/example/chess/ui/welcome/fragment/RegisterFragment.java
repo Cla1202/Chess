@@ -18,10 +18,11 @@ import androidx.lifecycle.ViewModelProvider;
 import com.example.chess.R;
 import com.example.chess.model.Result;
 import com.example.chess.model.User;
-import com.example.chess.repository.user.UserRepository;
+import com.example.chess.repository.user.IChessUserRepository;
 import com.example.chess.ui.home.HomeActivity;
 import com.example.chess.ui.welcome.viewmodel.UserViewModel;
 import com.example.chess.ui.welcome.viewmodel.UserViewModelFactory;
+import com.example.chess.util.ServiceLocator;
 
 public class RegisterFragment extends Fragment {
 
@@ -38,8 +39,8 @@ public class RegisterFragment extends Fragment {
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // Initialize the ViewModel associated with the Activity
-        UserRepository userRepository = new UserRepository();
+        // UPDATED: Using ServiceLocator instead of direct instantiation "new UserRepository()"
+        IChessUserRepository userRepository = ServiceLocator.getInstance().getUserRepository();
         userViewModel = new ViewModelProvider(
                 requireActivity(),
                 new UserViewModelFactory(userRepository)

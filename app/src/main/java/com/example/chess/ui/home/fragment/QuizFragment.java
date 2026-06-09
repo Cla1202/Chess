@@ -24,6 +24,7 @@ import com.example.chess.ui.home.GameActivity;
 import com.example.chess.ui.home.HomeActivity;
 import com.example.chess.ui.home.viewmodel.LevelViewModel;
 import com.example.chess.ui.home.viewmodel.LevelViewModelFactory;
+import com.example.chess.util.ServiceLocator;
 
 import java.util.List;
 
@@ -40,24 +41,24 @@ public class QuizFragment extends Fragment {
         RecyclerView recyclerView = view.findViewById(R.id.levelsRecyclerView);
         recyclerView.setLayoutManager(new LinearLayoutManager(requireContext()));
 
-        QuizRepository repository = new QuizRepository();
+        // 1. USE OF SERVICE LOCATOR INSTEAD OF "new QuizRepository()"
+        QuizRepository repository = ServiceLocator.getInstance().getQuizRepository();
         List<QuizLevel> levels = repository.getAllLevels();
 
-        // 1. Retrieve the parent Activity to get the logged-in user
         HomeActivity activity = (HomeActivity) getActivity();
         if (activity == null) return view;
 
         User currentUser = activity.getCurrentUser();
         if (currentUser == null) {
-            Toast.makeText(getContext(), "Errore: Utente non autenticato", Toast.LENGTH_SHORT).show();
+            Toast.makeText(getContext(), "Error: User not authenticated", Toast.LENGTH_SHORT).show();
             return view;
         }
 
-        ChessDatabase db = ChessDatabase.getInstance(requireContext());
+        // 2. USE OF SERVICE LOCATOR FOR THE DATABASE
+        ChessDatabase db = ServiceLocator.getInstance().getChessDatabase(requireContext());
         LevelViewModelFactory factory = new LevelViewModelFactory(db);
         viewModel = new ViewModelProvider(this, factory).get(LevelViewModel.class);
 
-        // 2. Pass the user's ID Token to retrieve THEIR unlocked levels
         String userId = currentUser.getIdToken();
 
         viewModel.getMaxCompletedLevel(userId).observe(getViewLifecycleOwner(), maxCompleted -> {
@@ -72,8 +73,6 @@ public class QuizFragment extends Fragment {
                     Intent intent = new Intent(requireActivity(), GameActivity.class);
                     intent.putExtra(GameActivity.EXTRA_MODE, GameActivity.MODE_QUIZ);
                     intent.putExtra("QUIZ_LEVEL_OBJECT", selectedLevel);
-
-                    // 3. ESSENTIAL: Pass the user to GameActivity so it can save progress!
                     intent.putExtra("CURRENT_USER", currentUser);
 
                     startActivity(intent);

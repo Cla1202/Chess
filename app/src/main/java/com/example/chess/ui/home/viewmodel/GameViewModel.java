@@ -1,10 +1,10 @@
 package com.example.chess.ui.home.viewmodel;
 
 import android.app.Application;
-import android.graphics.Color;
 import android.os.CountDownTimer;
 import android.os.Handler;
 import android.os.Looper;
+
 import androidx.annotation.NonNull;
 import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
@@ -18,19 +18,16 @@ import com.example.chess.model.Pawn;
 import com.example.chess.model.Piece;
 import com.example.chess.model.QuizLevel;
 import com.example.chess.repository.ChessRepository;
-import com.example.chess.service.StockfishService;
 import com.example.chess.util.ChessUtil;
-import com.example.chess.util.Constants;
 import com.example.chess.util.MoveCalculator;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import retrofit2.Call;
-import retrofit2.Callback;
-import retrofit2.Response;
-
 public class GameViewModel extends AndroidViewModel {
+
+    // Semantic enum for colors (Pure MVVM, no dependency on android.graphics.Color)
+    public enum StatusColorType { NORMAL, WARNING, DANGER, SUCCESS }
 
     private Board board;
     private final ChessRepository repository;
@@ -38,7 +35,6 @@ public class GameViewModel extends AndroidViewModel {
     private QuizLevel quizLevel;
     private long startTimeMillis;
 
-    // Variable to store the logged-in user ID without depending on Firebase
     private String currentUserId = "guest";
 
     private final MutableLiveData<Integer> selectedPosition = new MutableLiveData<>(null);
@@ -55,6 +51,9 @@ public class GameViewModel extends AndroidViewModel {
     private int quizErrorCount = 0;
     private boolean isHintActive = false;
 
+    // Variable to store the action to perform after the View animation
+    private Runnable pendingAnimationAction = null;
+
     public interface PromotionListener { void onPieceSelected(char type); }
 
     public GameViewModel(@NonNull Application application) {
@@ -62,7 +61,6 @@ public class GameViewModel extends AndroidViewModel {
         this.repository = new ChessRepository(application);
     }
 
-    // New method to receive the user ID from the Activity
     public void setCurrentUserId(String userId) {
         if (userId != null && !userId.isEmpty()) {
             this.currentUserId = userId;
@@ -89,6 +87,8 @@ public class GameViewModel extends AndroidViewModel {
 
     private void checkQuizCompletionAndStartTimer(boolean timerSettingEnabled) {
         if (!timerSettingEnabled) { isTimerVisible.setValue(false); return; }
+        // The asynchronous logic should ideally be in the Repository,
+        // but in this context we use a separate Thread with post for the UI
         new Thread(() -> {
             LevelProgress p = repository.getProgress(quizLevel.getId(), getCurrentUserId());
             boolean isComp = (p != null && p.isCompleted);
@@ -150,34 +150,55 @@ public class GameViewModel extends AndroidViewModel {
     }
 
     private void finalizeMove(int s, int e, Piece p) {
-        selectedPosition.setValue(null); hints.setValue(new ArrayList<>());
-        triggerEvent(new GameEvent(GameEvent.Type.ANIMATE_MOVE, s, e, p, () -> {
+        selectedPosition.setValue(null);
+        hints.setValue(new ArrayList<>());
+
+        // We save the post-animation action in the ViewModel's state
+        pendingAnimationAction = () -> {
             updateCapturedSignal();
             if ("BOT".equals(mode)) { if (!checkEndGameBot()) playBotMove(); }
             else { updateLocalStatus(); }
-        }));
+        };
+
+        triggerEvent(new GameEvent(GameEvent.Type.ANIMATE_MOVE, s, e, p));
     }
 
     private void handleQuizMove(int sR, int sC, int eR, int eC, Piece moving) {
         MoveRequest expected = quizLevel.getSolutionMoves().get(currentQuizMoveIndex);
         if (sR == expected.startRow && sC == expected.startCol && eR == expected.endRow && eC == expected.endCol) {
-            stopTimer(); board.movePiece(sR, sC, eR, eC);
+            stopTimer();
+            board.movePiece(sR, sC, eR, eC);
             int startIdx = sR * 8 + sC, endIdx = eR * 8 + eC;
-            selectedPosition.setValue(null); hints.setValue(new ArrayList<>());
-            triggerEvent(new GameEvent(GameEvent.Type.ANIMATE_MOVE, startIdx, endIdx, moving, () -> {
-                currentQuizMoveIndex++; updateCapturedSignal();
+            selectedPosition.setValue(null);
+            hints.setValue(new ArrayList<>());
+
+            pendingAnimationAction = () -> {
+                currentQuizMoveIndex++;
+                updateCapturedSignal();
                 if (currentQuizMoveIndex < quizLevel.getSolutionMoves().size()) {
-                    updateStatusText(getStr(R.string.risposta_computer), Color.WHITE); playQuizComputerMove();
+                    updateStatusText(getStr(R.string.risposta_computer), StatusColorType.NORMAL);
+                    playQuizComputerMove();
                 } else {
-                    updateStatusText(getStr(R.string.livello_superato), Color.GREEN);
+                    updateStatusText(getStr(R.string.livello_superato), StatusColorType.SUCCESS);
                     saveQuizProgress();
                     new Handler(Looper.getMainLooper()).postDelayed(this::finishGame, 1500);
                 }
-            }));
+            };
+
+            triggerEvent(new GameEvent(GameEvent.Type.ANIMATE_MOVE, startIdx, endIdx, moving));
         } else {
-            quizErrorCount++; int rem = quizLevel.getMaxAttempts() - quizErrorCount;
-            if (rem <= 0) { stopTimer(); updateStatusText(getStr(R.string.hai_perso), Color.RED); finishGame(); }
-            else { updateStatusText(getStr(R.string.mossa_errata, rem), Color.RED); isHintActive = false; selectedPosition.setValue(null); hints.setValue(new ArrayList<>()); }
+            quizErrorCount++;
+            int rem = quizLevel.getMaxAttempts() - quizErrorCount;
+            if (rem <= 0) {
+                stopTimer();
+                updateStatusText(getStr(R.string.hai_perso), StatusColorType.DANGER);
+                finishGame();
+            } else {
+                updateStatusText(getStr(R.string.mossa_errata, rem), StatusColorType.DANGER);
+                isHintActive = false;
+                selectedPosition.setValue(null);
+                hints.setValue(new ArrayList<>());
+            }
         }
     }
 
@@ -187,47 +208,74 @@ public class GameViewModel extends AndroidViewModel {
             MoveRequest move = quizLevel.getSolutionMoves().get(currentQuizMoveIndex);
             Piece p = board.getPiece(move.startRow, move.startCol);
             board.movePiece(move.startRow, move.startCol, move.endRow, move.endCol);
-            triggerEvent(new GameEvent(GameEvent.Type.ANIMATE_MOVE, move.startRow * 8 + move.startCol, move.endRow * 8 + move.endCol, p, () -> {
-                currentQuizMoveIndex++; updateCapturedSignal(); updateStatusText(getStr(R.string.tocca_a_te), Color.WHITE);
-                isThinking.setValue(false); startTimer();
-            }));
+
+            pendingAnimationAction = () -> {
+                currentQuizMoveIndex++;
+                updateCapturedSignal();
+                updateStatusText(getStr(R.string.tocca_a_te), StatusColorType.NORMAL);
+                isThinking.setValue(false);
+                startTimer();
+            };
+
+            triggerEvent(new GameEvent(GameEvent.Type.ANIMATE_MOVE, move.startRow * 8 + move.startCol, move.endRow * 8 + move.endCol, p));
         }, 1000);
     }
 
     private void playBotMove() {
-        isThinking.setValue(true); updateBotStatus();
-        repository.getBestMove(board.toFen(), 5).enqueue(new Callback<StockfishService.StockfishResponse>() {
-            @Override public void onResponse(Call<StockfishService.StockfishResponse> call, Response<StockfishService.StockfishResponse> res) {
-                if (res.isSuccessful() && res.body() != null) {
-                    String m = res.body().bestmove.replace("bestmove ", "").trim();
-                    if (m.length() >= 4) {
-                        int s = ChessUtil.algebraicToIndex(m.substring(0, 2)), e = ChessUtil.algebraicToIndex(m.substring(2, 4));
-                        Piece p = board.getPiece(s/8, s%8);
-                        board.movePiece(s/8, s%8, e/8, e%8, m.length() == 5 ? m.charAt(4) : 'q');
-                        triggerEvent(new GameEvent(GameEvent.Type.ANIMATE_MOVE, s, e, p, () -> {
-                            isThinking.setValue(false); updateCapturedSignal(); updateBotStatus(); checkEndGameBot();
-                        }));
-                        return;
-                    }
+        isThinking.setValue(true);
+        updateBotStatus();
+
+        // Using the new abstract asynchronous callback in ChessRepository (no Retrofit in ViewModel)
+        repository.getBestMove(board.toFen(), 5, new ChessRepository.BotMoveCallback() {
+            @Override
+            public void onSuccess(String bestmove) {
+                String m = bestmove.replace("bestmove ", "").trim();
+                if (m.length() >= 4) {
+                    int s = ChessUtil.algebraicToIndex(m.substring(0, 2)), e = ChessUtil.algebraicToIndex(m.substring(2, 4));
+                    Piece p = board.getPiece(s/8, s%8);
+                    board.movePiece(s/8, s%8, e/8, e%8, m.length() == 5 ? m.charAt(4) : 'q');
+
+                    pendingAnimationAction = () -> {
+                        isThinking.setValue(false);
+                        updateCapturedSignal();
+                        updateBotStatus();
+                        checkEndGameBot();
+                    };
+
+                    triggerEvent(new GameEvent(GameEvent.Type.ANIMATE_MOVE, s, e, p));
+                } else {
+                    isThinking.setValue(false);
+                    updateBotStatus();
                 }
-                isThinking.setValue(false); updateBotStatus();
             }
-            @Override public void onFailure(Call<StockfishService.StockfishResponse> call, Throwable t) { isThinking.setValue(false); updateBotStatus(); }
+
+            @Override
+            public void onError(Throwable t) {
+                isThinking.setValue(false);
+                updateBotStatus();
+            }
         });
     }
 
     private void updateBotStatus() {
         boolean w = board.isWhiteTurn(), inC = board.isKingInCheck(w);
-        if (w) updateStatusText(getStr(R.string.turno_bot, getStr(R.string.bianco), inC ? getStr(R.string.scacco) : ""), inC ? Color.RED : Color.WHITE);
-        else updateStatusText(getStr(R.string.bot_pensa), Color.LTGRAY);
+        if (w) {
+            updateStatusText(getStr(R.string.turno_bot, getStr(R.string.bianco), inC ? getStr(R.string.scacco) : ""), inC ? StatusColorType.DANGER : StatusColorType.NORMAL);
+        } else {
+            updateStatusText(getStr(R.string.bot_pensa), StatusColorType.WARNING); // Equivalent to Color.LTGRAY / waiting
+        }
     }
 
     private boolean checkEndGameBot() {
         boolean t = board.isWhiteTurn();
         if (!board.hasAnyLegalMoves(t)) {
-            if (board.isKingInCheck(t)) updateStatusText(getStr(R.string.scacco_matto_vince, getStr(t ? R.string.nero : R.string.bianco).toUpperCase()), Constants.GOLDENROD);
-            else updateStatusText(getStr(R.string.stallo), Color.LTGRAY);
-            finishGame(); return true;
+            if (board.isKingInCheck(t)) {
+                updateStatusText(getStr(R.string.scacco_matto_vince, getStr(t ? R.string.nero : R.string.bianco).toUpperCase()), StatusColorType.WARNING); // Goldenrod
+            } else {
+                updateStatusText(getStr(R.string.stallo), StatusColorType.WARNING);
+            }
+            finishGame();
+            return true;
         }
         return false;
     }
@@ -235,17 +283,26 @@ public class GameViewModel extends AndroidViewModel {
     private void updateLocalStatus() {
         boolean w = board.isWhiteTurn(), inC = board.isKingInCheck(w);
         if (!board.hasAnyLegalMoves(w)) {
-            if (inC) updateStatusText(getStr(R.string.scacco_matto_vince, getStr(w ? R.string.nero : R.string.bianco).toUpperCase()), Constants.GOLDENROD);
-            else updateStatusText(getStr(R.string.stallo), Color.LTGRAY);
+            if (inC) {
+                updateStatusText(getStr(R.string.scacco_matto_vince, getStr(w ? R.string.nero : R.string.bianco).toUpperCase()), StatusColorType.WARNING);
+            } else {
+                updateStatusText(getStr(R.string.stallo), StatusColorType.WARNING);
+            }
             finishGame();
-        } else updateStatusText(getStr(R.string.turno, getStr(w ? R.string.bianco : R.string.nero), inC ? getStr(R.string.scacco) : ""), inC ? Color.RED : Color.WHITE);
+        } else {
+            updateStatusText(getStr(R.string.turno, getStr(w ? R.string.bianco : R.string.nero), inC ? getStr(R.string.scacco) : ""), inC ? StatusColorType.DANGER : StatusColorType.NORMAL);
+        }
     }
 
     private void startTimer() {
         stopTimer();
         countDownTimer = new CountDownTimer(30000L, 100) {
             @Override public void onTick(long ms) { remainingTime.setValue(ms); }
-            @Override public void onFinish() { remainingTime.setValue(0L); updateStatusText(getStr(R.string.tempo_scaduto), Color.RED); triggerEvent(new GameEvent(GameEvent.Type.FAIL_RESET)); }
+            @Override public void onFinish() {
+                remainingTime.setValue(0L);
+                updateStatusText(getStr(R.string.tempo_scaduto), StatusColorType.DANGER);
+                triggerEvent(new GameEvent(GameEvent.Type.FAIL_RESET));
+            }
         }.start();
     }
 
@@ -258,7 +315,6 @@ public class GameViewModel extends AndroidViewModel {
         showToast(getStr(R.string.progresso_salvato));
     }
 
-    // Updated method: returns the ID set by the Activity without using Firebase
     private String getCurrentUserId() {
         return currentUserId;
     }
@@ -267,7 +323,9 @@ public class GameViewModel extends AndroidViewModel {
         if (quizLevel == null || currentQuizMoveIndex >= quizLevel.getSolutionMoves().size()) return;
         MoveRequest m = quizLevel.getSolutionMoves().get(currentQuizMoveIndex);
         selectedPosition.setValue(m.startRow * 8 + m.startCol);
-        isHintActive = true; showToast(getStr(R.string.suggerimento_attivato)); refreshUI();
+        isHintActive = true;
+        showToast(getStr(R.string.suggerimento_attivato));
+        refreshUI();
     }
 
     public void refreshUI() {
@@ -281,7 +339,15 @@ public class GameViewModel extends AndroidViewModel {
         } else hints.setValue(new ArrayList<>());
     }
 
-    private void updateStatusText(String t, int c) { status.setValue(new StatusInfo(t, c)); }
+    // NEW: The Activity calls this method when the physical animation of the piece is completed
+    public void onAnimationFinished() {
+        if (pendingAnimationAction != null) {
+            pendingAnimationAction.run();
+            pendingAnimationAction = null;
+        }
+    }
+
+    private void updateStatusText(String t, StatusColorType type) { status.setValue(new StatusInfo(t, type)); }
     private void showToast(String m) { triggerEvent(new GameEvent(GameEvent.Type.TOAST, m)); }
     private void updateCapturedSignal() { triggerEvent(new GameEvent(GameEvent.Type.UPDATE_CAPTURED)); }
     private void finishGame() { triggerEvent(new GameEvent(GameEvent.Type.FINISH)); }
@@ -297,15 +363,38 @@ public class GameViewModel extends AndroidViewModel {
     public LiveData<Boolean> getIsTimerVisible() { return isTimerVisible; }
     public String getStr(int id) { return ChessUtil.getLocalizedContext(getApplication()).getString(id); }
     public String getStr(int id, Object... args) { return ChessUtil.getLocalizedContext(getApplication()).getString(id, args); }
+
     public void onPause() { stopTimer(); }
 
-    public static class StatusInfo { public final String text; public final int color; public StatusInfo(String t, int c) { this.text = t; this.color = c; } }
+    public static class StatusInfo {
+        public final String text;
+        public final StatusColorType colorType;
+
+        public StatusInfo(String t, StatusColorType c) {
+            this.text = t;
+            this.colorType = c;
+        }
+    }
+
     public static class GameEvent {
         public enum Type { TOAST, FINISH, UPDATE_CAPTURED, ANIMATE_MOVE, SHOW_PROMOTION, FAIL_RESET }
-        public final Type type; public final String data; public int startPos, endPos; public Piece piece; public Runnable onComplete; public boolean isWhite; public PromotionListener listener;
+        public final Type type;
+        public final String data;
+        public int startPos, endPos;
+        public Piece piece;
+        public boolean isWhite;
+        public PromotionListener listener;
+
         public GameEvent(Type t) { this.type = t; this.data = null; }
         public GameEvent(Type t, String d) { this.type = t; this.data = d; }
-        public GameEvent(Type t, int s, int e, Piece p, Runnable c) { this.type = t; this.startPos = s; this.endPos = e; this.piece = p; this.onComplete = c; this.data = null; }
-        public GameEvent(Type t, boolean w, PromotionListener l) { this.type = t; this.isWhite = w; this.listener = l; this.data = null; }
+
+        // Removed Runnable onComplete (Handled by onAnimationFinished in ViewModel)
+        public GameEvent(Type t, int s, int e, Piece p) {
+            this.type = t; this.startPos = s; this.endPos = e; this.piece = p; this.data = null;
+        }
+
+        public GameEvent(Type t, boolean w, PromotionListener l) {
+            this.type = t; this.isWhite = w; this.listener = l; this.data = null;
+        }
     }
 }

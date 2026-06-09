@@ -97,20 +97,63 @@ public class GameActivity extends AppCompatActivity {
     }
 
     private void setupObservers() {
-        viewModel.getSelectedPosition().observe(this, pos -> { adapter.setSelectedPosition(pos); adapter.notifyDataSetChanged(); });
-        viewModel.getHints().observe(this, h -> { adapter.setHints(h); adapter.notifyDataSetChanged(); });
-        viewModel.getStatus().observe(this, s -> { if (s != null) { statusText.setText(s.text); statusText.setTextColor(s.color); } });
+        viewModel.getSelectedPosition().observe(this, pos -> {
+            adapter.setSelectedPosition(pos);
+            adapter.notifyDataSetChanged();
+        });
+
+        viewModel.getHints().observe(this, h -> {
+            adapter.setHints(h);
+            adapter.notifyDataSetChanged();
+        });
+
+        // UPDATED: Map the StatusColorType enum to actual Android colors
+        viewModel.getStatus().observe(this, s -> {
+            if (s != null) {
+                statusText.setText(s.text);
+                switch (s.colorType) {
+                    case DANGER:
+                        statusText.setTextColor(Color.RED);
+                        break;
+                    case SUCCESS:
+                        statusText.setTextColor(Color.GREEN);
+                        break;
+                    case WARNING:
+                        statusText.setTextColor(Color.parseColor("#DAA520")); // Goldenrod (or Color.LTGRAY depending on context)
+                        break;
+                    case NORMAL:
+                    default:
+                        statusText.setTextColor(Color.WHITE);
+                        break;
+                }
+            }
+        });
+
         viewModel.getIsThinking().observe(this, thinking -> gridView.setEnabled(!thinking));
 
         viewModel.getGameEvent().observe(this, event -> {
             if (event == null) return;
             switch (event.type) {
-                case TOAST: Toast.makeText(this, event.data, Toast.LENGTH_SHORT).show(); break;
-                case FINISH: gridView.setEnabled(false); new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(this::finish, 500); break;
-                case UPDATE_CAPTURED: updateCapturedPieces(); break;
-                case ANIMATE_MOVE: animatePieceMove(event.startPos, event.endPos, event.piece, event.onComplete); break;
-                case SHOW_PROMOTION: showPromotionDialog(event.isWhite, event.listener); break;
-                case FAIL_RESET: new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(this::recreate, 2000); break;
+                case TOAST:
+                    Toast.makeText(this, event.data, Toast.LENGTH_SHORT).show();
+                    break;
+                case FINISH:
+                    gridView.setEnabled(false);
+                    new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(this::finish, 500);
+                    break;
+                case UPDATE_CAPTURED:
+                    updateCapturedPieces();
+                    break;
+                case ANIMATE_MOVE:
+                    // UPDATED: Passing only data to animate, no Runnable onComplete
+                    animatePieceMove(event.startPos, event.endPos, event.piece);
+                    break;
+                case SHOW_PROMOTION:
+                    showPromotionDialog(event.isWhite, event.listener);
+                    break;
+                case FAIL_RESET:
+                    new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(this::recreate, 2000);
+                    break;
             }
         });
 
@@ -162,23 +205,35 @@ public class GameActivity extends AppCompatActivity {
         }
     }
 
-    private void animatePieceMove(int s, int e, Piece piece, Runnable onComplete) {
+    // UPDATED: Removed Runnable onComplete.
+    private void animatePieceMove(int s, int e, Piece piece) {
         FrameLayout container = findViewById(R.id.boardContainer);
         View sV = gridView.getChildAt(s - gridView.getFirstVisiblePosition());
         View eV = gridView.getChildAt(e - gridView.getFirstVisiblePosition());
-        if (sV == null || eV == null) { if (onComplete != null) onComplete.run(); return; }
+
+        // If views are not ready or off-screen, skip animation but notify the ViewModel anyway
+        if (sV == null || eV == null) {
+            viewModel.onAnimationFinished();
+            return;
+        }
+
         ImageView ghost = new ImageView(this);
         ghost.setImageResource(getResIdForPiece(piece));
         ghost.setLayoutParams(new FrameLayout.LayoutParams(sV.getWidth(), sV.getHeight()));
-        ghost.setX(sV.getX() + gridView.getX()); ghost.setY(sV.getY() + gridView.getY());
+        ghost.setX(sV.getX() + gridView.getX());
+        ghost.setY(sV.getY() + gridView.getY());
         container.addView(ghost);
+
         if (sV instanceof ViewGroup) ((ImageView)((ViewGroup)sV).getChildAt(0)).setImageResource(0);
         gridView.setEnabled(false);
+
         ghost.animate().x(eV.getX() + gridView.getX()).y(eV.getY() + gridView.getY()).setDuration(300).withEndAction(() -> {
             container.removeView(ghost);
             adapter.notifyDataSetChanged();
             gridView.setEnabled(true);
-            if (onComplete != null) onComplete.run();
+
+            // UPDATED: Notify the ViewModel that the UI has finished the animation
+            viewModel.onAnimationFinished();
         }).start();
     }
 
@@ -197,7 +252,11 @@ public class GameActivity extends AppCompatActivity {
                 return v;
             }
         };
-        new androidx.appcompat.app.AlertDialog.Builder(this).setTitle(R.string.scegli_promozione).setCancelable(false).setAdapter(adp, (d, w) -> listener.onPieceSelected(codes[w])).show();
+        new androidx.appcompat.app.AlertDialog.Builder(this)
+                .setTitle(R.string.scegli_promozione)
+                .setCancelable(false)
+                .setAdapter(adp, (d, w) -> listener.onPieceSelected(codes[w]))
+                .show();
     }
 
     private int getResIdForPiece(Piece p) {

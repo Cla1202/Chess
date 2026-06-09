@@ -18,20 +18,20 @@ public class SquareGridView extends GridView {
         super(context, attrs, defStyleAttr);
     }
 
-    // Questo è il cuore della magia: intercettiamo il momento in cui Android calcola le misure
+    // This is the heart of the magic: we intercept the moment when Android calculates the measurements
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-        // Leggiamo quanto spazio Android ci sta dando in larghezza e altezza
+        // Read how much space Android is allocating for width and height
         int width = MeasureSpec.getSize(widthMeasureSpec);
         int height = MeasureSpec.getSize(heightMeasureSpec);
 
-        // Troviamo il lato più corto disponibile
+        // Find the smallest dimension available
         int size = Math.min(width, height);
 
-        // Creiamo una nuova regola rigida: "Devi essere grande esattamente 'size' pixel sia in larghezza che in altezza"
+        // Create a new strict rule: "You must be exactly 'size' pixels in both width and height"
         int squareMeasureSpec = MeasureSpec.makeMeasureSpec(size, MeasureSpec.EXACTLY);
 
-        // Passiamo questa nuova regola quadrata ad Android
+        // Pass this new square rule to Android
         super.onMeasure(squareMeasureSpec, squareMeasureSpec);
     }
 }

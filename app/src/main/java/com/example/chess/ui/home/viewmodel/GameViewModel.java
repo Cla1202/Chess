@@ -4,6 +4,7 @@ import android.app.Application;
 import android.os.CountDownTimer;
 import android.os.Handler;
 import android.os.Looper;
+import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.lifecycle.AndroidViewModel;
@@ -14,12 +15,13 @@ import com.example.chess.R;
 import com.example.chess.database.LevelProgress;
 import com.example.chess.model.Board;
 import com.example.chess.model.MoveRequest;
-import com.example.chess.model.Pawn;
 import com.example.chess.model.Piece;
+import com.example.chess.model.Pawn;
 import com.example.chess.model.QuizLevel;
 import com.example.chess.repository.ChessRepository;
 import com.example.chess.util.ChessUtil;
 import com.example.chess.util.MoveCalculator;
+import com.example.chess.util.ServiceLocator; // IMPORT AGIUNTO
 
 import java.util.ArrayList;
 import java.util.List;
@@ -28,11 +30,10 @@ import java.util.concurrent.Executors;
 
 public class GameViewModel extends AndroidViewModel {
 
-    // Semantic enum for colors (Pure MVVM, no dependency on android.graphics.Color)
     public enum StatusColorType { NORMAL, WARNING, DANGER, SUCCESS }
 
     private Board board;
-    private final ChessRepository repository;
+    private final ChessRepository repository; // La repository ora viene iniettata
     private String mode;
     private QuizLevel quizLevel;
     private long startTimeMillis;
@@ -53,18 +54,18 @@ public class GameViewModel extends AndroidViewModel {
     private int quizErrorCount = 0;
     private boolean isHintActive = false;
 
-    // ExecutorService to handle background operations in an optimized way compared to "new Thread()"
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
-
-    // Variable to store the action to perform after the View animation
     private Runnable pendingAnimationAction = null;
 
     public interface PromotionListener { void onPieceSelected(char type); }
 
     public GameViewModel(@NonNull Application application) {
         super(application);
-        this.repository = new ChessRepository(application);
+        // UPDATED: Use ServiceLocator to get the ChessRepository instance
+        this.repository = ServiceLocator.getInstance().getChessRepository(application);
     }
+
+    // ... (Il resto dei metodi rimane invariato)
 
     public void setCurrentUserId(String userId) {
         if (userId != null && !userId.isEmpty()) {
@@ -96,21 +97,21 @@ public class GameViewModel extends AndroidViewModel {
             return;
         }
 
-        // Use the executor for background work instead of "new Thread().start()"
         executor.execute(() -> {
             LevelProgress p = repository.getProgress(quizLevel.getId(), getCurrentUserId());
             boolean isComp = (p != null && p.isCompleted);
 
             if (!isComp) {
-                // postValue updates the LiveData safely from a background thread to the Main Thread
                 isTimerVisible.postValue(true);
-                // CountDownTimer must be instantiated on the Main Thread
                 new Handler(Looper.getMainLooper()).post(this::startTimer);
             } else {
                 isTimerVisible.postValue(false);
             }
         });
     }
+
+    // ... (Tutti gli altri metodi, inclusi processMove, playBotMove, ecc., rimangono identici)
+    // Assicurati che i metodi di callback e logica interna non siano stati alterati.
 
     public void handleSquareClick(int position) {
         if (Boolean.TRUE.equals(isThinking.getValue())) return;
@@ -263,6 +264,7 @@ public class GameViewModel extends AndroidViewModel {
             @Override
             public void onError(Throwable t) {
                 isThinking.setValue(false);
+                Log.e("BOT_ERROR", "Errore del bot: " + t.getMessage());
                 updateBotStatus();
             }
         });
@@ -357,7 +359,6 @@ public class GameViewModel extends AndroidViewModel {
         }
     }
 
-    // Override to clean up resources
     @Override
     protected void onCleared() {
         super.onCleared();

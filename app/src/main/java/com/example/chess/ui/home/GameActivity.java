@@ -12,6 +12,7 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.example.chess.R;
@@ -20,15 +21,12 @@ import com.example.chess.model.Piece;
 import com.example.chess.model.QuizLevel;
 import com.example.chess.model.User;
 import com.example.chess.ui.home.viewmodel.GameViewModel;
+import com.example.chess.util.Constants;
 
 import java.util.List;
 import java.util.Locale;
 
 public class GameActivity extends AppCompatActivity {
-    public static final String EXTRA_MODE = "EXTRA_MODE";
-    public static final String MODE_LOCAL_PVP = "LOCAL_PVP";
-    public static final String MODE_QUIZ = "QUIZ";
-    public static final String MODE_BOT = "BOT";
 
     private GameViewModel viewModel;
     private ChessAdapter adapter;
@@ -61,15 +59,15 @@ public class GameActivity extends AppCompatActivity {
         viewModel = new ViewModelProvider(this).get(GameViewModel.class);
 
         // 1. Retrieval of the User object passed via Intent
-        if (getIntent() != null && getIntent().hasExtra("CURRENT_USER")) {
-            currentUser = getIntent().getParcelableExtra("CURRENT_USER");
+        if (getIntent() != null && getIntent().hasExtra(Constants.EXTRA_CURRENT_USER)) {
+            currentUser = getIntent().getParcelableExtra(Constants.EXTRA_CURRENT_USER);
         }
 
-        String mode = getIntent().getStringExtra(EXTRA_MODE);
-        QuizLevel level = (QuizLevel) getIntent().getSerializableExtra("QUIZ_LEVEL_OBJECT");
+        String mode = getIntent().getStringExtra(Constants.EXTRA_MODE);
+        QuizLevel level = (QuizLevel) getIntent().getSerializableExtra(Constants.EXTRA_QUIZ_LEVEL_OBJECT);
 
-        android.content.SharedPreferences prefs = getSharedPreferences("ChessSettings", MODE_PRIVATE);
-        boolean timerEnabled = prefs.getBoolean("timer_enabled", true);
+        android.content.SharedPreferences prefs = getSharedPreferences(Constants.SETTINGS_PREFS_NAME, MODE_PRIVATE);
+        boolean timerEnabled = prefs.getBoolean(Constants.KEY_TIMER_ENABLED, true);
 
         // 2. ESSENTIAL: Pass the user ID to the ViewModel before initializing the game
         if (currentUser != null) {
@@ -88,12 +86,12 @@ public class GameActivity extends AppCompatActivity {
         findViewById(R.id.btnExit).setOnClickListener(v -> finish());
         View btnHelp = findViewById(R.id.btnHelp);
         if (btnHelp != null) {
-            btnHelp.setVisibility(MODE_QUIZ.equals(mode) ? View.VISIBLE : View.GONE);
+            btnHelp.setVisibility(Constants.MODE_QUIZ.equals(mode) ? View.VISIBLE : View.GONE);
             btnHelp.setOnClickListener(v -> viewModel.showQuizHint());
         }
 
         TextView levelTitle = findViewById(R.id.levelTitleText);
-        if (levelTitle != null && level != null && MODE_QUIZ.equals(mode)) levelTitle.setText(level.getTitle());
+        if (levelTitle != null && level != null && Constants.MODE_QUIZ.equals(mode)) levelTitle.setText(level.getTitle());
     }
 
     private void setupObservers() {
@@ -119,7 +117,7 @@ public class GameActivity extends AppCompatActivity {
                         statusText.setTextColor(Color.GREEN);
                         break;
                     case WARNING:
-                        statusText.setTextColor(Color.parseColor("#DAA520")); // Goldenrod (or Color.LTGRAY depending on context)
+                        statusText.setTextColor(ContextCompat.getColor(this, R.color.goldenrod));
                         break;
                     case NORMAL:
                     default:
@@ -193,7 +191,6 @@ public class GameActivity extends AppCompatActivity {
                 item.setGravity(android.view.Gravity.CENTER_VERTICAL);
                 item.setPadding(4, 0, 4, 0);
                 ImageView iv = new ImageView(this);
-                iv.setLayoutParams(new LinearLayout.LayoutParams(sz, sz));
                 iv.setImageResource(getResIdForPiece(protos.get(t)));
                 item.addView(iv);
                 if (counts.get(t) > 1) {
@@ -260,23 +257,23 @@ public class GameActivity extends AppCompatActivity {
     }
 
     private int getResIdForPiece(Piece p) {
-        android.content.SharedPreferences pr = getSharedPreferences("ChessSettings", MODE_PRIVATE);
-        String style = pr.getString("piece_style", "Classico");
+        android.content.SharedPreferences pr = getSharedPreferences(Constants.SETTINGS_PREFS_NAME, MODE_PRIVATE);
+        String style = pr.getString(Constants.KEY_PIECE_STYLE, "Classico");
         String pref = "";
         switch(style) { case "Neo": pref="neo_"; break; case "Moderno": pref="mod_"; break; case "Alfa": pref="alpha_"; break; }
-        String name = pref + (p.isWhite() ? "w_" : "b_") + p.getClass().getSimpleName().toLowerCase();
-        int id = getResources().getIdentifier(name, "drawable", getPackageName());
-        if (id == 0) id = getResources().getIdentifier((p.isWhite()?"w_":"b_") + p.getClass().getSimpleName().toLowerCase(), "drawable", getPackageName());
+        String name = pref + (p.isWhite() ? Constants.PREFIX_WHITE : Constants.PREFIX_BLACK) + p.getClass().getSimpleName().toLowerCase();
+        int id = getResources().getIdentifier(name, Constants.DEF_TYPE_DRAWABLE, getPackageName());
+        if (id == 0) id = getResources().getIdentifier((p.isWhite()?Constants.PREFIX_WHITE:Constants.PREFIX_BLACK) + p.getClass().getSimpleName().toLowerCase(), Constants.DEF_TYPE_DRAWABLE, getPackageName());
         return id;
     }
 
     private int getResIdForType(String type, boolean isWhite) {
-        android.content.SharedPreferences pr = getSharedPreferences("ChessSettings", MODE_PRIVATE);
-        String s = pr.getString("piece_style", "Classico"), pref = "";
+        android.content.SharedPreferences pr = getSharedPreferences(Constants.SETTINGS_PREFS_NAME, MODE_PRIVATE);
+        String s = pr.getString(Constants.KEY_PIECE_STYLE, "Classico"), pref = "";
         switch(s) { case "Neo": pref="neo_"; break; case "Moderno": pref="mod_"; break; case "Alfa": pref="alpha_"; break; }
-        String name = pref + (isWhite ? "w_" : "b_") + type;
-        int id = getResources().getIdentifier(name, "drawable", getPackageName());
-        if (id == 0) id = getResources().getIdentifier((isWhite?"w_":"b_") + type, "drawable", getPackageName());
+        String name = pref + (isWhite ? Constants.PREFIX_WHITE : Constants.PREFIX_BLACK) + type;
+        int id = getResources().getIdentifier(name, Constants.DEF_TYPE_DRAWABLE, getPackageName());
+        if (id == 0) id = getResources().getIdentifier((isWhite?Constants.PREFIX_WHITE:Constants.PREFIX_BLACK) + type, Constants.DEF_TYPE_DRAWABLE, getPackageName());
         return id;
     }
 }

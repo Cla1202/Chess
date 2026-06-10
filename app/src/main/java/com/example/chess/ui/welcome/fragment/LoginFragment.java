@@ -5,7 +5,7 @@ import android.os.Bundle;
 import android.os.CancellationSignal;
 import android.util.Log;
 import android.view.LayoutInflater;
-import android.view.View;
+import android.view. View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
@@ -33,6 +33,7 @@ import com.example.chess.ui.home.HomeActivity;
 import com.example.chess.ui.welcome.viewmodel.UserViewModel;
 import com.example.chess.ui.welcome.viewmodel.UserViewModelFactory;
 import com.example.chess.ui.welcome.LoginActivity;
+import com.example.chess.util.Constants;
 import com.example.chess.util.NetworkUtil;
 import com.example.chess.util.ServiceLocator;
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption;
@@ -109,10 +110,11 @@ public class LoginFragment extends Fragment {
                     User loggedUser = ((Result.Success) result).getUser();
 
                     // Display custom name in the welcome Toast
-                    Toast.makeText(getContext(), "Welcome back, " + loggedUser.getName() + "!", Toast.LENGTH_SHORT).show();
+                    String welcomeMsg = getString(R.string.welcome_back, loggedUser.getName());
+                    Toast.makeText(getContext(), welcomeMsg, Toast.LENGTH_SHORT).show();
 
                     Intent intent = new Intent(getActivity(), HomeActivity.class);
-                    intent.putExtra("CURRENT_USER", loggedUser);
+                    intent.putExtra(Constants.EXTRA_CURRENT_USER, loggedUser);
                     intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
                     startActivity(intent);
                     requireActivity().finish();
@@ -184,10 +186,10 @@ public class LoginFragment extends Fragment {
             if (result.isSuccess()) {
                 User loggedUser = ((Result.Success) result).getUser();
 
-                Toast.makeText(getContext(), "Google login completed", Toast.LENGTH_SHORT).show();
+                Toast.makeText(getContext(), getString(R.string.login_google_success), Toast.LENGTH_SHORT).show();
 
                 Intent intent = new Intent(getActivity(), HomeActivity.class);
-                intent.putExtra("CURRENT_USER", loggedUser);
+                intent.putExtra(Constants.EXTRA_CURRENT_USER, loggedUser);
                 intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
                 startActivity(intent);
                 requireActivity().finish();

@@ -32,7 +32,7 @@ public class UserAuthenticationLocalDataSource extends BaseUserAuthenticationRem
             liveData.postValue(new Result.Success(localUser));
         } else {
             // If the password is too short, return the error using the Result class
-            liveData.postValue(new Result.Error(Constants.PASSWORD_CORTA));
+            liveData.postValue(new Result.Error("error_password_short"));
         }
 
         return liveData;
@@ -73,7 +73,7 @@ public class UserAuthenticationLocalDataSource extends BaseUserAuthenticationRem
 
     // Helper method to save the user string
     private void saveUserLocally(String username) {
-        sharedPreferences.edit().putString("logged_user", username).apply();
+        sharedPreferences.edit().putString(Constants.KEY_LOGGED_USER, username).apply();
     }
 
     // Helper method to remove the user when they disconnect

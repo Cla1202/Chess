@@ -20,6 +20,7 @@ import com.example.chess.ui.welcome.LoginActivity; // Ensure this import is corr
 import com.example.chess.ui.welcome.viewmodel.UserViewModel; // Check your ViewModel path
 import com.example.chess.ui.welcome.viewmodel.UserViewModelFactory;
 import com.example.chess.util.ChessUtil;
+import com.example.chess.util.Constants;
 import com.example.chess.util.ServiceLocator;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
@@ -39,8 +40,8 @@ public class HomeActivity extends AppCompatActivity {
         userViewModel = new ViewModelProvider(this, new UserViewModelFactory(userRepository)).get(UserViewModel.class);
 
         // 2. Retrieve the user from the Intent (if coming from Login/Register)
-        if (getIntent() != null && getIntent().hasExtra("CURRENT_USER")) {
-            currentUser = getIntent().getParcelableExtra("CURRENT_USER");
+        if (getIntent() != null && getIntent().hasExtra(Constants.EXTRA_CURRENT_USER)) {
+            currentUser = getIntent().getParcelableExtra(Constants.EXTRA_CURRENT_USER);
         } else {
             // If not in the Intent, try to retrieve the active session from Firebase
             currentUser = userViewModel.getLoggedUser();

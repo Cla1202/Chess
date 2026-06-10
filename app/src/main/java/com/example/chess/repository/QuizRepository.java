@@ -150,11 +150,9 @@ public class QuizRepository {
         setupLevel[riga("f6")][col("f6")] = new Pawn(riga("f6"), col("f6"), true);
 
         List<MoveRequest> soluzione = new ArrayList<>();
-        soluzione.add(mossa("d2", "g5"));
-        soluzione.add(mossa("h7", "h6"));
-        soluzione.add(mossa("g5", "g7"));
+        soluzione.add(mossa("d2", "d8"));
 
-        return new QuizLevel(5, "Livello 5: Infiltrazione (in 2)", setupLevel, true, soluzione, 3);
+        return new QuizLevel(5, "Livello 5: Infiltrazione (in 1)", setupLevel, true, soluzione, 3);
     }
 
     // ==========================================

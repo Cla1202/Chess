@@ -11,6 +11,7 @@ import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.GridView;
+import androidx.core.content.ContextCompat;
 import com.example.chess.R;
 import com.example.chess.model.Board;
 import com.example.chess.model.Piece;
@@ -60,7 +61,7 @@ public class ChessAdapter extends BaseAdapter {
         boolean isL = (row + col) % 2 == 0;
         h.container.setBackgroundColor(Color.parseColor(isL ? l : d));
         h.dot.setVisibility(hints.contains(p) ? View.VISIBLE : View.GONE);
-        if (selected != null && selected == p) h.container.setBackgroundColor(Color.parseColor(Constants.STEEL_BLUE));
+        if (selected != null && selected == p) h.container.setBackgroundColor(ContextCompat.getColor(context, R.color.steel_blue));
 
         h.rank.setVisibility(col == 0 ? View.VISIBLE : View.GONE);
         if (col == 0) { h.rank.setText("" + (8 - row)); h.rank.setTextColor(Color.parseColor(isL ? d : l)); }

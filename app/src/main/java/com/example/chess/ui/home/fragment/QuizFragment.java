@@ -24,6 +24,7 @@ import com.example.chess.ui.home.GameActivity;
 import com.example.chess.ui.home.HomeActivity;
 import com.example.chess.ui.home.viewmodel.LevelViewModel;
 import com.example.chess.ui.home.viewmodel.LevelViewModelFactory;
+import com.example.chess.util.Constants;
 import com.example.chess.util.ServiceLocator;
 
 import java.util.List;
@@ -71,9 +72,10 @@ public class QuizFragment extends Fragment {
                     QuizLevel selectedLevel = levels.get(position);
 
                     Intent intent = new Intent(requireActivity(), GameActivity.class);
-                    intent.putExtra(GameActivity.EXTRA_MODE, GameActivity.MODE_QUIZ);
-                    intent.putExtra("QUIZ_LEVEL_OBJECT", selectedLevel);
-                    intent.putExtra("CURRENT_USER", currentUser);
+                    // Fixed using Constants
+                    intent.putExtra(Constants.EXTRA_MODE, Constants.MODE_QUIZ);
+                    intent.putExtra(Constants.EXTRA_QUIZ_LEVEL_OBJECT, selectedLevel);
+                    intent.putExtra(Constants.EXTRA_CURRENT_USER, currentUser);
 
                     startActivity(intent);
                 });

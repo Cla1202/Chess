@@ -2,6 +2,7 @@ package com.example.chess.source.game;
 
 import com.example.chess.repository.ChessRepository;
 import com.example.chess.service.StockfishService;
+import com.example.chess.util.Constants;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -15,7 +16,7 @@ public class ChessRemoteDataSource implements BaseChessRemoteDataSource {
 
     public ChessRemoteDataSource() {
         Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl("https://stockfish.online/")
+                .baseUrl(Constants.STOCKFISH_BASE_URL)
                 .addConverterFactory(GsonConverterFactory.create())
                 .build();
         apiService = retrofit.create(StockfishService.class);

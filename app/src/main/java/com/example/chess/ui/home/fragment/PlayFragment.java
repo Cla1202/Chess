@@ -14,6 +14,7 @@ import com.example.chess.R;
 import com.example.chess.model.User;
 import com.example.chess.ui.home.GameActivity;
 import com.example.chess.ui.home.HomeActivity;
+import com.example.chess.util.Constants;
 
 public class PlayFragment extends Fragment {
 
@@ -28,11 +29,11 @@ public class PlayFragment extends Fragment {
 
         v.findViewById(R.id.btnStartGame).setOnClickListener(view -> {
             Intent i = new Intent(requireActivity(), GameActivity.class);
-            i.putExtra(GameActivity.EXTRA_MODE, GameActivity.MODE_LOCAL_PVP);
+            i.putExtra(Constants.EXTRA_MODE, Constants.MODE_LOCAL_PVP);
 
             // 2. Pass the user to GameActivity
             if (currentUser != null) {
-                i.putExtra("CURRENT_USER", currentUser);
+                i.putExtra(Constants.EXTRA_CURRENT_USER, currentUser);
             }
 
             startActivity(i);
@@ -40,11 +41,11 @@ public class PlayFragment extends Fragment {
 
         v.findViewById(R.id.btnPlayBot).setOnClickListener(view -> {
             Intent i = new Intent(requireActivity(), GameActivity.class);
-            i.putExtra(GameActivity.EXTRA_MODE, GameActivity.MODE_BOT);
+            i.putExtra(Constants.EXTRA_MODE, Constants.MODE_BOT);
 
             // 2. Pass the user to GameActivity
             if (currentUser != null) {
-                i.putExtra("CURRENT_USER", currentUser);
+                i.putExtra(Constants.EXTRA_CURRENT_USER, currentUser);
             }
 
             startActivity(i);

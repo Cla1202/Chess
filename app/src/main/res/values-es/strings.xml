@@ -113,4 +113,8 @@
     <string name="_12_ud83d_udd25">12 🔥</string>
     <string name="_45s">45s</string>
     <string name="password_dimenticata">¿Contraseña olvidada?</string>
+    <string name="error_fill_all_fields">Por favor, rellena todos los campos</string>
+    <string name="error_passwords_dont_match">Las contraseñas no coinciden</string>
+    <string name="error_password_short">La contraseña debe tener al menos 6 caracteres</string>
+    <string name="error_registration">Error en el registro: %1$s</string>
 </resources>

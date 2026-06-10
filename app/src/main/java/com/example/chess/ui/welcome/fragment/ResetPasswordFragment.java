@@ -21,6 +21,7 @@ import com.example.chess.model.Result;
 import com.example.chess.repository.user.IChessUserRepository;
 import com.example.chess.ui.welcome.viewmodel.UserViewModel;
 import com.example.chess.ui.welcome.viewmodel.UserViewModelFactory;
+import com.example.chess.util.NetworkUtil;
 import com.example.chess.util.ServiceLocator;
 
 public class ResetPasswordFragment extends Fragment {
@@ -64,6 +65,11 @@ public class ResetPasswordFragment extends Fragment {
 
         // Single listener for the button: handles Logging and the Firebase call
         btnResetPassword.setOnClickListener(v -> {
+            if (!NetworkUtil.isNetworkAvailable(getContext())) {
+                Toast.makeText(getContext(), getString(R.string.errore_connessione), Toast.LENGTH_LONG).show();
+                return;
+            }
+
             String email = etResetEmail.getText().toString().trim();
 
             // Print the exact string sent to Firebase to the Logcat for debugging

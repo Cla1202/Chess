@@ -21,7 +21,8 @@ import com.example.chess.model.QuizLevel;
 import com.example.chess.repository.ChessRepository;
 import com.example.chess.util.ChessUtil;
 import com.example.chess.util.MoveCalculator;
-import com.example.chess.util.ServiceLocator; // IMPORT AGIUNTO
+import com.example.chess.util.NetworkUtil;
+import com.example.chess.util.ServiceLocator;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -33,7 +34,7 @@ public class GameViewModel extends AndroidViewModel {
     public enum StatusColorType { NORMAL, WARNING, DANGER, SUCCESS }
 
     private Board board;
-    private final ChessRepository repository; // La repository ora viene iniettata
+    private final ChessRepository repository;
     private String mode;
     private QuizLevel quizLevel;
     private long startTimeMillis;
@@ -61,11 +62,8 @@ public class GameViewModel extends AndroidViewModel {
 
     public GameViewModel(@NonNull Application application) {
         super(application);
-        // UPDATED: Use ServiceLocator to get the ChessRepository instance
         this.repository = ServiceLocator.getInstance().getChessRepository(application);
     }
-
-    // ... (Il resto dei metodi rimane invariato)
 
     public void setCurrentUserId(String userId) {
         if (userId != null && !userId.isEmpty()) {
@@ -110,8 +108,6 @@ public class GameViewModel extends AndroidViewModel {
         });
     }
 
-    // ... (Tutti gli altri metodi, inclusi processMove, playBotMove, ecc., rimangono identici)
-    // Assicurati che i metodi di callback e logica interna non siano stati alterati.
 
     public void handleSquareClick(int position) {
         if (Boolean.TRUE.equals(isThinking.getValue())) return;
@@ -243,6 +239,14 @@ public class GameViewModel extends AndroidViewModel {
     }
 
     private void playBotMove() {
+        // Connection check
+        if (!NetworkUtil.isNetworkAvailable(getApplication())) {
+            gameEvent.setValue(new GameEvent(GameEvent.Type.TOAST, "Connessione assente, impossibile giocare contro il Bot"));
+            isThinking.setValue(false);
+            return;
+        }
+
+        // Proceeding with the move
         isThinking.setValue(true);
         updateBotStatus();
 

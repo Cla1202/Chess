@@ -33,6 +33,7 @@ import com.example.chess.ui.home.HomeActivity;
 import com.example.chess.ui.welcome.viewmodel.UserViewModel;
 import com.example.chess.ui.welcome.viewmodel.UserViewModelFactory;
 import com.example.chess.ui.welcome.LoginActivity;
+import com.example.chess.util.NetworkUtil;
 import com.example.chess.util.ServiceLocator;
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption;
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential;
@@ -89,6 +90,11 @@ public class LoginFragment extends Fragment {
 
         // 1. LOGIN WITH EMAIL AND PASSWORD VIA VIEWMODEL
         btnLogin.setOnClickListener(v -> {
+            if (!NetworkUtil.isNetworkAvailable(getContext())) {
+                Toast.makeText(getContext(), getString(R.string.errore_connessione), Toast.LENGTH_LONG).show();
+                return;
+            }
+
             String email = etUsername.getText().toString().trim();
             String password = etPassword.getText().toString().trim();
 
@@ -117,7 +123,13 @@ public class LoginFragment extends Fragment {
             });
         });
 
-        btnGoogleLogin.setOnClickListener(v -> avviaLoginGoogleModerno());
+        btnGoogleLogin.setOnClickListener(v -> {
+            if (!NetworkUtil.isNetworkAvailable(getContext())) {
+                Toast.makeText(getContext(), getString(R.string.errore_connessione), Toast.LENGTH_LONG).show();
+                return;
+            }
+            avviaLoginGoogleModerno();
+        });
     }
 
     private void avviaLoginGoogleModerno() {

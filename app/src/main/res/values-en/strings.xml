@@ -113,4 +113,5 @@
     <string name="_12_ud83d_udd25">12 🔥</string>
     <string name="_45s">45s</string>
     <string name="password_dimenticata">Forgot password?</string>
+    <string name="errore_connessione">No internet connection. Please check your network and try again.</string>
 </resources>

@@ -22,6 +22,7 @@ import com.example.chess.repository.user.IChessUserRepository;
 import com.example.chess.ui.home.HomeActivity;
 import com.example.chess.ui.welcome.viewmodel.UserViewModel;
 import com.example.chess.ui.welcome.viewmodel.UserViewModelFactory;
+import com.example.chess.util.NetworkUtil;
 import com.example.chess.util.ServiceLocator;
 
 public class RegisterFragment extends Fragment {
@@ -69,6 +70,11 @@ public class RegisterFragment extends Fragment {
         );
 
         btnRegister.setOnClickListener(v -> {
+            if (!NetworkUtil.isNetworkAvailable(getContext())) {
+                Toast.makeText(getContext(), getString(R.string.errore_connessione), Toast.LENGTH_LONG).show();
+                return;
+            }
+
             String name = etName.getText().toString().trim();
             String email = etEmail.getText().toString().trim();
             String password = etPassword.getText().toString().trim();

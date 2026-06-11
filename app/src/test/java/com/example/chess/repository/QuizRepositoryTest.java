@@ -8,30 +8,45 @@ import static org.junit.Assert.assertTrue;
 import com.example.chess.model.Board;
 import com.example.chess.model.MoveRequest;
 import com.example.chess.model.QuizLevel;
+import com.example.chess.source.quiz.IQuizDataSource;
+import com.example.chess.util.IResourceProvider;
 
 import org.junit.Before;
 import org.junit.Test;
 
+import java.io.ByteArrayInputStream;
 import java.util.List;
 
 /**
- * Unit test (local) per QuizRepository.
- *
- * Nota: getLichessLevels(Context) dipende dal framework Android (assets),
- * quindi qui testiamo solo i livelli di fallback, che sono Java puro.
- * Il caricamento da CSV è coperto da LichessPuzzleLoaderTest.
- *
- * Oltre alla struttura dei dati, verifichiamo una proprietà di dominio
- * fondamentale: ogni soluzione di fallback deve essere composta da mosse
- * LEGALI e deve portare allo SCACCO MATTO dell'avversario.
+ * Unit test (local) for QuizRepository.
+ * Now it uses a fake IResourceProvider and a fake IQuizDataSource to avoid 
+ * dependencies on the Android Context and Assets, making the test pure Java and much faster.
  */
 public class QuizRepositoryTest {
 
     private QuizRepository repository;
 
+    // A simple fake implementation of IResourceProvider for testing purposes
+    private final IResourceProvider fakeResourceProvider = new IResourceProvider() {
+        @Override
+        public String getString(int resId) {
+            return "Fake String for ID: " + resId;
+        }
+
+        @Override
+        public String getString(int resId, Object... formatArgs) {
+            return "Fake Formatted String for ID: " + resId;
+        }
+    };
+
+    // A simple fake implementation of IQuizDataSource for testing purposes.
+    // It returns an empty stream so the repository will use fallback levels.
+    private final IQuizDataSource fakeDataSource = () -> new ByteArrayInputStream("".getBytes());
+
     @Before
     public void setUp() {
-        repository = new QuizRepository();
+        // We inject the fake provider and fake data source into the repository
+        repository = new QuizRepository(fakeResourceProvider, fakeDataSource);
     }
 
     @Test
@@ -56,20 +71,20 @@ public class QuizRepositoryTest {
     @Test
     public void fallbackLevels_solutionsAreLegalAndDeliverCheckmate() {
         for (QuizLevel level : repository.getFallbackLevels()) {
-            Board board = new Board();
+            Board board = new Board(true); // Empty board
             board.setupCustomBoard(level.getInitialBoardSetup(), level.isWhiteTurnToStart());
 
-            // Tutte le mosse della soluzione devono essere accettate dal motore
+            // Every move in the solution must be accepted by the engine
             for (MoveRequest m : level.getSolutionMoves()) {
-                assertTrue("Mossa della soluzione rifiutata nel livello " + level.getId(),
+                assertTrue("Solution move rejected in level " + level.getId(),
                         board.movePiece(m.startRow, m.startCol, m.endRow, m.endCol));
             }
 
-            // Al termine, il giocatore avversario deve essere in scacco matto
-            boolean loserIsWhite = !level.isWhiteTurnToStart();
-            assertTrue("Il livello " + level.getId() + " non termina con uno scacco",
+            // At the end, the opponent must be in checkmate
+            boolean loserIsWhite = !board.isWhiteTurn();
+            assertTrue("Level " + level.getId() + " does not end with a check",
                     board.isKingInCheck(loserIsWhite));
-            assertFalse("Il livello " + level.getId() + " non termina con un matto",
+            assertFalse("Level " + level.getId() + " does not end with a mate",
                     board.hasAnyLegalMoves(loserIsWhite));
         }
     }

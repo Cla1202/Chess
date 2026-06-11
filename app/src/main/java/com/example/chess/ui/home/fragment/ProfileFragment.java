@@ -18,6 +18,7 @@ import com.example.chess.R;
 import com.example.chess.database.ChessDatabase;
 import com.example.chess.database.LevelProgress;
 import com.example.chess.model.User;
+import com.example.chess.repository.IQuizRepository;
 import com.example.chess.ui.home.HomeActivity;
 import com.example.chess.ui.home.viewmodel.LevelViewModel;
 import com.example.chess.ui.home.viewmodel.LevelViewModelFactory;
@@ -51,7 +52,8 @@ public class ProfileFragment extends Fragment {
 
         // 2. Initialize the ViewModel for Levels
         ChessDatabase db = ServiceLocator.getInstance().getChessDatabase(requireContext());
-        LevelViewModelFactory factory = new LevelViewModelFactory(db);
+        IQuizRepository repository = ServiceLocator.getInstance().getQuizRepository(requireContext());
+        LevelViewModelFactory factory = new LevelViewModelFactory(db, repository);
         LevelViewModel levelViewModel = new ViewModelProvider(this, factory).get(LevelViewModel.class);
 
         if (currentUser != null) {
@@ -64,7 +66,6 @@ public class ProfileFragment extends Fragment {
             emailText.setText(currentUser.getEmail());
 
             // 3. Observe ONLY the progress of this specific user
-            // NOTE: Ensure that in your LevelViewModel, the method requires the userId!
             levelViewModel.getAllCompletedLevels(currentUser.getIdToken()).observe(getViewLifecycleOwner(), progressList -> {
                 if (progressList != null && !progressList.isEmpty()) {
                     calculateAndDisplayStats(progressList, totalQuizzesText, accuracyText, streakText, avgTimeText, currentLevelText);

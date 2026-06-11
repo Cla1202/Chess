@@ -13,6 +13,7 @@ import com.example.chess.model.Pawn;
 import com.example.chess.model.Piece;
 import com.example.chess.model.QuizLevel;
 import com.example.chess.model.Rook;
+import com.example.chess.util.IResourceProvider;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -48,6 +49,19 @@ public class LichessPuzzleLoaderTest {
 
     private LichessPuzzleLoader loader;
 
+    /** Provider fittizio: restituisce sempre la stessa stringa per qualsiasi resId. */
+    private final IResourceProvider fakeProvider = new IResourceProvider() {
+        @Override
+        public String getString(int resId) {
+            return "Titolo di test";
+        }
+
+        @Override
+        public String getString(int resId, Object... formatArgs) {
+            return "Titolo di test";
+        }
+    };
+
     @Before
     public void setUp() {
         loader = new LichessPuzzleLoader();
@@ -65,12 +79,13 @@ public class LichessPuzzleLoaderTest {
 
     @Test
     public void loadFromCsv_validRow_buildsOneLevel() throws IOException {
-        List<QuizLevel> levels = loader.loadFromCsv(csv(VALID_ROW), null, 0, 9999, 10);
+        List<QuizLevel> levels = loader.loadFromCsv(fakeProvider, csv(VALID_ROW), null, 0, 9999, 10);
 
         assertEquals(1, levels.size());
         QuizLevel level = levels.get(0);
         assertEquals(1, level.getId());
-        assertTrue(level.getTitle().startsWith("Livello 1"));
+        // Il titolo ora viene generato tramite IResourceProvider
+        assertTrue(level.getTitle().startsWith("Titolo di test"));
         assertEquals(3, level.getMaxAttempts());
 
         // Nella FEN muove il nero -> il giocatore del puzzle è il bianco
@@ -97,7 +112,7 @@ public class LichessPuzzleLoaderTest {
     public void loadFromCsv_solutionIsLegalAndDeliversCheckmate() throws IOException {
         // Test di coerenza con il motore di gioco: la soluzione caricata
         // dal CSV deve essere legale per Board e produrre scacco matto
-        List<QuizLevel> levels = loader.loadFromCsv(csv(VALID_ROW), null, 0, 9999, 10);
+        List<QuizLevel> levels = loader.loadFromCsv(fakeProvider, csv(VALID_ROW), null, 0, 9999, 10);
         QuizLevel level = levels.get(0);
 
         Board board = new Board();
@@ -116,22 +131,22 @@ public class LichessPuzzleLoaderTest {
     @Test
     public void loadFromCsv_ratingOutOfRange_isExcluded() throws IOException {
         // Rating 800: fuori dall'intervallo [1000, 2000]
-        List<QuizLevel> levels = loader.loadFromCsv(csv(VALID_ROW), null, 1000, 2000, 10);
+        List<QuizLevel> levels = loader.loadFromCsv(fakeProvider, csv(VALID_ROW), null, 1000, 2000, 10);
         assertTrue(levels.isEmpty());
     }
 
     @Test
     public void loadFromCsv_themeFilter_excludesNonMatchingPuzzles() throws IOException {
-        List<QuizLevel> levels = loader.loadFromCsv(csv(VALID_ROW), "mateIn2", 0, 9999, 10);
+        List<QuizLevel> levels = loader.loadFromCsv(fakeProvider, csv(VALID_ROW), "mateIn2", 0, 9999, 10);
         assertTrue(levels.isEmpty());
 
-        List<QuizLevel> matching = loader.loadFromCsv(csv(VALID_ROW), "mateIn1", 0, 9999, 10);
+        List<QuizLevel> matching = loader.loadFromCsv(fakeProvider, csv(VALID_ROW), "mateIn1", 0, 9999, 10);
         assertEquals(1, matching.size());
     }
 
     @Test
     public void loadFromCsv_respectsMaxLevels() throws IOException {
-        List<QuizLevel> levels = loader.loadFromCsv(csv(VALID_ROW, VALID_ROW_2), null, 0, 9999, 1);
+        List<QuizLevel> levels = loader.loadFromCsv(fakeProvider, csv(VALID_ROW, VALID_ROW_2), null, 0, 9999, 1);
         assertEquals(1, levels.size());
     }
 
@@ -141,7 +156,7 @@ public class LichessPuzzleLoaderTest {
 
     @Test
     public void loadFromCsv_emptyFile_returnsEmptyList() throws IOException {
-        List<QuizLevel> levels = loader.loadFromCsv(
+        List<QuizLevel> levels = loader.loadFromCsv(fakeProvider,
                 new ByteArrayInputStream(new byte[0]), null, 0, 9999, 10);
         assertNotNull(levels);
         assertTrue(levels.isEmpty());
@@ -149,7 +164,7 @@ public class LichessPuzzleLoaderTest {
 
     @Test
     public void loadFromCsv_headerOnly_returnsEmptyList() throws IOException {
-        List<QuizLevel> levels = loader.loadFromCsv(csv(), null, 0, 9999, 10);
+        List<QuizLevel> levels = loader.loadFromCsv(fakeProvider, csv(), null, 0, 9999, 10);
         assertTrue(levels.isEmpty());
     }
 
@@ -157,7 +172,7 @@ public class LichessPuzzleLoaderTest {
     public void loadFromCsv_malformedRows_areSkippedWithoutCrashing() throws IOException {
         String tooFewFields = "abc,def";
         String nonNumericRating = "00003,7k/5ppp/8/8/8/8/5PPP/4R1K1 b - - 0 1,h8g8 e1e8,notanumber,75,95,1000,mateIn1,url,";
-        List<QuizLevel> levels = loader.loadFromCsv(
+        List<QuizLevel> levels = loader.loadFromCsv(fakeProvider,
                 csv(tooFewFields, nonNumericRating, VALID_ROW), null, 0, 9999, 10);
 
         // Le righe corrotte vengono ignorate, quella valida viene caricata
@@ -169,7 +184,7 @@ public class LichessPuzzleLoaderTest {
         // Mossa UCI a 5 caratteri (promozione e7e8q): il puzzle va scartato
         String promotionRow =
                 "00004,4k3/4P3/8/8/8/8/8/4K3 w - - 0 1,e7e8q e8d7,800,75,95,1000,promotion,url,";
-        List<QuizLevel> levels = loader.loadFromCsv(csv(promotionRow), null, 0, 9999, 10);
+        List<QuizLevel> levels = loader.loadFromCsv(fakeProvider, csv(promotionRow), null, 0, 9999, 10);
         assertTrue(levels.isEmpty());
     }
 
@@ -178,7 +193,7 @@ public class LichessPuzzleLoaderTest {
         // Servono almeno 2 mosse: una dell'avversario + almeno una di soluzione
         String singleMoveRow =
                 "00005,7k/5ppp/8/8/8/8/5PPP/4R1K1 b - - 0 1,h8g8,800,75,95,1000,mateIn1,url,";
-        List<QuizLevel> levels = loader.loadFromCsv(csv(singleMoveRow), null, 0, 9999, 10);
+        List<QuizLevel> levels = loader.loadFromCsv(fakeProvider, csv(singleMoveRow), null, 0, 9999, 10);
         assertTrue(levels.isEmpty());
     }
 

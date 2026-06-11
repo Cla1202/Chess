@@ -20,4 +20,9 @@ public class ChessRoomDataSource implements BaseChessLocalDataSource {
     public LevelProgress getProgress(int levelId, String userId) {
         return levelDao.getProgressForLevel(levelId, userId);
     }
+
+    @Override
+    public void deleteProgressForUser(String userId) {
+        levelDao.deleteProgressForUser(userId);
+    }
 }

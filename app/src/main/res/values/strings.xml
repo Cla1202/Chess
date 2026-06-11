@@ -180,4 +180,6 @@
     <string name="pool_watch_king">Watch the King</string>
 
     <string name="fallback_welcome">Welcome!</string>
+    <string name="prova_senza_account">Try without account</string>
+    <string name="guest">Guest</string>
 </resources>

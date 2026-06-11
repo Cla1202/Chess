@@ -241,7 +241,7 @@ public class GameViewModel extends AndroidViewModel {
     private void playBotMove() {
         // Connection check
         if (!NetworkUtil.isNetworkAvailable(getApplication())) {
-            gameEvent.setValue(new GameEvent(GameEvent.Type.TOAST, "Connessione assente, impossibile giocare contro il Bot"));
+            gameEvent.setValue(new GameEvent(GameEvent.Type.TOAST, getStr(R.string.errore_connessione_bot)));
             isThinking.setValue(false);
             return;
         }

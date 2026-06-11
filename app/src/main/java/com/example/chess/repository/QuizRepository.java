@@ -2,6 +2,7 @@ package com.example.chess.repository;
 
 import android.content.Context;
 
+import com.example.chess.R;
 import com.example.chess.model.Bishop;
 import com.example.chess.model.King;
 import com.example.chess.model.Knight;
@@ -19,49 +20,38 @@ import java.util.List;
 public class QuizRepository {
 
     private static final String PUZZLE_FILE = "puzzles.csv";
-    // QuizRepository: allinea le costanti al nuovo file
-    private static final int MIN_RATING = 0;      // il filtro è già fatto nel CSV
+    private static final int MIN_RATING = 0;
     private static final int MAX_RATING = 9999;
-    private static final int MAX_LEVELS = 30;     // = righe del CSV
-    /**
-     * Fonte principale dei livelli: il database di puzzle Lichess in assets/puzzles.csv.
-     * Se il file manca o non e' leggibile, ricade sui livelli di fallback hardcoded.
-     */
+    private static final int MAX_LEVELS = 30;
+
     public List<QuizLevel> getLichessLevels(Context context) {
         try {
             LichessPuzzleLoader loader = new LichessPuzzleLoader();
             List<QuizLevel> levels = loader.loadFromCsv(
+                    context,
                     context.getAssets().open(PUZZLE_FILE),
-                    null,          // tema: null = tutti quelli presenti nel CSV
+                    null,
                     MIN_RATING,
                     MAX_RATING,
                     MAX_LEVELS);
 
-            // Se il CSV esiste ma non ha prodotto livelli validi, meglio il fallback
             if (levels.isEmpty()) {
-                return getFallbackLevels();
+                return getFallbackLevels(context);
             }
             return levels;
 
         } catch (IOException e) {
-            return getFallbackLevels();
+            return getFallbackLevels(context);
         }
     }
 
-    // ==========================================
-    // FALLBACK: due livelli minimi, usati SOLO se
-    // il CSV non e' disponibile. Garantiscono che
-    // il tab Quiz non sia mai vuoto.
-    // ==========================================
-
-    public List<QuizLevel> getFallbackLevels() {
+    public List<QuizLevel> getFallbackLevels(Context context) {
         List<QuizLevel> levels = new ArrayList<>();
-        levels.add(createFallbackLevel1());
-        levels.add(createFallbackLevel2());
+        levels.add(createFallbackLevel1(context));
+        levels.add(createFallbackLevel2(context));
         return levels;
     }
 
-    // --- TRADUTTORI DI COORDINATE ---
     private int col(String pos) {
         return pos.toLowerCase().charAt(0) - 'a';
     }
@@ -78,8 +68,7 @@ public class QuizRepository {
         return new Piece[8][8];
     }
 
-    // Matto in 1: Dxh7# (ex Livello 1)
-    private QuizLevel createFallbackLevel1() {
+    private QuizLevel createFallbackLevel1(Context context) {
         Piece[][] setupLevel = createEmptyBoard();
 
         setupLevel[riga("g8")][col("g8")] = new King(riga("g8"), col("g8"), false);
@@ -93,11 +82,12 @@ public class QuizRepository {
         List<MoveRequest> soluzione = new ArrayList<>();
         soluzione.add(mossa("d3", "h7"));
 
-        return new QuizLevel(1, "Livello 1: Benvenuto!", setupLevel, true, soluzione, 3);
+        // Titolo pulito per il fallback
+        String title = context.getString(R.string.fallback_welcome);
+        return new QuizLevel(1, title, setupLevel, true, soluzione, 3);
     }
 
-    // Matto Arabo: Txh7# (ex Livello 6)
-    private QuizLevel createFallbackLevel2() {
+    private QuizLevel createFallbackLevel2(Context context) {
         Piece[][] setupLevel = createEmptyBoard();
 
         setupLevel[riga("h8")][col("h8")] = new King(riga("h8"), col("h8"), false);
@@ -109,6 +99,8 @@ public class QuizRepository {
         List<MoveRequest> soluzione = new ArrayList<>();
         soluzione.add(mossa("h1", "h7"));
 
-        return new QuizLevel(2, "Livello 2: Matto Arabo", setupLevel, true, soluzione, 3);
+        // Titolo pulito per il fallback
+        String title = context.getString(R.string.theme_arabian_mate);
+        return new QuizLevel(2, title, setupLevel, true, soluzione, 3);
     }
 }

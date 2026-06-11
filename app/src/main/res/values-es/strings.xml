@@ -28,7 +28,7 @@
     <string name="email">Email</string>
     <string name="conferma_password">Confirmar Contraseña</string>
     <string name="hai_gi_un_account_accedi">¿Ya tienes una cuenta? Accede</string>
-    <string name="partita_libera">Partida Libre</string>
+    <string name="partita_libera">Partita Libre</string>
     <string name="gioca_ora">Jugar con un amigo</string>
     <string name="caricamento">Cargando...</string>
     <string name="attendere_prego">Por favor, espere...</string>
@@ -76,7 +76,13 @@
     <string name="gioco">JUEGO</string>
     <string name="audio_e_notifiche">AUDIO Y NOTIFICACIONES</string>
     <string name="verde_classico">Verde Clásico</string>
+    <string name="legno_scuro">Madera Oscura</string>
+    <string name="blu_oceano">Azul Océano</string>
+    <string name="grigio_moderno">Gris Moderno</string>
     <string name="neo">Neo</string>
+    <string name="classico">Clásico</string>
+    <string name="moderno">Moderno</string>
+    <string name="alfa">Alfa</string>
     <string name="gioca_con_bot">Jugar con bot</string>
     <string name="esci_app">Salir de la App</string>
     <string name="bot_pensa">El Bot está pensando...</string>
@@ -113,8 +119,65 @@
     <string name="_12_ud83d_udd25">12 🔥</string>
     <string name="_45s">45s</string>
     <string name="password_dimenticata">¿Contraseña olvidada?</string>
+    <string name="errore_connessione">No hay conexión a internet. Por favor, compruebe su conexión de red e inténtelo de nuevo.</string>
+    <string name="welcome_back">¡Bienvenido de nuevo, %1$s!</string>
+    <string name="welcome_new_user">¡Bienvenido, %1$s!</string>
+    <string name="login_google_success">Inicio de sesión con Google completato</string>
+    <string name="errore_campi_vuoti">Por favor, introduce email y contraseña</string>
+    <string name="errore_generico">Error: %1$s</string>
+    <string name="prefix_level">Nivel</string>
+    <string name="msg_level_locked">¡Debes completar el nivel anterior para desbloquear este!</string>
     <string name="error_fill_all_fields">Por favor, rellena todos los campos</string>
     <string name="error_passwords_dont_match">Las contraseñas no coinciden</string>
     <string name="error_password_short">La contraseña debe tener al menos 6 caracteres</string>
     <string name="error_registration">Error en el registro: %1$s</string>
+    <string name="reset_titolo">Restablecer</string>
+    <string name="reset_messaggio">¿Estás seguro de que quieres borrar tu progreso en los Quiz?</string>
+    <string name="si">Sí</string>
+    <string name="no">No</string>
+    <string name="progressi_azzerati">¡Progreso restablecido!</string>
+    <string name="errore_connessione_bot">Sin conexión a internet, imposible jugar contra el Bot</string>
+
+    <string name="error_token_read">Error al leer el Token</string>
+    <string name="error_no_google_account">No si ha encontrado ninguna cuenta de Google en el dispositivo o el acceso non está configurado correctamente.</string>
+    <string name="error_google_firebase">Error de Google Firebase: %1$s</string>
+
+    <!-- Quiz Themes -->
+    <string name="theme_smothered_mate">Mate de la Coz</string>
+    <string name="theme_arabian_mate">Mate Árabe</string>
+    <string name="theme_anastasia_mate">Mate de Anastasia</string>
+    <string name="theme_boden_mate">Mate de Boden</string>
+    <string name="theme_back_rank_mate">Mate en la Octava Fila</string>
+    <string name="theme_hook_mate">Mate de Gancho</string>
+    <string name="theme_double_bishop_mate">Mate de los Dos Alfiles</string>
+    <string name="theme_dovetail_mate">Mate de Cola de Milano</string>
+    <string name="theme_sacrifice">El Sacrificio</string>
+    <string name="theme_double_check">Jaque Doble</string>
+    <string name="theme_deflection">Desviación</string>
+    <string name="theme_attraction">Atracción</string>
+    <string name="theme_discovered_attack">Ataque a la Descubierta</string>
+    <string name="theme_promotion">Promoción</string>
+
+    <!-- Quiz Titles Pool -->
+    <string name="pool_sharp_blow">Golpe Seco</string>
+    <string name="pool_single_move">Un Solo Movimiento</string>
+    <string name="pool_final_blow">El Golpe de Gracia</string>
+    <string name="pool_lightning_execution">Ejecución Relámpago</string>
+    <string name="pool_immediate_victory">Victoria Inmediata</string>
+    <string name="pool_trap">La Trampa</string>
+    <string name="pool_two_moves_glory">Dos Movimientos para la Gloria</string>
+    <string name="pool_ambush">La Emboscada</string>
+    <string name="pool_net_closes">La Red se Cierra</string>
+    <string name="pool_king_hunt">Caza del Rey</string>
+    <string name="pool_perfect_plan">El Plan Perfecto</string>
+    <string name="pool_long_hunt">La Caza Amplia</string>
+    <string name="pool_three_moves_triumph">Tres Movimientos para el Triunfo</string>
+    <string name="pool_siege">El Asedio</string>
+    <string name="pool_spider_web">La Telaraña</string>
+    <string name="pool_final_check">Jaque Final</string>
+    <string name="pool_winning_tactic">Táctica Ganadora</string>
+    <string name="pool_right_moment">El Momento Justo</string>
+    <string name="pool_watch_king">Ojo al Rey</string>
+
+    <string name="fallback_welcome">¡Bienvenido!</string>
 </resources>

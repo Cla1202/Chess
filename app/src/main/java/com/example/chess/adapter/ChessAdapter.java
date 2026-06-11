@@ -31,7 +31,7 @@ public class ChessAdapter extends BaseAdapter {
 
     public ChessAdapter(Context context, Board board) {
         this.context = context; this.board = board;
-        this.prefs = context.getSharedPreferences("ChessSettings", Context.MODE_PRIVATE);
+        this.prefs = context.getSharedPreferences(Constants.SETTINGS_PREFS_NAME, Context.MODE_PRIVATE);
     }
     @Override public int getCount() { return 64; }
     @Override public Object getItem(int p) { return null; }
@@ -66,13 +66,19 @@ public class ChessAdapter extends BaseAdapter {
         int row = p / 8, col = p % 8;
         int logical = mapPosition(p);
         int lRow = logical / 8, lCol = logical % 8;
-        String theme = prefs.getString("board_theme", "Verde Classico");
+        
+        // Uso le costanti per il tema
+        String theme = prefs.getString(Constants.KEY_BOARD_THEME, Constants.THEME_GREEN);
         String l = Constants.THEME_CLASSIC_LIGHT, d = Constants.THEME_CLASSIC_DARK;
-        switch(theme) {
-            case "Legno Scuro": l = Constants.THEME_WOOD_LIGHT; d = Constants.THEME_WOOD_DARK; break;
-            case "Blu Oceano": l = Constants.THEME_OCEAN_LIGHT; d = Constants.THEME_OCEAN_DARK; break;
-            case "Grigio Moderno": l = Constants.THEME_GREY_LIGHT; d = Constants.THEME_GREY_DARK; break;
+        
+        if (Constants.THEME_WOOD.equals(theme)) {
+            l = Constants.THEME_WOOD_LIGHT; d = Constants.THEME_WOOD_DARK;
+        } else if (Constants.THEME_OCEAN.equals(theme)) {
+            l = Constants.THEME_OCEAN_LIGHT; d = Constants.THEME_OCEAN_DARK;
+        } else if (Constants.THEME_GREY.equals(theme)) {
+            l = Constants.THEME_GREY_LIGHT; d = Constants.THEME_GREY_DARK;
         }
+
         boolean isL = (row + col) % 2 == 0;
         h.container.setBackgroundColor(Color.parseColor(isL ? l : d));
         h.dot.setVisibility(hints.contains(logical) ? View.VISIBLE : View.GONE);
@@ -89,12 +95,24 @@ public class ChessAdapter extends BaseAdapter {
     }
 
     private int getResId(Piece piece) {
-        String style = prefs.getString("piece_style", "Classico");
+        // Uso le costanti per lo stile dei pezzi
+        String style = prefs.getString(Constants.KEY_PIECE_STYLE, Constants.STYLE_NEO);
         String pref = "";
-        switch(style) { case "Neo": pref="neo_"; break; case "Moderno": pref="mod_"; break; case "Alfa": pref="alpha_"; break; }
-        String name = pref + (piece.isWhite()?"w_":"b_") + piece.getClass().getSimpleName().toLowerCase();
-        int id = context.getResources().getIdentifier(name, "drawable", context.getPackageName());
-        if (id == 0) id = context.getResources().getIdentifier((piece.isWhite()?"w_":"b_") + piece.getClass().getSimpleName().toLowerCase(), "drawable", context.getPackageName());
+        
+        if (Constants.STYLE_NEO.equals(style)) {
+            pref = "neo_";
+        } else if (Constants.STYLE_MODERN.equals(style)) {
+            pref = "mod_";
+        } else if (Constants.STYLE_ALPHA.equals(style)) {
+            pref = "alpha_";
+        }
+        
+        String name = pref + (piece.isWhite() ? Constants.PREFIX_WHITE : Constants.PREFIX_BLACK) + piece.getClass().getSimpleName().toLowerCase();
+        int id = context.getResources().getIdentifier(name, Constants.DEF_TYPE_DRAWABLE, context.getPackageName());
+        
+        if (id == 0) {
+            id = context.getResources().getIdentifier((piece.isWhite() ? Constants.PREFIX_WHITE : Constants.PREFIX_BLACK) + piece.getClass().getSimpleName().toLowerCase(), Constants.DEF_TYPE_DRAWABLE, context.getPackageName());
+        }
         return id;
     }
 

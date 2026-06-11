@@ -7,6 +7,10 @@ import com.example.chess.repository.ChessRepository;
 import com.example.chess.repository.QuizRepository;
 import com.example.chess.repository.user.IChessUserRepository;
 import com.example.chess.repository.user.UserRepository;
+import com.example.chess.source.game.BaseChessLocalDataSource;
+import com.example.chess.source.game.BaseChessRemoteDataSource;
+import com.example.chess.source.game.ChessRemoteDataSource;
+import com.example.chess.source.game.ChessRoomDataSource;
 
 public class ServiceLocator {
 
@@ -40,20 +44,6 @@ public class ServiceLocator {
         return userRepository;
     }
 
-    /**
-     * Provides a singleton instance of ChessRepository.
-     * Uses ApplicationContext to prevent memory leaks.
-     */
-    public ChessRepository getChessRepository(Context context) {
-        if (chessRepository == null) {
-            chessRepository = new ChessRepository(context.getApplicationContext());
-        }
-        return chessRepository;
-    }
-
-    /**
-     * Provides the local Room Database instance.
-     */
     public ChessDatabase getChessDatabase(Context context) {
         return ChessDatabase.getInstance(context.getApplicationContext());
     }
@@ -65,5 +55,37 @@ public class ServiceLocator {
             quizRepository = new QuizRepository();
         }
         return quizRepository;
+    }
+
+    // ... variabili esistenti ...
+    private BaseChessRemoteDataSource chessRemoteDataSource;
+    private BaseChessLocalDataSource chessLocalDataSource;
+
+    // 1. Fornitore del Remote Data Source
+    public BaseChessRemoteDataSource getChessRemoteDataSource() {
+        if (chessRemoteDataSource == null) {
+            chessRemoteDataSource = new ChessRemoteDataSource();
+        }
+        return chessRemoteDataSource;
+    }
+
+    // 2. Fornitore del Local Data Source (Richiede il DAO di Room)
+    public BaseChessLocalDataSource getChessLocalDataSource(Context context) {
+        if (chessLocalDataSource == null) {
+            ChessDatabase db = getChessDatabase(context);
+            chessLocalDataSource = new ChessRoomDataSource(db.levelDao());
+        }
+        return chessLocalDataSource;
+    }
+
+    // 3. AGGIORNA il fornitore della Repository per iniettare i Data Source
+    public ChessRepository getChessRepository(Context context) {
+        if (chessRepository == null) {
+            chessRepository = new ChessRepository(
+                    getChessLocalDataSource(context),
+                    getChessRemoteDataSource()
+            );
+        }
+        return chessRepository;
     }
 }

@@ -113,4 +113,16 @@
     <string name="_12_ud83d_udd25">12 🔥</string>
     <string name="_45s">45s</string>
     <string name="password_dimenticata">Forgot password?</string>
+    <string name="errore_connessione">No internet connection. Please check your network and try again.</string>
+    <string name="welcome_back">Welcome back, %1$s!</string>
+    <string name="welcome_new_user">Welcome, %1$s!</string>
+    <string name="login_google_success">Google login completed</string>
+    <string name="errore_campi_vuoti">Please enter email and password</string>
+    <string name="errore_generico">Error: %1$s</string>
+    <string name="prefix_level">Level </string>
+    <string name="msg_level_locked">You must complete the previous level to unlock this one!</string>
+    <string name="error_fill_all_fields">Please fill all fields</string>
+    <string name="error_passwords_dont_match">Passwords do not match</string>
+    <string name="error_password_short">Password must be at least 6 characters</string>
+    <string name="error_registration">Registration failed: %1$s</string>
 </resources>

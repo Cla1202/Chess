@@ -22,6 +22,8 @@ import com.example.chess.repository.user.IChessUserRepository;
 import com.example.chess.ui.home.HomeActivity;
 import com.example.chess.ui.welcome.viewmodel.UserViewModel;
 import com.example.chess.ui.welcome.viewmodel.UserViewModelFactory;
+import com.example.chess.util.Constants;
+import com.example.chess.util.NetworkUtil;
 import com.example.chess.util.ServiceLocator;
 
 public class RegisterFragment extends Fragment {
@@ -39,7 +41,6 @@ public class RegisterFragment extends Fragment {
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // UPDATED: Using ServiceLocator instead of direct instantiation "new UserRepository()"
         IChessUserRepository userRepository = ServiceLocator.getInstance().getUserRepository();
         userViewModel = new ViewModelProvider(
                 requireActivity(),
@@ -69,44 +70,49 @@ public class RegisterFragment extends Fragment {
         );
 
         btnRegister.setOnClickListener(v -> {
+            if (!NetworkUtil.isNetworkAvailable(getContext())) {
+                Toast.makeText(getContext(), getString(R.string.errore_connessione), Toast.LENGTH_LONG).show();
+                return;
+            }
+
             String name = etName.getText().toString().trim();
             String email = etEmail.getText().toString().trim();
             String password = etPassword.getText().toString().trim();
             String confirmPassword = etConfirmPassword.getText().toString().trim();
 
-            // 1. Input validation
+            // validazione input con stringhe tradotte
             if (name.isEmpty() || email.isEmpty() || password.isEmpty() || confirmPassword.isEmpty()) {
-                Toast.makeText(getContext(), "Please fill in all fields", Toast.LENGTH_SHORT).show();
+                Toast.makeText(getContext(), getString(R.string.error_fill_all_fields), Toast.LENGTH_SHORT).show();
                 return;
             }
 
             if (!password.equals(confirmPassword)) {
-                Toast.makeText(getContext(), "Passwords do not match", Toast.LENGTH_SHORT).show();
+                Toast.makeText(getContext(), getString(R.string.error_passwords_dont_match), Toast.LENGTH_SHORT).show();
                 return;
             }
 
             if (password.length() < 6) {
-                Toast.makeText(getContext(), "Password must be at least 6 characters long", Toast.LENGTH_SHORT).show();
+                Toast.makeText(getContext(), getString(R.string.error_password_short), Toast.LENGTH_SHORT).show();
                 return;
             }
 
-            // 2. ViewModel call with the NEW "name" parameter
             userViewModel.getUser(name, email, password, false).observe(getViewLifecycleOwner(), result -> {
                 if (result.isSuccess()) {
-                    // Retrieve the newly created user (which now already has the name integrated by Firebase!)
                     User newUser = ((Result.Success) result).getUser();
 
-                    Toast.makeText(getContext(), "Welcome, " + newUser.getName() + "!", Toast.LENGTH_SHORT).show();
+                    // Messaggio di benvenuto tradotto
+                    String welcomeMsg = getString(R.string.welcome_new_user, newUser.getName());
+                    Toast.makeText(getContext(), welcomeMsg, Toast.LENGTH_SHORT).show();
 
-                    // Navigate directly to HomeActivity
                     Intent intent = new Intent(getActivity(), HomeActivity.class);
-                    intent.putExtra("CURRENT_USER", newUser);
+                    // Uso della costante centralizzata
+                    intent.putExtra(Constants.EXTRA_CURRENT_USER, newUser);
                     intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
                     startActivity(intent);
                     requireActivity().finish();
                 } else {
                     String errorMessage = ((Result.Error) result).getMessage();
-                    Toast.makeText(getContext(), "Registration error: " + errorMessage, Toast.LENGTH_LONG).show();
+                    Toast.makeText(getContext(), getString(R.string.error_registration, errorMessage), Toast.LENGTH_LONG).show();
                 }
             });
         });

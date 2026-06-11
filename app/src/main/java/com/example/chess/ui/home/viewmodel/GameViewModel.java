@@ -4,6 +4,7 @@ import android.app.Application;
 import android.os.CountDownTimer;
 import android.os.Handler;
 import android.os.Looper;
+import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.lifecycle.AndroidViewModel;
@@ -14,12 +15,14 @@ import com.example.chess.R;
 import com.example.chess.database.LevelProgress;
 import com.example.chess.model.Board;
 import com.example.chess.model.MoveRequest;
-import com.example.chess.model.Pawn;
 import com.example.chess.model.Piece;
+import com.example.chess.model.Pawn;
 import com.example.chess.model.QuizLevel;
 import com.example.chess.repository.ChessRepository;
 import com.example.chess.util.ChessUtil;
 import com.example.chess.util.MoveCalculator;
+import com.example.chess.util.NetworkUtil;
+import com.example.chess.util.ServiceLocator;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -28,7 +31,6 @@ import java.util.concurrent.Executors;
 
 public class GameViewModel extends AndroidViewModel {
 
-    // Semantic enum for colors (Pure MVVM, no dependency on android.graphics.Color)
     public enum StatusColorType { NORMAL, WARNING, DANGER, SUCCESS }
 
     private Board board;
@@ -53,17 +55,14 @@ public class GameViewModel extends AndroidViewModel {
     private int quizErrorCount = 0;
     private boolean isHintActive = false;
 
-    // ExecutorService to handle background operations in an optimized way compared to "new Thread()"
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
-
-    // Variable to store the action to perform after the View animation
     private Runnable pendingAnimationAction = null;
 
     public interface PromotionListener { void onPieceSelected(char type); }
 
     public GameViewModel(@NonNull Application application) {
         super(application);
-        this.repository = new ChessRepository(application);
+        this.repository = ServiceLocator.getInstance().getChessRepository(application);
     }
 
     public void setCurrentUserId(String userId) {
@@ -96,21 +95,19 @@ public class GameViewModel extends AndroidViewModel {
             return;
         }
 
-        // Use the executor for background work instead of "new Thread().start()"
         executor.execute(() -> {
             LevelProgress p = repository.getProgress(quizLevel.getId(), getCurrentUserId());
             boolean isComp = (p != null && p.isCompleted);
 
             if (!isComp) {
-                // postValue updates the LiveData safely from a background thread to the Main Thread
                 isTimerVisible.postValue(true);
-                // CountDownTimer must be instantiated on the Main Thread
                 new Handler(Looper.getMainLooper()).post(this::startTimer);
             } else {
                 isTimerVisible.postValue(false);
             }
         });
     }
+
 
     public void handleSquareClick(int position) {
         if (Boolean.TRUE.equals(isThinking.getValue())) return;
@@ -192,6 +189,7 @@ public class GameViewModel extends AndroidViewModel {
                     playQuizComputerMove();
                 } else {
                     updateStatusText(getStr(R.string.livello_superato), StatusColorType.SUCCESS);
+                    isThinking.setValue(true);
                     saveQuizProgress();
                     new Handler(Looper.getMainLooper()).postDelayed(this::finishGame, 1500);
                 }
@@ -224,9 +222,16 @@ public class GameViewModel extends AndroidViewModel {
             pendingAnimationAction = () -> {
                 currentQuizMoveIndex++;
                 updateCapturedSignal();
-                updateStatusText(getStr(R.string.tocca_a_te), StatusColorType.NORMAL);
-                isThinking.setValue(false);
-                startTimer();
+                if (currentQuizMoveIndex < quizLevel.getSolutionMoves().size()) {
+                    updateStatusText(getStr(R.string.tocca_a_te), StatusColorType.NORMAL);
+                    isThinking.setValue(false);
+                    startTimer();
+                } else {
+                    updateStatusText(getStr(R.string.livello_superato), StatusColorType.SUCCESS);
+                    isThinking.setValue(true);
+                    saveQuizProgress();
+                    new Handler(Looper.getMainLooper()).postDelayed(this::finishGame, 1500);
+                }
             };
 
             triggerEvent(new GameEvent(GameEvent.Type.ANIMATE_MOVE, move.startRow * 8 + move.startCol, move.endRow * 8 + move.endCol, p));
@@ -234,6 +239,14 @@ public class GameViewModel extends AndroidViewModel {
     }
 
     private void playBotMove() {
+        // Connection check
+        if (!NetworkUtil.isNetworkAvailable(getApplication())) {
+            gameEvent.setValue(new GameEvent(GameEvent.Type.TOAST, "Connessione assente, impossibile giocare contro il Bot"));
+            isThinking.setValue(false);
+            return;
+        }
+
+        // Proceeding with the move
         isThinking.setValue(true);
         updateBotStatus();
 
@@ -263,6 +276,7 @@ public class GameViewModel extends AndroidViewModel {
             @Override
             public void onError(Throwable t) {
                 isThinking.setValue(false);
+                Log.e("BOT_ERROR", "Errore del bot: " + t.getMessage());
                 updateBotStatus();
             }
         });
@@ -320,10 +334,12 @@ public class GameViewModel extends AndroidViewModel {
     private void stopTimer() { if (countDownTimer != null) countDownTimer.cancel(); }
 
     private void saveQuizProgress() {
-        long time = System.currentTimeMillis() - startTimeMillis;
-        LevelProgress p = new LevelProgress(quizLevel.getId(), getCurrentUserId(), true, quizErrorCount, time, System.currentTimeMillis());
-        repository.saveProgress(p);
-        showToast(getStr(R.string.progresso_salvato));
+        executor.execute(() -> {
+            long time = System.currentTimeMillis() - startTimeMillis;
+            LevelProgress p = new LevelProgress(quizLevel.getId(), getCurrentUserId(), true, quizErrorCount, time, System.currentTimeMillis());
+            repository.saveProgress(p);
+            new Handler(Looper.getMainLooper()).post(() -> showToast(getStr(R.string.progresso_salvato)));
+        });
     }
 
     private String getCurrentUserId() {
@@ -357,7 +373,6 @@ public class GameViewModel extends AndroidViewModel {
         }
     }
 
-    // Override to clean up resources
     @Override
     protected void onCleared() {
         super.onCleared();

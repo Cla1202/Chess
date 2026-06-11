@@ -34,6 +34,10 @@ public class ChessRepository {
         return localDataSource.getProgress(levelId, userId);
     }
 
+    public void deleteProgressForUser(String userId) {
+        localDataSource.deleteProgressForUser(userId);
+    }
+
     public interface BotMoveCallback {
         void onSuccess(String bestMove);
         void onError(Throwable t);

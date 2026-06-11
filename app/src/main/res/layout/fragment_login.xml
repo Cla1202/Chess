@@ -72,6 +72,17 @@
             android:textSize="16sp"
             android:textStyle="bold"
             android:backgroundTint="@color/gold_premium"
+            android:layout_marginBottom="16dp" />
+
+        <Button
+            android:id="@+id/guestButton"
+            android:layout_width="match_parent"
+            android:layout_height="55dp"
+            android:text="@string/prova_senza_account"
+            android:textColor="@color/white"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:backgroundTint="@color/grigio_chiaro"
             android:layout_marginBottom="32dp" />
 
         <LinearLayout

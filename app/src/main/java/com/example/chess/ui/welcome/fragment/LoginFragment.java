@@ -1,5 +1,6 @@
 package com.example.chess.ui.welcome.fragment;
 
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.CancellationSignal;
@@ -44,6 +45,7 @@ public class LoginFragment extends Fragment {
     private EditText etUsername;
     private EditText etPassword;
     private Button btnLogin;
+    private Button btnGuestLogin;
     private ImageButton btnGoogleLogin;
     private TextView tvRegisterLink;
     private TextView tvForgotPasswordLink;
@@ -74,6 +76,7 @@ public class LoginFragment extends Fragment {
         etUsername = view.findViewById(R.id.usernameInput);
         etPassword = view.findViewById(R.id.passwordInput);
         btnLogin = view.findViewById(R.id.loginButton);
+        btnGuestLogin = view.findViewById(R.id.guestButton);
         btnGoogleLogin = view.findViewById(R.id.googleLoginButton);
         tvRegisterLink = view.findViewById(R.id.registerLink);
         tvForgotPasswordLink = view.findViewById(R.id.forgotPasswordLink);
@@ -127,6 +130,28 @@ public class LoginFragment extends Fragment {
                 return;
             }
             avviaLoginGoogleModerno();
+        });
+
+        btnGuestLogin.setOnClickListener(v -> {
+            Context context = getContext();
+            if (context == null) return;
+            
+            // Reset "guest" progress to ensure a clean session (run on background thread)
+            new Thread(() -> {
+                ServiceLocator.getInstance().getChessRepository(context)
+                        .deleteProgressForUser("guest");
+
+                if (getActivity() != null) {
+                    getActivity().runOnUiThread(() -> {
+                        User guestUser = new User(getString(R.string.guest), "guest@example.com", "guest");
+                        Intent intent = new Intent(getActivity(), HomeActivity.class);
+                        intent.putExtra(Constants.EXTRA_CURRENT_USER, guestUser);
+                        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                        startActivity(intent);
+                        getActivity().finish();
+                    });
+                }
+            }).start();
         });
     }
 

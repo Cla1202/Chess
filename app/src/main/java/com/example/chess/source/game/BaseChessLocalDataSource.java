@@ -6,4 +6,5 @@ public interface BaseChessLocalDataSource {
     // (Room)
     void saveProgress(LevelProgress progress);
     LevelProgress getProgress(int levelId, String userId);
+    void deleteProgressForUser(String userId);
 }

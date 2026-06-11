@@ -1,6 +1,5 @@
 package com.example.chess.repository;
 
-import android.content.Context;
 import com.example.chess.R;
 import com.example.chess.model.Bishop;
 import com.example.chess.model.King;
@@ -11,6 +10,7 @@ import com.example.chess.model.Piece;
 import com.example.chess.model.Queen;
 import com.example.chess.model.QuizLevel;
 import com.example.chess.model.Rook;
+import com.example.chess.util.IResourceProvider;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -23,16 +23,15 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Carica puzzle dal database CSV di Lichess (https://database.lichess.org/#puzzles)
- * e li converte in QuizLevel.
+ * Loads puzzles from the Lichess CSV database and converts them into QuizLevel.
  */
 public class LichessPuzzleLoader {
     private final Map<String, Integer> titleCounts = new HashMap<>();
 
     /**
-     * Legge un CSV (es. da assets) e restituisce i livelli filtrati.
+     * Reads a CSV and returns filtered levels.
      */
-    public List<QuizLevel> loadFromCsv(Context context,
+    public List<QuizLevel> loadFromCsv(IResourceProvider resourceProvider,
                                        InputStream input,
                                        String themeFilter,
                                        int minRating,
@@ -44,7 +43,7 @@ public class LichessPuzzleLoader {
         try (BufferedReader reader = new BufferedReader(
                 new InputStreamReader(input, StandardCharsets.UTF_8))) {
 
-            String line = reader.readLine(); // salta l'header
+            String line = reader.readLine(); // skip header
             titleCounts.clear();
             while ((line = reader.readLine()) != null && levels.size() < maxLevels) {
                 String[] fields = line.split(",", -1);
@@ -63,7 +62,7 @@ public class LichessPuzzleLoader {
                 if (rating < minRating || rating > maxRating) continue;
                 if (themeFilter != null && !themes.contains(themeFilter)) continue;
 
-                QuizLevel level = buildLevel(context, levelNumber, fen, movesUci, themes);
+                QuizLevel level = buildLevel(resourceProvider, levelNumber, fen, movesUci, themes);
                 if (level != null) {
                     levels.add(level);
                     levelNumber++;
@@ -73,11 +72,7 @@ public class LichessPuzzleLoader {
         return levels;
     }
 
-
-    /**
-     * Costruisce un QuizLevel da FEN + mosse UCI.
-     */
-    private QuizLevel buildLevel(Context context, int number, String fen, String movesUci, String themes) {
+    private QuizLevel buildLevel(IResourceProvider resourceProvider, int number, String fen, String movesUci, String themes) {
         Piece[][] board = parseFen(fen);
         if (board == null) return null;
 
@@ -98,15 +93,12 @@ public class LichessPuzzleLoader {
             soluzione.add(uciToMove(uciMoves[i]));
         }
 
-        String baseTitle = describeTheme(context, number, themes);
+        String baseTitle = describeTheme(resourceProvider, number, themes);
         int count = titleCounts.getOrDefault(baseTitle, 0) + 1;
         titleCounts.put(baseTitle, count);
         
-        // Titolo pulito (es. "Matto Arabo" o "Matto Arabo #2")
         String displayTitle = baseTitle + (count > 1 ? " #" + count : "");
         
-        // Il titolo salvato nel QuizLevel è solo il nome del tema.
-        // Il "Livello X" verrà aggiunto dall'Adapter.
         return new QuizLevel(number, displayTitle, board, playerIsWhite, soluzione, 3);
     }
 
@@ -170,26 +162,23 @@ public class LichessPuzzleLoader {
         return true;
     }
 
-    private String describeTheme(Context context, int number, String themes) {
-        // 1) Matti "con nome": titolo dedicato
-        if (themes.contains("smotheredMate"))    return context.getString(R.string.theme_smothered_mate);
-        if (themes.contains("arabianMate"))      return context.getString(R.string.theme_arabian_mate);
-        if (themes.contains("anastasiaMate"))    return context.getString(R.string.theme_anastasia_mate);
-        if (themes.contains("bodenMate"))        return context.getString(R.string.theme_boden_mate);
-        if (themes.contains("backRankMate"))     return context.getString(R.string.theme_back_rank_mate);
-        if (themes.contains("hookMate"))         return context.getString(R.string.theme_hook_mate);
-        if (themes.contains("doubleBishopMate")) return context.getString(R.string.theme_double_bishop_mate);
-        if (themes.contains("dovetailMate"))     return context.getString(R.string.theme_dovetail_mate);
+    private String describeTheme(IResourceProvider resourceProvider, int number, String themes) {
+        if (themes.contains("smotheredMate"))    return resourceProvider.getString(R.string.theme_smothered_mate);
+        if (themes.contains("arabianMate"))      return resourceProvider.getString(R.string.theme_arabian_mate);
+        if (themes.contains("anastasiaMate"))    return resourceProvider.getString(R.string.theme_anastasia_mate);
+        if (themes.contains("bodenMate"))        return resourceProvider.getString(R.string.theme_boden_mate);
+        if (themes.contains("backRankMate"))     return resourceProvider.getString(R.string.theme_back_rank_mate);
+        if (themes.contains("hookMate"))         return resourceProvider.getString(R.string.theme_hook_mate);
+        if (themes.contains("doubleBishopMate")) return resourceProvider.getString(R.string.theme_double_bishop_mate);
+        if (themes.contains("dovetailMate"))     return resourceProvider.getString(R.string.theme_dovetail_mate);
 
-        // 2) Motivi tattici
-        if (themes.contains("sacrifice"))        return context.getString(R.string.theme_sacrifice);
-        if (themes.contains("doubleCheck"))      return context.getString(R.string.theme_double_check);
-        if (themes.contains("deflection"))       return context.getString(R.string.theme_deflection);
-        if (themes.contains("attraction"))       return context.getString(R.string.theme_attraction);
-        if (themes.contains("discoveredAttack")) return context.getString(R.string.theme_discovered_attack);
-        if (themes.contains("promotion"))        return context.getString(R.string.theme_promotion);
+        if (themes.contains("sacrifice"))        return resourceProvider.getString(R.string.theme_sacrifice);
+        if (themes.contains("doubleCheck"))      return resourceProvider.getString(R.string.theme_double_check);
+        if (themes.contains("deflection"))       return resourceProvider.getString(R.string.theme_deflection);
+        if (themes.contains("attraction"))       return resourceProvider.getString(R.string.theme_attraction);
+        if (themes.contains("discoveredAttack")) return resourceProvider.getString(R.string.theme_discovered_attack);
+        if (themes.contains("promotion"))        return resourceProvider.getString(R.string.theme_promotion);
 
-        // 3) Fallback pool
         int[] pool;
         if (themes.contains("mateIn1")) {
             pool = new int[]{R.string.pool_sharp_blow, R.string.pool_single_move, R.string.pool_final_blow,
@@ -203,6 +192,6 @@ public class LichessPuzzleLoader {
         } else {
             pool = new int[]{R.string.pool_winning_tactic, R.string.pool_right_moment, R.string.pool_watch_king};
         }
-        return context.getString(pool[number % pool.length]);
+        return resourceProvider.getString(pool[number % pool.length]);
     }
 }

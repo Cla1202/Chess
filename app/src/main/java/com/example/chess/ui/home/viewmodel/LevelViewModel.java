@@ -7,21 +7,26 @@ import androidx.lifecycle.ViewModel;
 
 import com.example.chess.database.ChessDatabase;
 import com.example.chess.database.LevelProgress;
+import com.example.chess.model.QuizLevel;
+import com.example.chess.repository.IQuizRepository;
 
 import java.util.List;
 
 public class LevelViewModel extends ViewModel {
 
     private final ChessDatabase database;
+    private final IQuizRepository quizRepository;
+    
     private final MutableLiveData<String> currentUserId = new MutableLiveData<>();
     private final LiveData<Integer> maxCompletedLevel;
     private final LiveData<List<LevelProgress>> allCompletedLevels;
+    
+    private final MutableLiveData<List<QuizLevel>> quizLevels = new MutableLiveData<>();
 
-    public LevelViewModel(ChessDatabase database) {
+    public LevelViewModel(ChessDatabase database, IQuizRepository quizRepository) {
         this.database = database;
+        this.quizRepository = quizRepository;
 
-        // The LiveData reacts and queries the DAO automatically
-        // every time the value of currentUserId changes
         this.maxCompletedLevel = Transformations.switchMap(currentUserId, userId ->
                 database.levelDao().getMaxCompletedLevelLive(userId)
         );
@@ -31,22 +36,32 @@ public class LevelViewModel extends ViewModel {
         );
     }
 
-    // Private method to update the ID reactively
+    /**
+     * Loads the quiz levels using the repository.
+     * The repository now handles the data source internally (Clean Architecture).
+     */
+    public void loadQuizLevels() {
+        if (quizLevels.getValue() == null) {
+            List<QuizLevel> levels = quizRepository.getLichessLevels();
+            quizLevels.setValue(levels);
+        }
+    }
+    
+    public LiveData<List<QuizLevel>> getQuizLevels() {
+        return quizLevels;
+    }
+
     private void setUserId(String userId) {
-        // We update the LiveData only if the ID has changed, to avoid infinite loops
         if (currentUserId.getValue() == null || !currentUserId.getValue().equals(userId)) {
             currentUserId.setValue(userId);
         }
     }
 
-    // 1. Retrieve the maximum level completed for this specific user
     public LiveData<Integer> getMaxCompletedLevel(String userId) {
         setUserId(userId);
         return maxCompletedLevel;
     }
 
-    // 2. Retrieve all completed levels for this specific user
-    // (This is the method your ProfileFragment now uses!)
     public LiveData<List<LevelProgress>> getAllCompletedLevels(String userId) {
         setUserId(userId);
         return allCompletedLevels;

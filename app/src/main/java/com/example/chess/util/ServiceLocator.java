@@ -11,6 +11,8 @@ import com.example.chess.source.game.BaseChessLocalDataSource;
 import com.example.chess.source.game.BaseChessRemoteDataSource;
 import com.example.chess.source.game.ChessRemoteDataSource;
 import com.example.chess.source.game.ChessRoomDataSource;
+import com.example.chess.source.quiz.AssetQuizDataSource;
+import com.example.chess.source.quiz.IQuizDataSource;
 
 public class ServiceLocator {
 
@@ -18,11 +20,10 @@ public class ServiceLocator {
 
     private IChessUserRepository userRepository;
     private ChessRepository chessRepository;
+    private QuizRepository quizRepository;
 
-    // Private constructor to prevent direct instantiation
     private ServiceLocator() {}
 
-    // Thread-safe Singleton implementation
     public static ServiceLocator getInstance() {
         if (instance == null) {
             synchronized (ServiceLocator.class) {
@@ -34,9 +35,6 @@ public class ServiceLocator {
         return instance;
     }
 
-    /**
-     * Provides a singleton instance of IChessUserRepository.
-     */
     public IChessUserRepository getUserRepository() {
         if (userRepository == null) {
             userRepository = new UserRepository();
@@ -48,20 +46,22 @@ public class ServiceLocator {
         return ChessDatabase.getInstance(context.getApplicationContext());
     }
 
-    private QuizRepository quizRepository;
-
-    public QuizRepository getQuizRepository() {
+    /**
+     * Provides a singleton instance of QuizRepository.
+     * @param context Required to create the AndroidResourceProvider and AssetQuizDataSource.
+     */
+    public QuizRepository getQuizRepository(Context context) {
         if (quizRepository == null) {
-            quizRepository = new QuizRepository();
+            IResourceProvider resourceProvider = new AndroidResourceProvider(context);
+            IQuizDataSource quizDataSource = new AssetQuizDataSource(context);
+            quizRepository = new QuizRepository(resourceProvider, quizDataSource);
         }
         return quizRepository;
     }
 
-    // ... variabili esistenti ...
     private BaseChessRemoteDataSource chessRemoteDataSource;
     private BaseChessLocalDataSource chessLocalDataSource;
 
-    // 1. Fornitore del Remote Data Source
     public BaseChessRemoteDataSource getChessRemoteDataSource() {
         if (chessRemoteDataSource == null) {
             chessRemoteDataSource = new ChessRemoteDataSource();
@@ -69,7 +69,6 @@ public class ServiceLocator {
         return chessRemoteDataSource;
     }
 
-    // 2. Fornitore del Local Data Source (Richiede il DAO di Room)
     public BaseChessLocalDataSource getChessLocalDataSource(Context context) {
         if (chessLocalDataSource == null) {
             ChessDatabase db = getChessDatabase(context);
@@ -78,7 +77,6 @@ public class ServiceLocator {
         return chessLocalDataSource;
     }
 
-    // 3. AGGIORNA il fornitore della Repository per iniettare i Data Source
     public ChessRepository getChessRepository(Context context) {
         if (chessRepository == null) {
             chessRepository = new ChessRepository(

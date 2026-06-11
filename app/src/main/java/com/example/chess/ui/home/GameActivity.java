@@ -80,8 +80,11 @@ public class GameActivity extends AppCompatActivity {
         setupObservers();
 
         adapter = new ChessAdapter(this, viewModel.getBoard());
+        if (MODE_QUIZ.equals(mode) && level != null) {
+            adapter.setFlipped(!level.isWhiteTurnToStart());
+        }
         gridView.setAdapter(adapter);
-        gridView.setOnItemClickListener((p, v, pos, id) -> viewModel.handleSquareClick(pos));
+        gridView.setOnItemClickListener((p, v, pos, id) -> viewModel.handleSquareClick(adapter.mapPosition(pos)));
 
         findViewById(R.id.btnExit).setOnClickListener(v -> finish());
         View btnHelp = findViewById(R.id.btnHelp);
@@ -204,6 +207,8 @@ public class GameActivity extends AppCompatActivity {
 
     // UPDATED: Removed Runnable onComplete.
     private void animatePieceMove(int s, int e, Piece piece) {
+        s = adapter.mapPosition(s);
+        e = adapter.mapPosition(e);
         FrameLayout container = findViewById(R.id.boardContainer);
         View sV = gridView.getChildAt(s - gridView.getFirstVisiblePosition());
         View eV = gridView.getChildAt(e - gridView.getFirstVisiblePosition());

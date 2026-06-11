@@ -44,7 +44,7 @@ public class QuizFragment extends Fragment {
 
         // 1. USE OF SERVICE LOCATOR INSTEAD OF "new QuizRepository()"
         QuizRepository repository = ServiceLocator.getInstance().getQuizRepository();
-        List<QuizLevel> levels = repository.getAllLevels();
+        List<QuizLevel> levels = repository.getLichessLevels(requireContext());
 
         HomeActivity activity = (HomeActivity) getActivity();
         if (activity == null) return view;

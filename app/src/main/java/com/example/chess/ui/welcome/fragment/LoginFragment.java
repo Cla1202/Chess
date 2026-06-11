@@ -54,7 +54,6 @@ public class LoginFragment extends Fragment {
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // UPDATED: Using ServiceLocator instead of "new UserRepository()"
         IChessUserRepository userRepository = ServiceLocator.getInstance().getUserRepository();
         userViewModel = new ViewModelProvider(
                 requireActivity(),
@@ -89,7 +88,6 @@ public class LoginFragment extends Fragment {
             }
         });
 
-        // 1. LOGIN WITH EMAIL AND PASSWORD VIA VIEWMODEL
         btnLogin.setOnClickListener(v -> {
             if (!NetworkUtil.isNetworkAvailable(getContext())) {
                 Toast.makeText(getContext(), getString(R.string.errore_connessione), Toast.LENGTH_LONG).show();
@@ -100,16 +98,14 @@ public class LoginFragment extends Fragment {
             String password = etPassword.getText().toString().trim();
 
             if (email.isEmpty() || password.isEmpty()) {
-                Toast.makeText(getContext(), "Please enter email and password", Toast.LENGTH_SHORT).show();
+                Toast.makeText(getContext(), getString(R.string.errore_campi_vuoti), Toast.LENGTH_SHORT).show();
                 return;
             }
 
-            // ESSENTIAL MODIFICATION: Pass null as the first parameter (Name field)
             userViewModel.getUser(null, email, password, true).observe(getViewLifecycleOwner(), result -> {
                 if (result.isSuccess()) {
                     User loggedUser = ((Result.Success) result).getUser();
 
-                    // Display custom name in the welcome Toast
                     String welcomeMsg = getString(R.string.welcome_back, loggedUser.getName());
                     Toast.makeText(getContext(), welcomeMsg, Toast.LENGTH_SHORT).show();
 
@@ -120,7 +116,7 @@ public class LoginFragment extends Fragment {
                     requireActivity().finish();
                 } else {
                     String errorMessage = ((Result.Error) result).getMessage();
-                    Toast.makeText(getContext(), "Error: " + errorMessage, Toast.LENGTH_LONG).show();
+                    Toast.makeText(getContext(), getString(R.string.errore_generico, errorMessage), Toast.LENGTH_LONG).show();
                 }
             });
         });
@@ -162,7 +158,7 @@ public class LoginFragment extends Fragment {
                                 GoogleIdTokenCredential cred = GoogleIdTokenCredential.createFrom(credential.getData());
                                 authenticateWithGoogleToken(cred.getIdToken());
                             } catch (Exception e) {
-                                Toast.makeText(activity, "Error reading Token", Toast.LENGTH_SHORT).show();
+                                Toast.makeText(activity, getString(R.string.error_token_read), Toast.LENGTH_SHORT).show();
                             }
                         }
                     }
@@ -171,16 +167,15 @@ public class LoginFragment extends Fragment {
                     public void onError(@NonNull GetCredentialException e) {
                         Log.e("GOOGLE_LOGIN", "Error: " + e.getMessage());
                         if (e.getMessage() != null && e.getMessage().contains("No credentials available")) {
-                            Toast.makeText(activity, "No Google account found on the device or access not properly configured.", Toast.LENGTH_LONG).show();
+                            Toast.makeText(activity, getString(R.string.error_no_google_account), Toast.LENGTH_LONG).show();
                         } else {
-                            Toast.makeText(activity, "Google Error: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                            Toast.makeText(activity, getString(R.string.errore_generico, e.getMessage()), Toast.LENGTH_LONG).show();
                         }
                     }
                 }
         );
     }
 
-    // 2. LOGIN WITH GOOGLE VIA VIEWMODEL
     private void authenticateWithGoogleToken(String idToken) {
         userViewModel.getGoogleUser(idToken).observe(getViewLifecycleOwner(), result -> {
             if (result.isSuccess()) {
@@ -195,7 +190,7 @@ public class LoginFragment extends Fragment {
                 requireActivity().finish();
             } else {
                 String errorMessage = ((Result.Error) result).getMessage();
-                Toast.makeText(getContext(), "Google Firebase Error: " + errorMessage, Toast.LENGTH_LONG).show();
+                Toast.makeText(getContext(), getString(R.string.error_google_firebase, errorMessage), Toast.LENGTH_LONG).show();
             }
         });
     }

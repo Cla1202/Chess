@@ -76,7 +76,13 @@
     <string name="gioco">GAME</string>
     <string name="audio_e_notifiche">AUDIO &amp; NOTIFICATIONS</string>
     <string name="verde_classico">Classic Green</string>
+    <string name="legno_scuro">Dark Wood</string>
+    <string name="blu_oceano">Ocean Blue</string>
+    <string name="grigio_moderno">Modern Grey</string>
     <string name="neo">Neo</string>
+    <string name="classico">Classic</string>
+    <string name="moderno">Modern</string>
+    <string name="alfa">Alpha</string>
     <string name="gioca_con_bot">Play with bot</string>
     <string name="esci_app">Exit App</string>
     <string name="bot_pensa">The Bot is thinking...</string>
@@ -119,10 +125,59 @@
     <string name="login_google_success">Google login completed</string>
     <string name="errore_campi_vuoti">Please enter email and password</string>
     <string name="errore_generico">Error: %1$s</string>
-    <string name="prefix_level">Level </string>
+    <string name="prefix_level">Level %d</string>
     <string name="msg_level_locked">You must complete the previous level to unlock this one!</string>
     <string name="error_fill_all_fields">Please fill all fields</string>
     <string name="error_passwords_dont_match">Passwords do not match</string>
     <string name="error_password_short">Password must be at least 6 characters</string>
     <string name="error_registration">Registration failed: %1$s</string>
+    <string name="reset_titolo">Reset</string>
+    <string name="reset_messaggio">Are you sure you want to clear your Quiz progress?</string>
+    <string name="si">Yes</string>
+    <string name="no">No</string>
+    <string name="progressi_azzerati">Progress reset!</string>
+    <string name="errore_connessione_bot">No internet connection, impossible to play against the Bot</string>
+
+    <string name="error_token_read">Error reading Token</string>
+    <string name="error_no_google_account">No Google account found on the device or access not properly configured.</string>
+    <string name="error_google_firebase">Google Firebase Error: %1$s</string>
+
+    <!-- Quiz Themes -->
+    <string name="theme_smothered_mate">Smothered Mate</string>
+    <string name="theme_arabian_mate">Arabian Mate</string>
+    <string name="theme_anastasia_mate">Anastasia\'s Mate</string>
+    <string name="theme_boden_mate">Boden\'s Mate</string>
+    <string name="theme_back_rank_mate">Back Rank Mate</string>
+    <string name="theme_hook_mate">Hook Mate</string>
+    <string name="theme_double_bishop_mate">Double Bishop Mate</string>
+    <string name="theme_dovetail_mate">Dovetail Mate</string>
+    <string name="theme_sacrifice">The Sacrifice</string>
+    <string name="theme_double_check">Double Check</string>
+    <string name="theme_deflection">Deflection</string>
+    <string name="theme_attraction">Attraction</string>
+    <string name="theme_discovered_attack">Discovered Attack</string>
+    <string name="theme_promotion">Promotion</string>
+
+    <!-- Quiz Titles Pool -->
+    <string name="pool_sharp_blow">Sharp Blow</string>
+    <string name="pool_single_move">One Single Move</string>
+    <string name="pool_final_blow">The Final Blow</string>
+    <string name="pool_lightning_execution">Lightning Execution</string>
+    <string name="pool_immediate_victory">Immediate Victory</string>
+    <string name="pool_trap">The Trap</string>
+    <string name="pool_two_moves_glory">Two Moves to Glory</string>
+    <string name="pool_ambush">The Ambush</string>
+    <string name="pool_net_closes">The Net Closes</string>
+    <string name="pool_king_hunt">King Hunt</string>
+    <string name="pool_perfect_plan">The Perfect Plan</string>
+    <string name="pool_long_hunt">The Long Hunt</string>
+    <string name="pool_three_moves_triumph">Three Moves to Triumph</string>
+    <string name="pool_siege">The Siege</string>
+    <string name="pool_spider_web">The Spider Web</string>
+    <string name="pool_final_check">Final Check</string>
+    <string name="pool_winning_tactic">Winning Tactic</string>
+    <string name="pool_right_moment">The Right Moment</string>
+    <string name="pool_watch_king">Watch the King</string>
+
+    <string name="fallback_welcome">Welcome!</string>
 </resources>

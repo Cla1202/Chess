@@ -263,9 +263,12 @@ public class GameActivity extends AppCompatActivity {
 
     private int getResIdForPiece(Piece p) {
         android.content.SharedPreferences pr = getSharedPreferences(Constants.SETTINGS_PREFS_NAME, MODE_PRIVATE);
-        String style = pr.getString(Constants.KEY_PIECE_STYLE, "Classico");
+        String style = pr.getString(Constants.KEY_PIECE_STYLE, "neo");
         String pref = "";
-        switch(style) { case "Neo": pref="neo_"; break; case "Moderno": pref="mod_"; break; case "Alfa": pref="alpha_"; break; }
+        if ("neo".equals(style)) pref = "neo_";
+        else if ("modern".equals(style)) pref = "mod_";
+        else if ("alpha".equals(style)) pref = "alpha_";
+        
         String name = pref + (p.isWhite() ? Constants.PREFIX_WHITE : Constants.PREFIX_BLACK) + p.getClass().getSimpleName().toLowerCase();
         int id = getResources().getIdentifier(name, Constants.DEF_TYPE_DRAWABLE, getPackageName());
         if (id == 0) id = getResources().getIdentifier((p.isWhite()?Constants.PREFIX_WHITE:Constants.PREFIX_BLACK) + p.getClass().getSimpleName().toLowerCase(), Constants.DEF_TYPE_DRAWABLE, getPackageName());
@@ -274,8 +277,12 @@ public class GameActivity extends AppCompatActivity {
 
     private int getResIdForType(String type, boolean isWhite) {
         android.content.SharedPreferences pr = getSharedPreferences(Constants.SETTINGS_PREFS_NAME, MODE_PRIVATE);
-        String s = pr.getString(Constants.KEY_PIECE_STYLE, "Classico"), pref = "";
-        switch(s) { case "Neo": pref="neo_"; break; case "Moderno": pref="mod_"; break; case "Alfa": pref="alpha_"; break; }
+        String style = pr.getString(Constants.KEY_PIECE_STYLE, "neo");
+        String pref = "";
+        if ("neo".equals(style)) pref = "neo_";
+        else if ("modern".equals(style)) pref = "mod_";
+        else if ("alpha".equals(style)) pref = "alpha_";
+        
         String name = pref + (isWhite ? Constants.PREFIX_WHITE : Constants.PREFIX_BLACK) + type;
         int id = getResources().getIdentifier(name, Constants.DEF_TYPE_DRAWABLE, getPackageName());
         if (id == 0) id = getResources().getIdentifier((isWhite?Constants.PREFIX_WHITE:Constants.PREFIX_BLACK) + type, Constants.DEF_TYPE_DRAWABLE, getPackageName());

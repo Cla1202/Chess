@@ -1,5 +1,7 @@
 package com.example.chess.repository;
 
+import android.content.Context;
+import com.example.chess.R;
 import com.example.chess.model.Bishop;
 import com.example.chess.model.King;
 import com.example.chess.model.Knight;
@@ -23,32 +25,15 @@ import java.util.Map;
 /**
  * Carica puzzle dal database CSV di Lichess (https://database.lichess.org/#puzzles)
  * e li converte in QuizLevel.
- *
- * Formato riga CSV:
- * PuzzleId,FEN,Moves,Rating,RatingDeviation,Popularity,NbPlays,Themes,GameUrl,OpeningTags
- *
- * NOTA: nel formato Lichess la FEN rappresenta la posizione PRIMA della mossa
- * dell'avversario. La prima mossa del campo "Moves" viene applicata alla
- * scacchiera; le mosse rimanenti costituiscono la soluzione (alternando
- * giocatore e avversario, come nel formato gia' usato da QuizRepository).
- *
- * Convenzione coordinate (identica a QuizRepository):
- *   x = riga (0 = ottava traversa, 7 = prima traversa)
- *   y = colonna (0 = colonna 'a', 7 = colonna 'h')
  */
 public class LichessPuzzleLoader {
     private final Map<String, Integer> titleCounts = new HashMap<>();
 
     /**
      * Legge un CSV (es. da assets) e restituisce i livelli filtrati.
-     *
-     * @param input        stream del file CSV (decompresso)
-     * @param themeFilter  tema richiesto, es. "mateIn1", "mateIn2" (null = tutti)
-     * @param minRating    rating minimo del puzzle (es. 600)
-     * @param maxRating    rating massimo del puzzle (es. 1200)
-     * @param maxLevels    numero massimo di livelli da caricare
      */
-    public List<QuizLevel> loadFromCsv(InputStream input,
+    public List<QuizLevel> loadFromCsv(Context context,
+                                       InputStream input,
                                        String themeFilter,
                                        int minRating,
                                        int maxRating,
@@ -78,7 +63,7 @@ public class LichessPuzzleLoader {
                 if (rating < minRating || rating > maxRating) continue;
                 if (themeFilter != null && !themes.contains(themeFilter)) continue;
 
-                QuizLevel level = buildLevel(levelNumber, fen, movesUci, themes);
+                QuizLevel level = buildLevel(context, levelNumber, fen, movesUci, themes);
                 if (level != null) {
                     levels.add(level);
                     levelNumber++;
@@ -91,26 +76,20 @@ public class LichessPuzzleLoader {
 
     /**
      * Costruisce un QuizLevel da FEN + mosse UCI.
-     * Applica la prima mossa (quella dell'avversario) alla scacchiera,
-     * le restanti diventano la soluzione.
      */
-    private QuizLevel buildLevel(int number, String fen, String movesUci, String themes) {
+    private QuizLevel buildLevel(Context context, int number, String fen, String movesUci, String themes) {
         Piece[][] board = parseFen(fen);
         if (board == null) return null;
 
         String[] uciMoves = movesUci.trim().split("\\s+");
         if (uciMoves.length < 2) return null;
 
-        // Scartiamo puzzle con promozioni (mosse UCI a 5 caratteri, es. e7e8q):
-        // QuizLevel/MoveRequest non hanno ancora il concetto di promozione.
         for (String m : uciMoves) {
             if (m.length() != 4) return null;
         }
 
-        // La prima mossa e' dell'avversario: la applichiamo alla scacchiera.
         if (!applySimpleMove(board, uciMoves[0])) return null;
 
-        // Chi muove dopo la prima mossa e' l'opposto del side-to-move della FEN.
         boolean whiteToMoveInFen = fen.split(" ")[1].equals("w");
         boolean playerIsWhite = !whiteToMoveInFen;
 
@@ -119,19 +98,18 @@ public class LichessPuzzleLoader {
             soluzione.add(uciToMove(uciMoves[i]));
         }
 
-        String baseTitle = describeTheme(number, themes);
+        String baseTitle = describeTheme(context, number, themes);
         int count = titleCounts.getOrDefault(baseTitle, 0) + 1;
         titleCounts.put(baseTitle, count);
-        String title = "Livello " + number + ": " + baseTitle
-                + (count > 1 ? " #" + count : "");
-        return new QuizLevel(number, title, board, playerIsWhite, soluzione, 3);
+        
+        // Titolo pulito (es. "Matto Arabo" o "Matto Arabo #2")
+        String displayTitle = baseTitle + (count > 1 ? " #" + count : "");
+        
+        // Il titolo salvato nel QuizLevel è solo il nome del tema.
+        // Il "Livello X" verrà aggiunto dall'Adapter.
+        return new QuizLevel(number, displayTitle, board, playerIsWhite, soluzione, 3);
     }
 
-    // ==========================================
-    // FEN PARSING
-    // ==========================================
-
-    /** Converte la parte "piece placement" di una FEN in Piece[][] (riga 0 = ottava traversa). */
     public Piece[][] parseFen(String fen) {
         Piece[][] board = new Piece[8][8];
         String placement = fen.split(" ")[0];
@@ -169,11 +147,6 @@ public class LichessPuzzleLoader {
         }
     }
 
-    // ==========================================
-    // UCI MOVES
-    // ==========================================
-
-    /** "e2e4" -> MoveRequest, stessa convenzione di QuizRepository.mossa(). */
     public MoveRequest uciToMove(String uci) {
         int startCol = uci.charAt(0) - 'a';
         int startRow = 8 - Character.getNumericValue(uci.charAt(1));
@@ -182,75 +155,54 @@ public class LichessPuzzleLoader {
         return new MoveRequest(startRow, startCol, endRow, endCol);
     }
 
-    /**
-     * Applica una mossa UCI alla scacchiera in modo "ingenuo":
-     * sposta il pezzo, cattura quello di destinazione e aggiorna
-     * le coordinate interne del pezzo (x = riga, y = colonna).
-     * Non gestisce arrocco, en passant, promozione: i puzzle che
-     * li richiedono nella prima mossa vengono scartati.
-     */
     private boolean applySimpleMove(Piece[][] board, String uci) {
         MoveRequest m = uciToMove(uci);
         Piece piece = board[m.startRow][m.startCol];
         if (piece == null) return false;
 
-        // Scarta arrocco (re che si muove di 2 colonne)
-        if (piece instanceof King && Math.abs(m.endCol - m.startCol) == 2) {
-            return false;
-        }
-        // Scarta possibile en passant (pedone che cattura in diagonale su casa vuota)
-        if (piece instanceof Pawn
-                && m.startCol != m.endCol
-                && board[m.endRow][m.endCol] == null) {
-            return false;
-        }
+        if (piece instanceof King && Math.abs(m.endCol - m.startCol) == 2) return false;
+        if (piece instanceof Pawn && m.startCol != m.endCol && board[m.endRow][m.endCol] == null) return false;
 
         board[m.endRow][m.endCol] = piece;
         board[m.startRow][m.startCol] = null;
-
-        // Tiene coerenti le coordinate interne del pezzo con l'array
         piece.setX(m.endRow);
         piece.setY(m.endCol);
         return true;
     }
 
-    // ==========================================
-    // UTILS
-    // ==========================================
+    private String describeTheme(Context context, int number, String themes) {
+        // 1) Matti "con nome": titolo dedicato
+        if (themes.contains("smotheredMate"))    return context.getString(R.string.theme_smothered_mate);
+        if (themes.contains("arabianMate"))      return context.getString(R.string.theme_arabian_mate);
+        if (themes.contains("anastasiaMate"))    return context.getString(R.string.theme_anastasia_mate);
+        if (themes.contains("bodenMate"))        return context.getString(R.string.theme_boden_mate);
+        if (themes.contains("backRankMate"))     return context.getString(R.string.theme_back_rank_mate);
+        if (themes.contains("hookMate"))         return context.getString(R.string.theme_hook_mate);
+        if (themes.contains("doubleBishopMate")) return context.getString(R.string.theme_double_bishop_mate);
+        if (themes.contains("dovetailMate"))     return context.getString(R.string.theme_dovetail_mate);
 
-    private String describeTheme(int number, String themes) {
-        // 1) Matti "con nome": titolo dedicato (priorità ai più specifici)
-        if (themes.contains("smotheredMate"))    return "Matto Affogato";
-        if (themes.contains("arabianMate"))      return "Matto Arabo";
-        if (themes.contains("anastasiaMate"))    return "Matto di Anastasia";
-        if (themes.contains("bodenMate"))        return "Matto di Boden";
-        if (themes.contains("backRankMate"))     return "Matto del Corridoio";
-        if (themes.contains("hookMate"))         return "Matto dell'Uncino";
-        if (themes.contains("doubleBishopMate")) return "I Due Alfieri";
-        if (themes.contains("dovetailMate"))     return "Coda di Rondine";
+        // 2) Motivi tattici
+        if (themes.contains("sacrifice"))        return context.getString(R.string.theme_sacrifice);
+        if (themes.contains("doubleCheck"))      return context.getString(R.string.theme_double_check);
+        if (themes.contains("deflection"))       return context.getString(R.string.theme_deflection);
+        if (themes.contains("attraction"))       return context.getString(R.string.theme_attraction);
+        if (themes.contains("discoveredAttack")) return context.getString(R.string.theme_discovered_attack);
+        if (themes.contains("promotion"))        return context.getString(R.string.theme_promotion);
 
-        // 2) Motivi tattici notevoli
-        if (themes.contains("sacrifice"))        return "Il Sacrificio";
-        if (themes.contains("doubleCheck"))      return "Doppio Scacco";
-        if (themes.contains("deflection"))       return "La Deviazione";
-        if (themes.contains("attraction"))       return "L'Esca";
-        if (themes.contains("discoveredAttack")) return "Attacco di Scoperta";
-        if (themes.contains("promotion"))        return "L'Ottava Traversa";
-
-        // 3) Fallback: rosa di titoli che ruota col numero del livello
-        String[] pool;
+        // 3) Fallback pool
+        int[] pool;
         if (themes.contains("mateIn1")) {
-            pool = new String[]{"Colpo Secco", "Una Sola Mossa", "Il Colpo di Grazia",
-                    "Esecuzione Lampo", "Vittoria Immediata"};
+            pool = new int[]{R.string.pool_sharp_blow, R.string.pool_single_move, R.string.pool_final_blow,
+                    R.string.pool_lightning_execution, R.string.pool_immediate_victory};
         } else if (themes.contains("mateIn2")) {
-            pool = new String[]{"La Trappola", "Due Mosse alla Gloria", "L'Imboscata",
-                    "La Rete si Chiude", "Caccia al Re", "Il Piano Perfetto"};
+            pool = new int[]{R.string.pool_trap, R.string.pool_two_moves_glory, R.string.pool_ambush,
+                    R.string.pool_net_closes, R.string.pool_king_hunt, R.string.pool_perfect_plan};
         } else if (themes.contains("mateIn3")) {
-            pool = new String[]{"La Lunga Caccia", "Tre Mosse al Trionfo", "L'Assedio",
-                    "La Tela del Ragno", "Scacco Finale"};
+            pool = new int[]{R.string.pool_long_hunt, R.string.pool_three_moves_triumph, R.string.pool_siege,
+                    R.string.pool_spider_web, R.string.pool_final_check};
         } else {
-            pool = new String[]{"Tattica Vincente", "Il Momento Giusto", "Occhio al Re"};
+            pool = new int[]{R.string.pool_winning_tactic, R.string.pool_right_moment, R.string.pool_watch_king};
         }
-        return pool[number % pool.length];
+        return context.getString(pool[number % pool.length]);
     }
 }

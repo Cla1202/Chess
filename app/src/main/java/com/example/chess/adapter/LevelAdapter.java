@@ -49,19 +49,24 @@ public class LevelAdapter extends RecyclerView.Adapter<LevelAdapter.LevelViewHol
         int levelNumber = position + 1;
         android.content.Context context = holder.itemView.getContext();
 
+        // Titolo del Quiz (es. "Matto Arabo") -> SOPRA (Grande, Bold)
+        holder.levelNumberText.setText(level.getTitle());
+        
+        // Scritta "Livello X" -> SOTTO (Più piccolo)
         String prefix = context.getString(R.string.prefix_level);
-        holder.titleText.setText(prefix + levelNumber);
-        holder.descriptionText.setText(level.getTitle());
+        holder.levelTitleText.setText(prefix + " " + levelNumber);
 
         if (levelNumber <= maxUnlocked) {
             holder.padlockIcon.setVisibility(View.GONE);
             holder.itemView.setBackgroundColor(ContextCompat.getColor(context, R.color.color_card_unlocked));
-            holder.titleText.setTextColor(Color.parseColor(Constants.THEME_CLASSIC_DARK));
+            holder.levelNumberText.setTextColor(ContextCompat.getColor(context, R.color.green_soft));
+            holder.levelTitleText.setTextColor(Color.WHITE);
             holder.itemView.setOnClickListener(v -> listener.onItemClick(position));
         } else {
             holder.padlockIcon.setVisibility(View.VISIBLE);
             holder.itemView.setBackgroundColor(ContextCompat.getColor(context, R.color.color_card_locked));
-            holder.titleText.setTextColor(ContextCompat.getColor(context, R.color.color_text_locked));
+            holder.levelNumberText.setTextColor(ContextCompat.getColor(context, R.color.color_text_locked));
+            holder.levelTitleText.setTextColor(ContextCompat.getColor(context, R.color.color_text_locked));
             holder.itemView.setOnClickListener(v -> {
                 Toast.makeText(context, context.getString(R.string.msg_level_locked), Toast.LENGTH_SHORT).show();
             });
@@ -74,14 +79,14 @@ public class LevelAdapter extends RecyclerView.Adapter<LevelAdapter.LevelViewHol
     }
 
     public static class LevelViewHolder extends RecyclerView.ViewHolder {
-        TextView titleText;
-        TextView descriptionText;
+        TextView levelNumberText; // Campo superiore
+        TextView levelTitleText;  // Campo inferiore
         ImageView padlockIcon;
 
         public LevelViewHolder(@NonNull View itemView) {
             super(itemView);
-            titleText = itemView.findViewById(R.id.levelTitleText);
-            descriptionText = itemView.findViewById(R.id.levelNumberText);
+            levelNumberText = itemView.findViewById(R.id.levelNumberText);
+            levelTitleText = itemView.findViewById(R.id.levelTitleText);
             padlockIcon = itemView.findViewById(R.id.lockIcon);
         }
     }

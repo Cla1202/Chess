@@ -33,6 +33,20 @@ public class Constants {
     public static final String KEY_USER_TOKEN = "logged_user_token";
     public static final String KEY_TIMER_ENABLED = "timer_enabled";
     public static final String KEY_PIECE_STYLE = "piece_style";
+    public static final String KEY_BOARD_THEME = "board_theme";
+    public static final String KEY_LANGUAGE = "language";
+    public static final String KEY_VIBRATION = "vibration_enabled";
+
+    // --- SETTINGS VALUES (Internal Keys) ---
+    public static final String STYLE_NEO = "neo";
+    public static final String STYLE_CLASSIC = "classic";
+    public static final String STYLE_MODERN = "modern";
+    public static final String STYLE_ALPHA = "alpha";
+
+    public static final String THEME_GREEN = "classic_green";
+    public static final String THEME_WOOD = "dark_wood";
+    public static final String THEME_OCEAN = "ocean_blue";
+    public static final String THEME_GREY = "modern_grey";
 
     // --- INTENT EXTRAS ---
     public static final String EXTRA_CURRENT_USER = "CURRENT_USER";

@@ -50,6 +50,8 @@ public class ChessAdapter extends BaseAdapter {
         } else h = (ViewHolder) convertView.getTag();
 
         int row = p / 8, col = p % 8;
+        int logical = mapPosition(p);
+        int lRow = logical / 8, lCol = logical % 8;
         String theme = prefs.getString("board_theme", "Verde Classico");
         String l = Constants.THEME_CLASSIC_LIGHT, d = Constants.THEME_CLASSIC_DARK;
         switch(theme) {
@@ -59,15 +61,15 @@ public class ChessAdapter extends BaseAdapter {
         }
         boolean isL = (row + col) % 2 == 0;
         h.container.setBackgroundColor(Color.parseColor(isL ? l : d));
-        h.dot.setVisibility(hints.contains(p) ? View.VISIBLE : View.GONE);
-        if (selected != null && selected == p) h.container.setBackgroundColor(Color.parseColor(Constants.STEEL_BLUE));
+        h.dot.setVisibility(hints.contains(logical) ? View.VISIBLE : View.GONE);
+        if (selected != null && selected == logical) h.container.setBackgroundColor(Color.parseColor(Constants.STEEL_BLUE));
 
         h.rank.setVisibility(col == 0 ? View.VISIBLE : View.GONE);
-        if (col == 0) { h.rank.setText("" + (8 - row)); h.rank.setTextColor(Color.parseColor(isL ? d : l)); }
+        if (col == 0) { h.rank.setText("" + (8 - lRow)); h.rank.setTextColor(Color.parseColor(isL ? d : l)); }
         h.file.setVisibility(row == 7 ? View.VISIBLE : View.GONE);
-        if (row == 7) { h.file.setText("" + (char)('a' + col)); h.file.setTextColor(Color.parseColor(isL ? d : l)); }
+        if (row == 7) { h.file.setText("" + (char)('a' + lCol)); h.file.setTextColor(Color.parseColor(isL ? d : l)); }
 
-        Piece piece = board.getPiece(row, col);
+        Piece piece = board.getPiece(lRow, lCol);
         if (piece != null) h.piece.setImageResource(getResId(piece)); else h.piece.setImageResource(0);
         return convertView;
     }
@@ -80,6 +82,17 @@ public class ChessAdapter extends BaseAdapter {
         int id = context.getResources().getIdentifier(name, "drawable", context.getPackageName());
         if (id == 0) id = context.getResources().getIdentifier((piece.isWhite()?"w_":"b_") + piece.getClass().getSimpleName().toLowerCase(), "drawable", context.getPackageName());
         return id;
+    }
+    private boolean flipped = false;
+
+    public void setFlipped(boolean flipped) {
+        this.flipped = flipped;
+        notifyDataSetChanged();
+    }
+
+    /** Converte posizione griglia <-> posizione logica (rotazione 180°, è il suo stesso inverso) */
+    public int mapPosition(int p) {
+        return flipped ? 63 - p : p;
     }
 
     private static class ViewHolder { FrameLayout container; ImageView piece; View dot; TextView rank, file; }

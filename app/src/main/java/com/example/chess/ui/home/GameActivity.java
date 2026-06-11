@@ -80,7 +80,7 @@ public class GameActivity extends AppCompatActivity {
         setupObservers();
 
         adapter = new ChessAdapter(this, viewModel.getBoard());
-        if (MODE_QUIZ.equals(mode) && level != null) {
+        if (Constants.MODE_QUIZ.equals(mode) && level != null) {
             adapter.setFlipped(!level.isWhiteTurnToStart());
         }
         gridView.setAdapter(adapter);

@@ -14,6 +14,13 @@ public class Board {
         grid = new Piece[8][8];
         setupBoard();
     }
+
+    public Board(boolean empty) {
+        grid = new Piece[8][8];
+        if (!empty) {
+            setupBoard();
+        }
+    }
     
     public List<Piece> getCapturedWhite() { return capturedWhite; }
     public List<Piece> getCapturedBlack() { return capturedBlack; }
@@ -30,8 +37,22 @@ public class Board {
     public void setEnPassantColumn(int col) { this.enPassantColumn = col; }
 
     public Piece getPiece(int x, int y) {
-        if (x < 0 || x > 7 || y < 0 || y > 7) return null;
+        if (!isValidSquare(x, y)) return null;
         return grid[x][y];
+    }
+
+    public void setPiece(int x, int y, Piece piece) {
+        if (isValidSquare(x, y)) {
+            grid[x][y] = piece;
+            if (piece != null) {
+                piece.setX(x);
+                piece.setY(y);
+            }
+        }
+    }
+
+    public boolean isValidSquare(int x, int y) {
+        return x >= 0 && x < 8 && y >= 0 && y < 8;
     }
 
     private void setupBoard() {

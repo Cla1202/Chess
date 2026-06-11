@@ -77,7 +77,16 @@ dependencies {
     implementation("androidx.room:room-ktx:$room_version")
     implementation(libs.room.common.jvm)
 
+    // Test unitari (JUnit)
     testImplementation(libs.junit)
+
+    // Test strumentati (Espresso=
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
+    androidTestImplementation("androidx.test:runner:1.6.2")
+    androidTestImplementation("androidx.test:rules:1.6.1")
+
+    // Mockito (per mock Firebase nei test)
+    testImplementation("org.mockito:mockito-core:5.11.0")
+    androidTestImplementation("org.mockito:mockito-android:5.11.0")
 }

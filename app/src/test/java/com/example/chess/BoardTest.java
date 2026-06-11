@@ -12,8 +12,6 @@ import static org.junit.Assert.*;
 /**
  * Test unitari per la classe Board e la logica di gioco.
  * Copertura: inizializzazione, movimenti, scacco, scaccomatto, en passant, arrocco, promozione.
- *
- * Collocazione: app/src/test/java/com/example/chess/BoardTest.java
  */
 public class BoardTest {
 

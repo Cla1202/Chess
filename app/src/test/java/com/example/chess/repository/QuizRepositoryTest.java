@@ -81,7 +81,7 @@ public class QuizRepositoryTest {
             }
 
             // At the end, the opponent must be in checkmate
-            boolean loserIsWhite = !board.isWhiteTurn();
+            boolean loserIsWhite = board.isWhiteTurn();
             assertTrue("Level " + level.getId() + " does not end with a check",
                     board.isKingInCheck(loserIsWhite));
             assertFalse("Level " + level.getId() + " does not end with a mate",
